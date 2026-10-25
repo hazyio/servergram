@@ -1,0 +1,6 @@
+flutter-run:
+  cmd: flutter
+  dir: ./client
+dart:
+  cmd: dart
+  dir: ./client

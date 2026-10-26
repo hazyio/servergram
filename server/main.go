@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"hazyio.com/servergram/internal"

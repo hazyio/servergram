@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"log/slog"
@@ -26,7 +25,7 @@ type AuthenticatedRouteData struct {
 	Response       *JsonResponse
 	ResponseWriter http.ResponseWriter
 	Database       *gorm.DB
-	User           db.User
+	Service        db.Service
 }
 
 // NormalRouteHandler handles a request that needs no authentication.
@@ -68,7 +67,7 @@ func (s *Server) Route(pattern string, next NormalRouteHandler) {
 // responding 401 otherwise. It does not yet look the session up in the database.
 // It returns the Server's queries.
 func (s *Server) AuthenticatedRoute(pattern string, next AuthenticatedRouteHandler) {
-	ctx := context.Background()
+	// ctx := context.Background()
 	s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		session_token, err := r.Cookie("session_token")
 		response := NewResponse(w)
@@ -83,21 +82,21 @@ func (s *Server) AuthenticatedRoute(pattern string, next AuthenticatedRouteHandl
 		}
 
 		// session, err := s.database.GetSessionByToken(ctx, trimmed_session_token)
-		var session db.Sessions
+		// var session db.Sessions
 
-		err = s.database.WithContext(ctx).First(&session, "token = ?", HashToken(trimmed_session_token)).Error
-		if err != nil {
-			response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session not found"})
-			return
-		}
-		var user db.User
-		err = s.database.WithContext(ctx).First(&user, "id = ?", session.UserID).Error
-		if err != nil {
-			response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, user not found"})
-			return
-		}
+		// err = s.database.WithContext(ctx).First(&session, "token = ?", HashToken(trimmed_session_token)).Error
+		// if err != nil {
+		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session not found"})
+		// 	return
+		// }
+		// var user db.User
+		// err = s.database.WithContext(ctx).First(&user, "id = ?", session.UserID).Error
+		// if err != nil {
+		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, user not found"})
+		// 	return
+		// }
 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next(AuthenticatedRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, User: user, Database: s.database})
+			next(AuthenticatedRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Service: db.Service{}, Database: s.database})
 		})
 		chain(h, recoverer, logging).ServeHTTP(w, r)
 	})
@@ -135,14 +134,14 @@ func logging(next http.Handler) http.Handler {
 	})
 }
 
-func handleNotFound(w http.ResponseWriter, r *http.Request) {
-	response := NewResponse(w)
-	response.Write(http.StatusNotFound, map[string]string{"error": "endpoint not found"})
-}
+// func handleNotFound(w http.ResponseWriter, r *http.Request) {
+// 	response := NewResponse(w)
+// 	response.Write(http.StatusNotFound, map[string]string{"error": "endpoint not found"})
+// }
 
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	handleNotFound(w, r)
-}
+// func handleRoot(w http.ResponseWriter, r *http.Request) {
+// 	handleNotFound(w, r)
+// }
 
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))

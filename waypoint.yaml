@@ -1,3 +1,6 @@
 bun:
   cmd: bun
   dir: ./frontend
+air:
+  cmd: air
+  dir: ./server

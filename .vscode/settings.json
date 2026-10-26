@@ -4,5 +4,9 @@
         "**/client/.idea": true,
         "**/.dart_tool": true,
         "**/linux/flutter/ephemeral": true
-    }
+    },
+    "cSpell.words": [
+        "Dialector",
+        "servergram"
+    ]
 }

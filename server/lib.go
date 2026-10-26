@@ -32,7 +32,9 @@ func NewRouter(database *gorm.DB) http.Handler {
 
 	mux := http.NewServeMux()
 	slog.Info("Logger initialized")
-	api := humago.New(mux, huma.DefaultConfig("Sever Gram Api", "1.0.0"))
+	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
+	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
+	api := humago.New(mux, config)
 	server := internal.NewServer(api, database)
 	routes.RegisterFilesRoutes(server)
 	mux.HandleFunc("/", handleRoot)
@@ -41,8 +43,7 @@ func NewRouter(database *gorm.DB) http.Handler {
 }
 
 func handleNotFound(w http.ResponseWriter, r *http.Request) {
-	response := internal.NewResponse(w)
-	response.Write(http.StatusNotFound, map[string]string{"error": "endpoint not found"})
+	http.Error(w, `{"error":"endpoint not found"}`, http.StatusNotFound)
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {

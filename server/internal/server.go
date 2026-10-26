@@ -2,12 +2,7 @@ package internal
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"log/slog"
 	"net/http"
-	"slices"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/db"
@@ -22,7 +17,6 @@ type NormalRouteData[I any] struct {
 }
 type AuthenticatedRouteData struct {
 	Request        *http.Request
-	Response       *JsonResponse
 	ResponseWriter http.ResponseWriter
 	Database       *gorm.DB
 	Service        db.Service
@@ -50,16 +44,17 @@ func NewServer(server huma.API, database *gorm.DB) *Server {
 }
 
 // Get registers an unauthenticated GET handler wrapped with recovery and logging.
-func (s *Server) Get[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
+// Methods cannot have type parameters, so this is a package-level function.
+func Get[I, O any](s *Server, pattern string, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Get(s.server, pattern, func(
 		ctx context.Context,
 		input *I,
-	) (*O, error) {
+	) (*JsonResponse[O], error) {
 		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, err
 		}
-		return resp, nil
+		return NewResponse(*resp), nil
 	})
 
 	// s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
@@ -109,48 +104,3 @@ func (s *Server) Get[I, O any](pattern string, next func(NormalRouteData[I]) (*O
 // 	})
 
 // }
-
-// chain applies m to h, then recoverer and logging, so the first middleware is outermost.
-func chain(h http.Handler, m ...Middleware) http.Handler {
-	for _, v := range slices.Backward(m) {
-		h = v(h)
-	}
-	return h
-}
-
-// recoverer turns a panic in next into a 500 JSON response.
-func recoverer(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("panic", "error", err)
-				response := NewResponse(w)
-				response.Write(http.StatusInternalServerError, map[string]string{"error": "An internal error occurred"})
-			}
-		}()
-		next.ServeHTTP(w, r)
-	})
-}
-
-// logging logs the method, path and duration of each request after it completes.
-func logging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r) // call the wrapped handler
-		slog.Info("request", "method", r.Method, "path", r.URL.Path, "duration", time.Since(start))
-	})
-}
-
-// func handleNotFound(w http.ResponseWriter, r *http.Request) {
-// 	response := NewResponse(w)
-// 	response.Write(http.StatusNotFound, map[string]string{"error": "endpoint not found"})
-// }
-
-// func handleRoot(w http.ResponseWriter, r *http.Request) {
-// 	handleNotFound(w, r)
-// }
-
-func HashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:]) // 64 chars
-}

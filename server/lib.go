@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
@@ -19,6 +21,9 @@ import (
 	"hazyio.com/servergram/internal"
 	"hazyio.com/servergram/routes"
 )
+
+//go:embed all:dist
+var distFS embed.FS
 
 func NewRouter(database *gorm.DB) http.Handler {
 	env := internal.LoadEnv()
@@ -40,7 +45,12 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
-	handleNotFound(w, r)
+	sub, err := fs.Sub(distFS, "dist") // strip the "dist/" prefix
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+
 }
 
 func InitDatabase() *gorm.DB {

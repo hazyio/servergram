@@ -1,26 +1,48 @@
 package internal
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
+	"net/url"
+	"strings"
+
 	"log"
 	"os"
-	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 )
 
 type Env struct {
-	DatabaseUrl    string   `validate:"required,url"`
+	DatabaseUrl    string   `validate:"required,database_url"`
 	ServerPort     string   `validate:"required"`
 	AllowedOrigins []string `validate:"required,dive,required"`
 }
 
-var validate = validator.New(validator.WithRequiredStructEnabled())
+var validate = func() *validator.Validate {
+	v := validator.New(validator.WithRequiredStructEnabled())
+	_ = v.RegisterValidation("database_url", func(field validator.FieldLevel) bool {
+		parsedURL, err := url.Parse(field.Field().String())
+		if err != nil {
+			return false
+		}
+
+		switch strings.ToLower(parsedURL.Scheme) {
+		case "sqlite", "sqlite3":
+			return parsedURL.Opaque != "" || parsedURL.Host != "" || parsedURL.Path != ""
+		case "postgres", "postgresql", "mysql", "sqlserver", "mssql":
+			return parsedURL.Host != ""
+		default:
+			return false
+		}
+	})
+	return v
+}()
 
 func LoadEnv() Env {
 	err := godotenv.Load()
 	if err != nil {
-
-		log.Fatal("Error loading .env file, are you sure it is in same dir you are running this application")
+		if !os.IsNotExist(err) {
+			log.Fatal("Error loading .env file, are you sure it is in same dir you are running this application")
+		}
 	}
 
 	env := Env{
@@ -43,10 +65,11 @@ func LoadEnv() Env {
 	}
 
 	if strings.TrimSpace(env.ServerPort) == "" {
-		log.Println("SERVER_PORT is not set, defaulting to 8080 this is dangerous as it allowed requests from all origins")
-		env.ServerPort = "8080"
+		log.Println("SERVER_PORT is not set, defaulting to 9788 this is dangerous as it allowed requests from all origins")
+		env.ServerPort = "9788"
 		env.AllowedOrigins = []string{"*"}
 	}
+	println("Loaded environment variables: ", env.DatabaseUrl)
 
 	if err := validate.Struct(env); err != nil {
 		log.Fatalf("environment validation failed: %v", err)

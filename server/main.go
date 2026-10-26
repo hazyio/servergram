@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello, World!")
+	startServer()
 }
 
 func startServer() {

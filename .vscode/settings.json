@@ -3,7 +3,6 @@
         "**/build": true,
         "**/client/.idea": true,
         "**/.dart_tool": true,
-        "**/android": true,
         "**/linux/flutter/ephemeral": true
     }
 }

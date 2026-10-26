@@ -11,7 +11,7 @@ import (
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func HandleServer(server *internal.Server) {
-	server.Route("GET /health", serverHealth)
+	server.Route("GET /api/service/health", serverHealth)
 
 }
 

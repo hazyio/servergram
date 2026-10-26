@@ -60,7 +60,6 @@ func (s *Server) Route(pattern string, next NormalRouteHandler) {
 		})
 		chain(h, recoverer, logging).ServeHTTP(w, r)
 	})
-
 }
 
 // AuthenticatedRoute registers a handler that requires a well-formed (32-char) "muster_session" cookie,

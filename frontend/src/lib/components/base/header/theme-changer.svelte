@@ -53,7 +53,7 @@
           onclick={() => setTheme("light")}
         >
           <Sun class={"h-5 w-5"} />
-          <div class={"grow"}>Light</div>
+          <div class={"grow text-left"}>Light</div>
           <Check
             class={`h-5 w-5 ${currentTheme === "light" ? "visible" : "invisible"}`}
           />
@@ -63,7 +63,7 @@
           onclick={() => setTheme("dark")}
         >
           <Moon class={"h-5 w-5"} />
-          <div class={"grow"}>Dark</div>
+          <div class={"grow text-left"}>Dark</div>
           <Check
             class={`h-5 w-5 ${currentTheme === "dark" ? "visible" : "invisible"}`}
           />
@@ -73,7 +73,7 @@
           onclick={() => setTheme("system")}
         >
           <SunMoon class={"h-5 w-5"} />
-          <div class={"grow"}>System</div>
+          <div class={"grow text-left"}>System</div>
           <Check
             class={`h-5 w-5 ${currentTheme === "system" ? "visible" : "invisible"}`}
           />

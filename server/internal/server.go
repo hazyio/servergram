@@ -1,24 +1,24 @@
 package internal
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"log/slog"
 	"net/http"
 	"slices"
-	"strings"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/db"
 
 	"gorm.io/gorm"
 )
 
-type NormalRouteData struct {
-	Request        *http.Request
-	Response       *JsonResponse
-	ResponseWriter http.ResponseWriter
-	Database       *gorm.DB
+type NormalRouteData[I any] struct {
+	Database *gorm.DB
+	Context  *context.Context
+	Input    I
 }
 type AuthenticatedRouteData struct {
 	Request        *http.Request
@@ -27,9 +27,6 @@ type AuthenticatedRouteData struct {
 	Database       *gorm.DB
 	Service        db.Service
 }
-
-// NormalRouteHandler handles a request that needs no authentication.
-type NormalRouteHandler func(NormalRouteData)
 
 // AuthenticatedRouteHandler handles a request on behalf of an authenticated user.
 type AuthenticatedRouteHandler func(AuthenticatedRouteData)
@@ -40,11 +37,11 @@ type Middleware func(http.Handler) http.Handler
 // Server registers routes on a ServeMux and exposes the database queries to them.
 type Server struct {
 	database *gorm.DB
-	server   *http.ServeMux
+	server   huma.API
 }
 
 // NewServer wraps mux with a Server whose queries use pool.
-func NewServer(server *http.ServeMux, database *gorm.DB) *Server {
+func NewServer(server huma.API, database *gorm.DB) *Server {
 	return &Server{
 		database: database,
 		server:   server,
@@ -52,55 +49,66 @@ func NewServer(server *http.ServeMux, database *gorm.DB) *Server {
 
 }
 
-// Route registers an unauthenticated handler wrapped with recovery and logging.
-func (s *Server) Route(pattern string, next NormalRouteHandler) {
-	s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next(NormalRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Database: s.database})
-		})
-		chain(h, recoverer, logging).ServeHTTP(w, r)
+// Get registers an unauthenticated GET handler wrapped with recovery and logging.
+func (s *Server) Get[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Get(s.server, pattern, func(
+		ctx context.Context,
+		input *I,
+	) (*O, error) {
+		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
 	})
+
+	// s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+	// 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 		next(NormalRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Database: s.database})
+	// 	})
+	// 	chain(h, recoverer, logging).ServeHTTP(w, r)
+	// })
 }
 
 // AuthenticatedRoute registers a handler that requires a well-formed (32-char) "muster_session" cookie,
 // responding 401 otherwise. It does not yet look the session up in the database.
 // It returns the Server's queries.
-func (s *Server) AuthenticatedRoute(pattern string, next AuthenticatedRouteHandler) {
-	// ctx := context.Background()
-	s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		session_token, err := r.Cookie("session_token")
-		response := NewResponse(w)
-		if err != nil {
-			response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session token not found"})
-			return
-		}
-		trimmed_session_token := strings.TrimSpace(session_token.Value)
-		if trimmed_session_token == "" {
-			response.Write(http.StatusUnauthorized, map[string]string{"error": "session token is empty"})
-			return
-		}
+// func (s *Server) AuthenticatedRoute(pattern string, next AuthenticatedRouteHandler) {
+// 	// ctx := context.Background()
+// 	s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+// 		session_token, err := r.Cookie("session_token")
+// 		response := NewResponse(w)
+// 		if err != nil {
+// 			response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session token not found"})
+// 			return
+// 		}
+// 		trimmed_session_token := strings.TrimSpace(session_token.Value)
+// 		if trimmed_session_token == "" {
+// 			response.Write(http.StatusUnauthorized, map[string]string{"error": "session token is empty"})
+// 			return
+// 		}
 
-		// session, err := s.database.GetSessionByToken(ctx, trimmed_session_token)
-		// var session db.Sessions
+// 		// session, err := s.database.GetSessionByToken(ctx, trimmed_session_token)
+// 		// var session db.Sessions
 
-		// err = s.database.WithContext(ctx).First(&session, "token = ?", HashToken(trimmed_session_token)).Error
-		// if err != nil {
-		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session not found"})
-		// 	return
-		// }
-		// var user db.User
-		// err = s.database.WithContext(ctx).First(&user, "id = ?", session.UserID).Error
-		// if err != nil {
-		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, user not found"})
-		// 	return
-		// }
-		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next(AuthenticatedRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Service: db.Service{}, Database: s.database})
-		})
-		chain(h, recoverer, logging).ServeHTTP(w, r)
-	})
+// 		// err = s.database.WithContext(ctx).First(&session, "token = ?", HashToken(trimmed_session_token)).Error
+// 		// if err != nil {
+// 		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session not found"})
+// 		// 	return
+// 		// }
+// 		// var user db.User
+// 		// err = s.database.WithContext(ctx).First(&user, "id = ?", session.UserID).Error
+// 		// if err != nil {
+// 		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, user not found"})
+// 		// 	return
+// 		// }
+// 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			next(AuthenticatedRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Service: db.Service{}, Database: s.database})
+// 		})
+// 		chain(h, recoverer, logging).ServeHTTP(w, r)
+// 	})
 
-}
+// }
 
 // chain applies m to h, then recoverer and logging, so the first middleware is outermost.
 func chain(h http.Handler, m ...Middleware) http.Handler {

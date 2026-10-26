@@ -69,7 +69,6 @@ func LoadEnv() Env {
 		env.ServerPort = "9788"
 		env.AllowedOrigins = []string{"*"}
 	}
-	println("Loaded environment variables: ", env.DatabaseUrl)
 
 	if err := validate.Struct(env); err != nil {
 		log.Fatalf("environment validation failed: %v", err)

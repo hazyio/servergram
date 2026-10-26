@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humago"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -29,12 +31,11 @@ func NewRouter(database *gorm.DB) http.Handler {
 	env := internal.LoadEnv()
 
 	mux := http.NewServeMux()
-	server := internal.NewServer(mux, database)
 	slog.Info("Logger initialized")
-	routes.HandleServer(server)
-
+	api := humago.New(mux, huma.DefaultConfig("Sever Gram Api", "1.0.0"))
+	server := internal.NewServer(api, database)
+	routes.RegisterFilesRoutes(server)
 	mux.HandleFunc("/", handleRoot)
-	mux.HandleFunc("/404", handleNotFound)
 
 	return internal.CORS(env.AllowedOrigins)(mux)
 }

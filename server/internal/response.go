@@ -8,6 +8,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
+type BodyRequest[T any] struct {
+	Body T
+}
 // JsonResponse is the huma output envelope; huma serializes only the Body field.
 type JsonResponse[T any] struct {
 	Body T

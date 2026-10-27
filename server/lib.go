@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -37,20 +38,43 @@ func NewRouter(database *gorm.DB) http.Handler {
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
 
 	api := humago.New(mux, config)
-	apiUmbrella := huma.NewGroup(api, "/api")
-	routes.RegisterFilesRoutes(apiUmbrella, database)
-	routes.RegisterAccountRoutes(apiUmbrella, database, loginTokens)
-
-	if env.Password != "" {
-		// add middleware only if password is set
-		api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
+	loggingMW := internal.LoggingMiddleware(api)
+	sessionMW := internal.SessionMiddleware(loginTokens, api)
+	api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
+		loggingMW(ctx, func(ctx huma.Context) {
 			if skipAuthForRoutes(ctx.URL().Path) {
+				slog.Info("Skipping authentication for route", "path", ctx.URL().Path)
 				next(ctx)
 				return
 			}
-			internal.SessionMiddleware(loginTokens, api)(ctx, next)
+			// add session middleware only if password is set
+			if env.Password == "" {
+				slog.Info("Skipping authentication because password is not set", "path", ctx.URL().Path)
+				next(ctx)
+				return
+			}
+			sessionMW(ctx, next)
+		})
+
+	})
+	apiUmbrella := huma.NewGroup(api, "/api")
+	// Middleware responses are invisible to Huma, so the 401 is added to the spec here.
+	if env.Password != "" {
+		errSchema := api.OpenAPI().Components.Schemas.Schema(reflect.TypeFor[huma.ErrorModel](), true, "ErrorModel")
+		apiUmbrella.UseSimpleModifier(func(op *huma.Operation) {
+			if op.Responses == nil {
+				op.Responses = map[string]*huma.Response{}
+			}
+			op.Responses["401"] = &huma.Response{
+				Description: "Unauthorized",
+				Content: map[string]*huma.MediaType{
+					"application/problem+json": {Schema: errSchema},
+				},
+			}
 		})
 	}
+	routes.RegisterFilesRoutes(apiUmbrella, database)
+	routes.RegisterAccountRoutes(apiUmbrella, database, loginTokens)
 
 	mux.HandleFunc("/", handleRoot)
 
@@ -59,9 +83,9 @@ func NewRouter(database *gorm.DB) http.Handler {
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here
 	skipRoutes := []string{
-		"/",              // root route
-		"/account/login", // login route
-		"/_app/*",        // frontend route and its subroutes
+		"/",                  // root route
+		"/api/account/login", // login route
+		"/_app/*",            // frontend route and its subroutes
 	}
 	for _, route := range skipRoutes {
 		if strings.HasSuffix(route, "/*") {
@@ -115,7 +139,6 @@ func getDatabaseDialector(dbURL string) (gorm.Dialector, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid database URL: %w", err)
 	}
-
 	switch strings.ToLower(parsedURL.Scheme) {
 	case "sqlite", "sqlite3":
 		dsn := strings.TrimPrefix(dbURL, parsedURL.Scheme+":")

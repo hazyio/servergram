@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -84,8 +85,14 @@ func (s *Server) Post[I, O any](pattern string, next func(NormalRouteData[I]) (*
 	})
 
 }
-func (s *Server) PostRaw[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
-	huma.Post(s.group, pattern, func(ctx context.Context, input *I) (*O, error) {
+func (s *Server) PostRaw[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Register(s.group, huma.Operation{
+		OperationID:   huma.GenerateOperationID(http.MethodPost, pattern, new(O)),
+		Summary:       huma.GenerateSummary(http.MethodPost, pattern, new(O)),
+		Method:        http.MethodPost,
+		Path:          pattern,
+		DefaultStatus: status,
+	}, func(ctx context.Context, input *I) (*O, error) {
 		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, ToHumaError(err)
@@ -98,13 +105,8 @@ func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context,
 
 		req := http.Request{Header: http.Header{"Cookie": {ctx.Header("Cookie")}}}
 		c, err := req.Cookie("session_token")
-		if err != nil || c.Value == "" {
-			redirect(ctx, "/account/login")
-
-			return
-		}
-		if !loginTokens.Valid(c.Value) {
-			redirect(ctx, "/account/login")
+		if err != nil || c.Value == "" || !loginTokens.Valid(c.Value) {
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 
@@ -112,8 +114,9 @@ func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context,
 	}
 
 }
-
-func redirect(ctx huma.Context, url string) {
-	ctx.SetHeader("Location", url)
-	ctx.SetStatus(http.StatusSeeOther) // 303
+func LoggingMiddleware(api huma.API) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		slog.Info("Request received", "method", ctx.Method(), "path", ctx.URL().Path)
+		next(ctx)
+	}
 }

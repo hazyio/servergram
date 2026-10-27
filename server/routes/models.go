@@ -2,6 +2,7 @@ package routes
 
 import "net/http"
 
+
 type LoginRequestBody struct {
 	Password string `json:"password" required:"true" doc:"The password for login" minLength:"16" maxLength:"128"`
 }

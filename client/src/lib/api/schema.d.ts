@@ -13,8 +13,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post API account login */
-        post: operations["post-api-account-login"];
+        /** Post login */
+        post: operations["post-login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -83,6 +83,10 @@ export interface components {
              */
             type: string;
         };
+        LoginRequestBody: {
+            /** @description The password for login */
+            password: string;
+        };
         MessageResponse: {
             message: string;
         };
@@ -95,17 +99,21 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    "post-api-account-login": {
+    "post-login": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequestBody"];
+            };
+        };
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description See Other */
+            303: {
                 headers: {
                     Location?: string;
                     "Set-Cookie"?: string;

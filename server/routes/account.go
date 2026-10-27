@@ -14,8 +14,8 @@ import (
 
 func RegisterAccountRoutes(api *huma.Group, database *gorm.DB, loginTokens *internal.LoginToken) {
 	server := internal.NewGroup("/account", api, database)
-	server.PostRaw("/login", func(nrd internal.NormalRouteData[LoginRequestBody]) (*LoginSuccessfulRedirectResponse, error) {
-		return login(nrd.Input, loginTokens)
+	server.PostRaw("/login", http.StatusSeeOther, func(nrd internal.NormalRouteData[internal.BodyRequest[LoginRequestBody]]) (*LoginSuccessfulRedirectResponse, error) {
+		return login(nrd.Input.Body, loginTokens)
 	})
 
 }

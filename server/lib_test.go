@@ -24,3 +24,25 @@ func TestDefaultCORSAllowsNextDevPreflight(t *testing.T) {
 		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "http://localhost:3000")
 	}
 }
+
+func TestSkipAuthForRoutesSupportsWildcards(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{path: "/", want: true},
+		{path: "/login", want: true},
+		{path: "/login/validate", want: true},
+		{path: "/login/validate/token", want: true},
+		{path: "/logins", want: false},
+		{path: "/account", want: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			if got := skipAuthForRoutes(test.path); got != test.want {
+				t.Errorf("skipAuthForRoutes(%q) = %t, want %t", test.path, got, test.want)
+			}
+		})
+	}
+}

@@ -29,19 +29,50 @@ var distFS embed.FS
 
 func NewRouter(database *gorm.DB) http.Handler {
 	env := internal.LoadEnv()
+	loginTokens := make(internal.LoginToken)
 
 	mux := http.NewServeMux()
 	slog.Info("Logger initialized")
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
+
 	api := humago.New(mux, config)
+
 	server := internal.NewServer(api, database)
+	if env.Password != "" {
+		// add middleware only if password is set
+		api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
+			if skipAuthForRoutes(ctx.URL().Path) {
+				next(ctx)
+				return
+			}
+			internal.SessionMiddleware(&loginTokens, api)(ctx, next)
+		})
+	}
+
 	routes.RegisterFilesRoutes(server)
 	mux.HandleFunc("/", handleRoot)
 
 	return internal.CORS(env.AllowedOrigins)(mux)
 }
-
+func skipAuthForRoutes(path string) bool {
+	// Add routes that should skip authentication here
+	skipRoutes := []string{
+		"/",        // root route
+		"/login/*", // login route and its subroutes
+	}
+	for _, route := range skipRoutes {
+		if strings.HasSuffix(route, "/*") {
+			prefix := strings.TrimSuffix(route, "*")
+			if path == strings.TrimSuffix(prefix, "/") || strings.HasPrefix(path, prefix) {
+				return true
+			}
+		} else if path == route {
+			return true
+		}
+	}
+	return false
+}
 func handleNotFound(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, `{"error":"endpoint not found"}`, http.StatusNotFound)
 }

@@ -3,6 +3,8 @@ package internal
 import (
 	"net/url"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"log"
 	"os"
@@ -15,6 +17,7 @@ type Env struct {
 	DatabaseUrl    string   `validate:"required,database_url"`
 	ServerPort     string   `validate:"required"`
 	AllowedOrigins []string `validate:"required,dive,required"`
+	Password       string   `validate:"omitempty,strong_password"`
 }
 
 var validate = func() *validator.Validate {
@@ -34,6 +37,25 @@ var validate = func() *validator.Validate {
 			return false
 		}
 	})
+	_ = v.RegisterValidation("strong_password", func(field validator.FieldLevel) bool {
+		password := field.Field().String()
+		length := utf8.RuneCountInString(password)
+		if length < 16 || length > 128 {
+			return false
+		}
+
+		var hasUpper, hasLower, hasNumber, hasSymbol bool
+		for _, char := range password {
+			if !unicode.IsPrint(char) || unicode.IsSpace(char) {
+				return false
+			}
+			hasUpper = hasUpper || unicode.IsUpper(char)
+			hasLower = hasLower || unicode.IsLower(char)
+			hasNumber = hasNumber || unicode.IsNumber(char)
+			hasSymbol = hasSymbol || unicode.IsPunct(char) || unicode.IsSymbol(char)
+		}
+		return hasUpper && hasLower && hasNumber && hasSymbol
+	})
 	return v
 }()
 
@@ -50,6 +72,7 @@ func LoadEnv() Env {
 		DatabaseUrl:    os.Getenv("DATABASE_URL"),
 		ServerPort:     os.Getenv("SERVER_PORT"),
 		AllowedOrigins: strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
+		Password:       os.Getenv("PASSWORD"),
 	}
 	for i, origin := range env.AllowedOrigins {
 		env.AllowedOrigins[i] = strings.TrimSpace(origin)
@@ -62,6 +85,9 @@ func LoadEnv() Env {
 			log.Fatalf("failed to get user config dir: %v", err)
 		}
 		env.DatabaseUrl = "sqlite3://" + dir + "/servergram.db"
+	}
+	if env.Password == "" {
+		log.Println("PASSWORD is not set, authentication will be disabled")
 	}
 
 	if strings.TrimSpace(env.ServerPort) == "" {

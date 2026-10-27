@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/db"
@@ -21,6 +22,10 @@ type AuthenticatedRouteData struct {
 	Database       *gorm.DB
 	Service        db.Service
 }
+type LoginTokenInformation struct {
+	Expires time.Time
+}
+type LoginToken map[string]LoginTokenInformation
 
 // AuthenticatedRouteHandler handles a request on behalf of an authenticated user.
 type AuthenticatedRouteHandler func(AuthenticatedRouteData)
@@ -57,50 +62,29 @@ func Get[I, O any](s *Server, pattern string, next func(NormalRouteData[I]) (*O,
 		return NewResponse(*resp), nil
 	})
 
-	// s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-	// 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 		next(NormalRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Database: s.database})
-	// 	})
-	// 	chain(h, recoverer, logging).ServeHTTP(w, r)
-	// })
+}
+func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+
+		req := http.Request{Header: http.Header{"Cookie": {ctx.Header("Cookie")}}}
+		c, err := req.Cookie("session_token")
+		if err != nil || c.Value == "" {
+			redirect(ctx, "/account/login")
+
+			return
+		}
+		info, ok := (*loginTokens)[c.Value]
+		if !ok || info.Expires.Before(time.Now()) {
+			redirect(ctx, "/account/login")
+			return
+		}
+
+		next(ctx)
+	}
+
 }
 
-// AuthenticatedRoute registers a handler that requires a well-formed (32-char) "muster_session" cookie,
-// responding 401 otherwise. It does not yet look the session up in the database.
-// It returns the Server's queries.
-// func (s *Server) AuthenticatedRoute(pattern string, next AuthenticatedRouteHandler) {
-// 	// ctx := context.Background()
-// 	s.server.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-// 		session_token, err := r.Cookie("session_token")
-// 		response := NewResponse(w)
-// 		if err != nil {
-// 			response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session token not found"})
-// 			return
-// 		}
-// 		trimmed_session_token := strings.TrimSpace(session_token.Value)
-// 		if trimmed_session_token == "" {
-// 			response.Write(http.StatusUnauthorized, map[string]string{"error": "session token is empty"})
-// 			return
-// 		}
-
-// 		// session, err := s.database.GetSessionByToken(ctx, trimmed_session_token)
-// 		// var session db.Sessions
-
-// 		// err = s.database.WithContext(ctx).First(&session, "token = ?", HashToken(trimmed_session_token)).Error
-// 		// if err != nil {
-// 		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, session not found"})
-// 		// 	return
-// 		// }
-// 		// var user db.User
-// 		// err = s.database.WithContext(ctx).First(&user, "id = ?", session.UserID).Error
-// 		// if err != nil {
-// 		// 	response.Write(http.StatusUnauthorized, map[string]string{"error": "unauthorized, user not found"})
-// 		// 	return
-// 		// }
-// 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			next(AuthenticatedRouteData{Request: r, Response: NewResponse(w), ResponseWriter: w, Service: db.Service{}, Database: s.database})
-// 		})
-// 		chain(h, recoverer, logging).ServeHTTP(w, r)
-// 	})
-
-// }
+func redirect(ctx huma.Context, url string) {
+	ctx.SetHeader("Location", url)
+	ctx.SetStatus(http.StatusSeeOther) // 303
+}

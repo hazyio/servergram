@@ -7,3 +7,6 @@ bunx:
 air:
   cmd: air
   dir: ./server
+mint:
+  cmd: mint
+  dir: ./docs

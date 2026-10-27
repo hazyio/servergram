@@ -1,0 +1,20 @@
+---
+title: "Configuration"
+description: "Environment variables for the Servergram server"
+---
+
+The server is configured through environment variables.
+
+| Variable          | Description                                         | Example                         |
+| ----------------- | --------------------------------------------------- | ------------------------------- |
+| `DATABASE_URL`    | Database connection string                          | `postgres://user:pass@host/db`  |
+| `SERVER_PORT`     | Port the server listens on                          | `8080`                          |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins        | `http://localhost:5173`         |
+| `PASSWORD`        | Password used to log in                             | `change-me`                     |
+
+```bash
+export DATABASE_URL="postgres://user:pass@localhost/servergram"
+export SERVER_PORT="8080"
+export ALLOWED_ORIGINS="http://localhost:5173"
+export PASSWORD="change-me"
+```

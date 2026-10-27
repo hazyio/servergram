@@ -1,0 +1,46 @@
+---
+title: "Install with Go"
+description: "Build the Servergram server and agent from source"
+---
+
+## Prerequisites
+
+- [Go](https://go.dev/dl/) installed
+
+## Install
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/hazyio/servergram.git
+    cd servergram
+    ```
+  </Step>
+  <Step title="Build the agent">
+    The agent runs on the managed server. The client pushes it over SSH.
+
+    ```bash
+    cd agent
+    go build -o servergram-agent .
+    ```
+  </Step>
+  <Step title="Build the server">
+    ```bash
+    cd ../server
+    go build -o servergram-server .
+    ```
+  </Step>
+  <Step title="Set environment variables and run">
+    See [Configuration](/config).
+
+    ```bash
+    export DATABASE_URL="..."
+    export PASSWORD="change-me"
+    ./servergram-server
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  This page will be updated as the install process changes.
+</Note>

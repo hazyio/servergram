@@ -7,22 +7,20 @@
   import Loader from "@lucide/svelte/icons/loader";
 
   let password = $state("");
-  let error = $state("");
+  let formError = $state("");
   let submitting = $state(false);
 
   async function handleLogin(event: SubmitEvent) {
     event.preventDefault();
-    error = "";
+    formError = "";
     submitting = true;
-    try {
-      const { data, requestError } = await NewRequestClient().POST(
-        "/api/account/login",
-        { password },
-      );
-    } catch {
-      error = "The password was not accepted.";
-    } finally {
-      submitting = false;
+    const { data, error } = await NewRequestClient().POST(
+      "/api/account/login",
+      { password },
+    );
+    submitting = false;
+    if (error) {
+      formError = error.detail ?? "An unknown error occurred";
     }
   }
 </script>
@@ -41,8 +39,8 @@
           bind:value={password}
           required
         />
-        {#if error}
-          <Field.Error>{error}</Field.Error>
+        {#if formError}
+          <Field.Error>{formError}</Field.Error>
         {/if}
       </Field.Field>
       <Button class="mt-4 w-full" type="submit" disabled={submitting}>

@@ -24,7 +24,7 @@ func login(data LoginRequestBody, loginTokens *internal.LoginToken) (*LoginSucce
 	env := internal.LoadEnv()
 	if env.Password == "" {
 		slog.Error("server password is not configured")
-		return nil, internal.InternalServerError
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "server password is not configured")
 	}
 	a := sha256.Sum256([]byte(data.Password))
 	b := sha256.Sum256([]byte(env.Password))
@@ -34,7 +34,7 @@ func login(data LoginRequestBody, loginTokens *internal.LoginToken) (*LoginSucce
 	randomToken, err := internal.GenerateRandomString(32)
 	if err != nil {
 		slog.Error("error generating random token", "err", err)
-		return nil, internal.InternalServerError
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "error generating random token")
 	}
 	expires := time.Now().Add(24 * time.Hour)
 

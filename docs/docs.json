@@ -1,10 +1,10 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Server Gram",
+  "name": "Servergram Docs",
   "colors": {
     "primary": "#16A34A",
-    "light": "#07C983",
+    "light": "#4ADE80",
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
@@ -14,59 +14,36 @@
         "group": "Getting Started",
         "pages": [
           "index",
-          "quickstart"
+          {
+            "expanded": false,
+            "group": "Installation",
+            "pages": [
+              "installation/index",
+              "installation/go"
+            ]
+          },
+          "config"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
-      }
-    ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "type": "github",
+      "label": "Github",
+      "href": "https://github.com/hazyio/servergram"
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
+    "options": ["copy", "view", "chatgpt", "claude", "aistudio"]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/hazyio/servergram"
     }
   }
 }

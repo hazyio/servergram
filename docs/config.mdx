@@ -3,18 +3,58 @@ title: "Configuration"
 description: "Environment variables for the Servergram server"
 ---
 
-The server is configured through environment variables.
+The server is configured through environment variables. A `.env` file in the directory the server is run from is loaded automatically.
 
-| Variable          | Description                                         | Example                         |
-| ----------------- | --------------------------------------------------- | ------------------------------- |
-| `DATABASE_URL`    | Database connection string                          | `postgres://user:pass@host/db`  |
-| `SERVER_PORT`     | Port the server listens on                          | `8080`                          |
-| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins        | `http://localhost:5173`         |
-| `PASSWORD`        | Password used to log in                             | `change-me`                     |
+| Variable          | Required                | Description                                                  | Example                        |
+| ----------------- | ----------------------- | ------------------------------------------------------------ | ------------------------------ |
+| `DATABASE_URL`    | No                      | Database connection string. Defaults to SQLite (see below)   | `postgres://user:pass@host/db` |
+| `SERVER_PORT`     | No                      | Port the server listens on. Defaults to `9788`               | `8080`                         |
+| `ALLOWED_ORIGINS` | If `SERVER_PORT` is set | Comma-separated list of allowed CORS origins                 | `http://localhost:5173`        |
+| `PASSWORD`        | No                      | Password used to log in. Authentication is disabled if unset | `Str0ng!Passw0rd#2026`         |
 
 ```bash
 export DATABASE_URL="postgres://user:pass@localhost/servergram"
 export SERVER_PORT="8080"
 export ALLOWED_ORIGINS="http://localhost:5173"
-export PASSWORD="change-me"
+export PASSWORD="Str0ng!Passw0rd#2026"
 ```
+
+## `DATABASE_URL`
+
+Supported databases:
+
+| Database   | Schemes                  | Example                                       |
+| ---------- | ------------------------ | --------------------------------------------- |
+| SQLite     | `sqlite`, `sqlite3`      | `sqlite3:///home/user/servergram.db`          |
+| PostgreSQL | `postgres`, `postgresql` | `postgres://user:pass@host:5432/db`           |
+| MySQL      | `mysql`                  | `mysql://user:pass@host:3306/db`              |
+| SQL Server | `sqlserver`, `mssql`     | `sqlserver://user:pass@host:1433?database=db` |
+
+If `DATABASE_URL` is not set, a SQLite database is created at `servergram.db` in the user config directory (for example `~/.config/servergram.db`).
+
+## `SERVER_PORT` and `ALLOWED_ORIGINS`
+
+<Warning>
+  If `SERVER_PORT` is not set, the server defaults to port `9788` and allows requests from **all origins** (`*`). This is dangerous on any network you do not fully trust.
+</Warning>
+
+When `SERVER_PORT` is set, you must also set `ALLOWED_ORIGINS` to the origin(s) of the client. Otherwise the server fails startup validation, and without a matching origin browsers block the client's requests (CORS).
+
+```bash
+export ALLOWED_ORIGINS="http://localhost:5173,https://servergram.example.com"
+```
+
+## `PASSWORD`
+
+<Warning>
+  If `PASSWORD` is not set, authentication is disabled and anyone who can reach the server has full access.
+</Warning>
+
+When set, the password must meet all of these requirements, otherwise the server refuses to start:
+
+- 16 to 128 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one symbol or punctuation character
+- Printable characters only, no spaces

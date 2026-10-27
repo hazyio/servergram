@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/db"
@@ -22,10 +21,6 @@ type AuthenticatedRouteData struct {
 	Database       *gorm.DB
 	Service        db.Service
 }
-type LoginTokenInformation struct {
-	Expires time.Time
-}
-type LoginToken map[string]LoginTokenInformation
 
 // AuthenticatedRouteHandler handles a request on behalf of an authenticated user.
 type AuthenticatedRouteHandler func(AuthenticatedRouteData)
@@ -36,32 +31,67 @@ type Middleware func(http.Handler) http.Handler
 // Server registers routes on a ServeMux and exposes the database queries to them.
 type Server struct {
 	database *gorm.DB
-	server   huma.API
+	group    *huma.Group
 }
 
-// NewServer wraps mux with a Server whose queries use pool.
-func NewServer(server huma.API, database *gorm.DB) *Server {
+// NewGroup wraps mux with a Server whose queries use pool.
+func NewGroup(prefix string, api *huma.Group, database *gorm.DB) *Server {
+	group := huma.NewGroup(api, prefix)
+
 	return &Server{
 		database: database,
-		server:   server,
+		group:    group,
 	}
 
 }
 
 // Get registers an unauthenticated GET handler wrapped with recovery and logging.
 // Methods cannot have type parameters, so this is a package-level function.
-func Get[I, O any](s *Server, pattern string, next func(NormalRouteData[I]) (*O, error)) {
-	huma.Get(s.server, pattern, func(
+func (s *Server) Get[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Get(s.group, pattern, func(
 		ctx context.Context,
 		input *I,
 	) (*JsonResponse[O], error) {
 		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
-			return nil, err
+			return nil, ToHumaError(err)
 		}
+		if resp == nil {
+			return nil, huma.Error500InternalServerError("internal error")
+		}
+
 		return NewResponse(*resp), nil
 	})
 
+}
+
+// Post registers an unauthenticated POST handler wrapped with recovery and logging.
+// Methods cannot have type parameters, so this is a package-level function.
+func (s *Server) Post[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Post(s.group, pattern, func(
+		ctx context.Context,
+		input *I,
+	) (*JsonResponse[O], error) {
+		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		if err != nil {
+			return nil, ToHumaError(err)
+		}
+		if resp == nil {
+			return nil, huma.Error500InternalServerError("internal error")
+		}
+
+		return NewResponse(*resp), nil
+	})
+
+}
+func (s *Server) PostRaw[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Post(s.group, pattern, func(ctx context.Context, input *I) (*O, error) {
+		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		if err != nil {
+			return nil, ToHumaError(err)
+		}
+		return resp, nil
+	})
 }
 func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
@@ -73,8 +103,7 @@ func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context,
 
 			return
 		}
-		info, ok := (*loginTokens)[c.Value]
-		if !ok || info.Expires.Before(time.Now()) {
+		if !loginTokens.Valid(c.Value) {
 			redirect(ctx, "/account/login")
 			return
 		}

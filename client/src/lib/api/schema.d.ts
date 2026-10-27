@@ -4,15 +4,32 @@
  */
 
 export interface paths {
-    "/api/service/health": {
+    "/api/account/login": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get API service health */
-        get: operations["get-api-service-health"];
+        get?: never;
+        put?: never;
+        /** Post API account login */
+        post: operations["post-api-account-login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get API files health */
+        get: operations["get-api-files-health"];
         put?: never;
         post?: never;
         delete?: never;
@@ -78,7 +95,36 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    "get-api-service-health": {
+    "post-api-account-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    Location?: string;
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-api-files-health": {
         parameters: {
             query?: never;
             header?: never;

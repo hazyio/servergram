@@ -29,7 +29,7 @@ var distFS embed.FS
 
 func NewRouter(database *gorm.DB) http.Handler {
 	env := internal.LoadEnv()
-	loginTokens := make(internal.LoginToken)
+	loginTokens := internal.NewLoginToken()
 
 	mux := http.NewServeMux()
 	slog.Info("Logger initialized")
@@ -37,8 +37,10 @@ func NewRouter(database *gorm.DB) http.Handler {
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
 
 	api := humago.New(mux, config)
+	apiUmbrella := huma.NewGroup(api, "/api")
+	routes.RegisterFilesRoutes(apiUmbrella, database)
+	routes.RegisterAccountRoutes(apiUmbrella, database, loginTokens)
 
-	server := internal.NewServer(api, database)
 	if env.Password != "" {
 		// add middleware only if password is set
 		api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
@@ -46,11 +48,10 @@ func NewRouter(database *gorm.DB) http.Handler {
 				next(ctx)
 				return
 			}
-			internal.SessionMiddleware(&loginTokens, api)(ctx, next)
+			internal.SessionMiddleware(loginTokens, api)(ctx, next)
 		})
 	}
 
-	routes.RegisterFilesRoutes(server)
 	mux.HandleFunc("/", handleRoot)
 
 	return internal.CORS(env.AllowedOrigins)(mux)
@@ -58,8 +59,9 @@ func NewRouter(database *gorm.DB) http.Handler {
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here
 	skipRoutes := []string{
-		"/",        // root route
-		"/login/*", // login route and its subroutes
+		"/",              // root route
+		"/account/login", // login route
+		"/_app/*",        // frontend route and its subroutes
 	}
 	for _, route := range skipRoutes {
 		if strings.HasSuffix(route, "/*") {

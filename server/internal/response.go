@@ -53,6 +53,8 @@ func ToHumaError(err error) error {
 		return huma.Error409Conflict("conflict")
 	case errors.Is(err, InternalServerError):
 		return huma.Error500InternalServerError("internal server error")
+	case errors.Is(err, BadRequest):
+		return huma.Error400BadRequest("bad request")
 	}
 
 	// Unknown: log the real error, return a generic one.

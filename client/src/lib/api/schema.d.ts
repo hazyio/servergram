@@ -28,10 +28,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get API files health */
-        get: operations["get-api-files-health"];
+        /** Get health */
+        get: operations["get-health"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ssh/add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post add */
+        post: operations["post-add"];
         delete?: never;
         options?: never;
         head?: never;
@@ -42,6 +59,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AddSSHKeyRequestBody: {
+            /** @description The private SSH key (may be passphrase-encrypted) */
+            key: string;
+            /** @description The name of the SSH key */
+            name: string;
+        };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
             location?: string;
@@ -87,9 +110,6 @@ export interface components {
             /** @description The password for login */
             password: string;
         };
-        MessageResponse: {
-            message: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -102,7 +122,9 @@ export interface operations {
     "post-login": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "User-Agent": string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -112,14 +134,22 @@ export interface operations {
             };
         };
         responses: {
-            /** @description See Other */
-            303: {
+            /** @description Created */
+            201: {
                 headers: {
-                    Location?: string;
                     "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
             };
             /** @description Error */
             default: {
@@ -132,7 +162,7 @@ export interface operations {
             };
         };
     };
-    "get-api-files-health": {
+    "get-health": {
         parameters: {
             query?: never;
             header?: never;
@@ -144,10 +174,58 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    Message?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageResponse"];
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddSSHKeyRequestBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
                 };
             };
             /** @description Error */

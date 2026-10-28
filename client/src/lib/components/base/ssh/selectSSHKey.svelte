@@ -4,6 +4,7 @@
   import * as Command from "#lib/components/ui/command/index.js";
   import * as Popover from "#lib/components/ui/popover/index.js";
   import { Button } from "#lib/components/ui/button/index.js";
+  import CreateSHHKey from "./createSHHKey.svelte";
 
   const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"];
 
@@ -44,7 +45,7 @@
     <Command.Root>
       <div class="w-full flex gap-2 justify-center items-center">
         <Command.Input placeholder="Search SSH key..." class="p-0 grow" />
-        <Button>New</Button>
+        <CreateSHHKey text="New" />
       </div>
       <Command.List>
         <Command.Empty>No items found.</Command.Empty>

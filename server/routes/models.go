@@ -1,8 +1,16 @@
 package routes
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
 
-type LoginRequestBody struct {
+	"strings"
+
+	"github.com/danielgtaylor/huma/v2"
+	"golang.org/x/crypto/ssh"
+)
+
+type LoginRequest struct {
 	Body struct {
 		Password string `json:"password" required:"true" doc:"The password for login" minLength:"16" maxLength:"128"`
 	}
@@ -15,4 +23,59 @@ type LoginSuccessfulRedirectResponse struct {
 }
 type MessageResponse struct {
 	Message string `json:"message"`
+}
+
+type AddSSHKeyRequest struct {
+	Body struct {
+		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the SSH key"`
+		Key  string `json:"key" required:"true" maxLength:"16384" doc:"The private SSH key (may be passphrase-encrypted)"`
+	}
+}
+
+func (r *AddSSHKeyRequest) Resolve() error {
+	// normalize (mutates the request, so the handler sees the cleaned value)
+	key := strings.ReplaceAll(strings.TrimSpace(r.Body.Key), "\r\n", "\n") + "\n"
+	r.Body.Key = key
+	r.Body.Name = strings.TrimSpace(r.Body.Name)
+
+	fail := func(msg string) error {
+		return &huma.ErrorDetail{
+			Location: "body.key",
+			Message:  msg,
+		}
+	}
+
+	if r.Body.Name == "" {
+		return &huma.ErrorDetail{Location: "body.name", Message: "name is required"}
+	}
+	// reject public keys with a helpful message
+	if _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key)); err == nil {
+		return fail("that looks like a public key, paste the private key")
+	}
+
+	_, err := ssh.ParsePrivateKey([]byte(key))
+	if err == nil {
+		return nil // valid, unencrypted
+	}
+
+	return fail("not a valid private key")
+}
+
+// Ensure you call [Resolve()] before calling [KeyEncrypted()] to normalize and validate the key.
+func (r *AddSSHKeyRequest) KeyEncrypted() bool {
+	_, err := ssh.ParsePrivateKey([]byte(r.Body.Key))
+	if err == nil {
+		return false
+	}
+
+	var missing *ssh.PassphraseMissingError
+	if errors.As(err, &missing) {
+		return true // valid structure, needs a passphrase
+	}
+
+	return false // not a valid private key at all meaning it's invalid
+
+}
+
+type SSHKeyAddedResponse struct {
 }

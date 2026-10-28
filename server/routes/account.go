@@ -16,11 +16,11 @@ import (
 
 func RegisterAccountRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/account", api, database)
-	server.PostRaw("/login", http.StatusCreated, login)
+	server.Post("/login", http.StatusCreated, login)
 
 }
 
-func login(data internal.NormalRouteData[LoginRequestBody]) (*LoginSuccessfulRedirectResponse, error) {
+func login(data internal.NormalRouteData[LoginRequest]) (*LoginSuccessfulRedirectResponse, error) {
 	input := data.Input
 	password := input.Body.Password
 	env := internal.LoadEnv()
@@ -34,7 +34,7 @@ func login(data internal.NormalRouteData[LoginRequestBody]) (*LoginSuccessfulRed
 		return nil, internal.NewHumaError(http.StatusUnauthorized, "Password incorrect")
 	}
 	randomToken, err := internal.GenerateRandomString(32)
-	if err != nil {	
+	if err != nil {
 		slog.Error("error generating random token", "err", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error generating random token")
 	}

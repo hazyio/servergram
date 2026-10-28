@@ -10,18 +10,24 @@
   let {
     children,
     sideBarItems,
-  }: { children?: Snippet; sideBarItems: SideBarItem[] } = $props();
+    unTetheredBreadcrumbs,
+  }: {
+    children?: Snippet;
+    sideBarItems: SideBarItem[];
+    unTetheredBreadcrumbs: SideBarItem[][];
+  } = $props();
+  let combinedBreadcrumbs = $derived([
+    ...unTetheredBreadcrumbs.flat(),
+    ...sideBarItems.flatMap((group) => group.items ?? []),
+  ]);
   let activeItem = $derived(
-    sideBarItems
-      .flatMap((group) => group.items ?? [])
-      .find(
-        (item) =>
-          new URL(item.url, page.url.origin).pathname === page.url.pathname,
-      ),
+    combinedBreadcrumbs.find(
+      (item) =>
+        new URL(item.url, page.url.origin).pathname === page.url.pathname,
+    ),
   );
   let breadcrumbItems = $derived(
-    activeItem?.breadcrumb ??
-      (activeItem ? [{ title: activeItem.title, url: activeItem.url }] : []),
+    activeItem?.url ? [{ title: activeItem.title, url: activeItem.url }] : [],
   );
 </script>
 

@@ -2,6 +2,8 @@
   import { NewRequestClient } from "#lib/api/request.ts";
   import type { components } from "#lib/api/schema.js";
   import appPaths from "#lib/appPaths.ts";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
   import Error from "#lib/components/base/error.svelte";
   import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
@@ -15,6 +17,22 @@
   let groups: components["schemas"]["GroupListResponseBody"] | undefined =
     $state();
   let loadError = $state(false);
+  let search = $state(page.url.searchParams.get("search") ?? "");
+  let filteredGroups = $derived(
+    groups?.items?.filter((group) =>
+      group.name.toLowerCase().includes(search.trim().toLowerCase()),
+    ) ?? [],
+  );
+  function updateSearch(event: Event) {
+    const value = (event.currentTarget as HTMLInputElement).value;
+    const url = new URL(page.url.href);
+    if (value) {
+      url.searchParams.set("search", value);
+    } else {
+      url.searchParams.delete("search");
+    }
+    goto(url, { state: page.state, shallow: true, replace: true });
+  }
   async function loadGroups() {
     loading = true;
     const { data, error } = await NewRequestClient().GET("/api/group/list");
@@ -31,7 +49,11 @@
 
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
-    <Input placeholder="Search groups..." />
+    <Input
+      placeholder="Search groups..."
+      bind:value={search}
+      oninput={updateSearch}
+    />
     <Button variant="secondary" onclick={loadGroups}><RefreshCw /></Button>
     <CreateGroup text="Create Group" onCreated={loadGroups} />
   </div>
@@ -43,9 +65,9 @@
       onRetry={loadGroups}
     />
   {:else if groups && !loading}
-    {#if groups.items?.length}
-      <ul class="mt-3">
-        {#each groups.items as group (group.id)}
+    {#if groups.items?.length && filteredGroups.length}
+      <ul class="mt-3 grid md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {#each filteredGroups as group (group.id)}
           <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
             <div class="flex gap-2 flex-col grow">
               <span class="font-bold">{group.name}</span>
@@ -68,6 +90,11 @@
           </li>
         {/each}
       </ul>
+    {:else if groups.items?.length}
+      <NoItemsFound
+        title="No matching groups"
+        message="Try a different name."
+      />
     {:else}
       <NoItemsFound
         title="No groups yet"

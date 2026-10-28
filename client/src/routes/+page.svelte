@@ -2,6 +2,7 @@
   import { NewRequestClient } from "#lib/api/request.ts";
   import CreateServer from "#lib/components/base/servers/createServer.svelte";
   import Sort, { type SortDirection } from "#lib/components/base/sort.svelte";
+  import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   let sortDirection: SortDirection = $state("asc");
   let sortValue: "Name" | "Date" | "Size" = $state("Name");

@@ -5,6 +5,8 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
   import { Textarea } from "#lib/components/ui/textarea/index.ts";
+  import { buttonVariants } from "#lib/components/ui/button/index.js";
+
   let loading = $state(false);
   let sshKey = $state("");
   let loadError = $state("");
@@ -34,9 +36,9 @@
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger class="h-0"
-    ><Button variant="outline" onclick={loadKey}>View Key</Button
-    ></Dialog.Trigger
+  <Dialog.Trigger
+    class={buttonVariants({ variant: "outline" })}
+    onclick={loadKey}>View Key</Dialog.Trigger
   >
   <Dialog.Content>
     <Dialog.Header>
@@ -49,7 +51,7 @@
     {#if !loading && sshKey}
       <Textarea
         id="key"
-        class="min-h-70 max-h-[50vh] w-full resize-none field-sizing-fixed overflow-y-auto"
+        class="min-h-70 max-h-[70vh] w-full resize-none field-sizing-fixed overflow-y-auto"
         bind:value={sshKey}
         readonly
       />

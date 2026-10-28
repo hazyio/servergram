@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { replaceState } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { NewRequestClient } from "#lib/api/request.ts";
   import type { components } from "#lib/api/schema.js";
@@ -32,7 +32,7 @@
     } else {
       url.searchParams.delete("search");
     }
-    replaceState(url, page.state);
+    goto(url, { state: page.state, shallow: true, replace: true });
   }
   async function loadSSHKeys() {
     loading = true;
@@ -67,7 +67,7 @@
     />
   {:else if sshKeys && !loading}
     {#if sshKeys.items?.length && filteredSSHKeys.length}
-      <ul class="mt-3">
+      <ul class="mt-3 grid md:grid-cols-2 lg:grid-cols-3 gap-2">
         {#each filteredSSHKeys as key (key.id)}
           <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
             <div class="flex gap-2 flex-col grow">
@@ -82,7 +82,7 @@
                 >Created at: {new Date(key.created_at).toLocaleString()}</small
               >
             </div>
-            <div class="flex justify-center gap-2">
+            <div class="flex justify-center gap-2 max-md:flex-col">
               <ViewKeyInfo id={key.id} />
               <DeleteSSHKey
                 id={key.id}

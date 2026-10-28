@@ -2,8 +2,6 @@
   import * as DropdownMenu from "#lib/components/ui/dropdown-menu/index.js";
   import Check from "@lucide/svelte/icons/check";
   import SlidersHorizontal from "@lucide/svelte/icons/sliders-horizontal";
-  import ListSortAscending from "@lucide/svelte/icons/list-sort-ascending";
-  import ListSortDescending from "@lucide/svelte/icons/list-sort-descending";
   import Button from "../ui/button/button.svelte";
   export type SortDirection = "asc" | "desc";
   interface SortOption<T> {
@@ -15,7 +13,6 @@
   let { value, items, direction, onSelect }: SortOption<any> = $props();
 </script>
 
-<div>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger>
       <Button variant="outline"><SlidersHorizontal /> {value}</Button>
@@ -56,4 +53,4 @@
       </DropdownMenu.Group>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
-</div>
+    

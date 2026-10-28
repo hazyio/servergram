@@ -34,6 +34,7 @@
 <AlertDialog.Root bind:open>
   <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
     Delete
+    <div>sjs</div>
   </AlertDialog.Trigger>
   <AlertDialog.Content>
     {#if deleting}

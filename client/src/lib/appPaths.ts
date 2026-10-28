@@ -11,6 +11,15 @@ const appPaths = {
   account: {
     login: "/account/login",
   },
+  servers: {
+    index: "/servers",
+    add: "/servers/add",
+    
+  },
+  databases: {
+    index: "/servers",
+    add: "/databases/add",
+  },
 };
 
 export default appPaths;

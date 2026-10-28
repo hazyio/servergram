@@ -8,6 +8,19 @@
   import { page } from "$app/state";
 
   let { children }: LayoutProps = $props();
+  const homeBreadcrumbs = [
+    {
+      title: "Home",
+      url: appPaths.home,
+    },
+  ];
+  const serverBreadcrumbs = [
+    ...homeBreadcrumbs,
+    {
+      title: "Servers",
+      url: appPaths.servers.index,
+    },
+  ];
 </script>
 
 <svelte:head>
@@ -19,9 +32,18 @@
   {@render children()}
 {:else}
   <SideBarContainer
+    unTetheredBreadcrumbs={[
+      [
+        ...serverBreadcrumbs,
+        {
+          title: "Add New Server",
+          url: appPaths.servers.add,
+        },
+      ],
+    ]}
     sideBarItems={[
       {
-        title: "Getting Started",
+        title: "Main",
         url: "#",
         items: [
           {
@@ -29,6 +51,27 @@
             url: appPaths.home,
             breadcrumb: [{ title: "Home", url: appPaths.home }],
           },
+          {
+            title: "Services",
+            url: appPaths.home,
+            breadcrumb: [{ title: "Home", url: appPaths.home }],
+          },
+          {
+            title: "Databases",
+            url: appPaths.home,
+            breadcrumb: [{ title: "Home", url: appPaths.home }],
+          },
+          {
+            title: "Cron Jobs",
+            url: appPaths.home,
+            breadcrumb: [{ title: "Home", url: appPaths.home }],
+          },
+        ],
+      },
+      {
+        title: "Subs",
+        url: "#",
+        items: [
           {
             title: "Groups",
             url: appPaths.groups.index,

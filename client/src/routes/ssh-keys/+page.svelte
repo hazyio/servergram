@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { NewRequestClient } from "#lib/api/request.ts";
   import type { components } from "#lib/api/schema.js";
   import Error from "#lib/components/base/error.svelte";
@@ -15,7 +17,23 @@
   let loading = $state(true);
   let sshKeys: components["schemas"]["SSHKeyListResponseBody"] | undefined =
     $state();
+  let search = $state(page.url.searchParams.get("search") ?? "");
+  let filteredSSHKeys = $derived(
+    sshKeys?.items?.filter((key) =>
+      key.name.toLowerCase().includes(search.trim().toLowerCase()),
+    ) ?? [],
+  );
   let loadError = $state(false);
+  function updateSearch(event: Event) {
+    const value = (event.currentTarget as HTMLInputElement).value;
+    const url = new URL(page.url.href);
+    if (value) {
+      url.searchParams.set("search", value);
+    } else {
+      url.searchParams.delete("search");
+    }
+    replaceState(url, page.state);
+  }
   async function loadSSHKeys() {
     loading = true;
     const { data, error } = await NewRequestClient().GET("/api/ssh/list");
@@ -32,7 +50,11 @@
 
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
-    <Input placeholder="Search SSH keys..." />
+    <Input
+      placeholder="Search SSH keys by name..."
+      bind:value={search}
+      oninput={updateSearch}
+    />
     <Button variant="secondary" onclick={loadSSHKeys}><RefreshCw /></Button>
     <CreateSSHKey text="Add SSH Key" onCreated={loadSSHKeys} />
   </div>
@@ -44,9 +66,9 @@
       onRetry={loadSSHKeys}
     />
   {:else if sshKeys && !loading}
-    {#if sshKeys.items?.length}
+    {#if sshKeys.items?.length && filteredSSHKeys.length}
       <ul class="mt-3">
-        {#each sshKeys.items as key (key.id)}
+        {#each filteredSSHKeys as key (key.id)}
           <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
             <div class="flex gap-2 flex-col grow">
               <span class="font-bold">{key.name}</span>
@@ -71,6 +93,11 @@
           </li>
         {/each}
       </ul>
+    {:else if sshKeys.items?.length}
+      <NoItemsFound
+        title="No matching SSH keys"
+        message="Try a different name."
+      />
     {:else}
       <NoItemsFound
         title="No SSH keys yet"

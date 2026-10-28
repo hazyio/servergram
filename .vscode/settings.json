@@ -9,5 +9,6 @@
         "Dialector",
         "huma",
         "servergram"
-    ]
+    ],
+    "js/ts.experimental.useTsgo": false
 }

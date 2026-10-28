@@ -34,7 +34,7 @@ func login(data internal.NormalRouteData[LoginRequestBody]) (*LoginSuccessfulRed
 		return nil, internal.NewHumaError(http.StatusUnauthorized, "Password incorrect")
 	}
 	randomToken, err := internal.GenerateRandomString(32)
-	if err != nil {
+	if err != nil {	
 		slog.Error("error generating random token", "err", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error generating random token")
 	}

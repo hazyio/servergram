@@ -18,6 +18,7 @@ type Env struct {
 	ServerPort     string   `validate:"required"`
 	AllowedOrigins []string `validate:"required,dive,required"`
 	Password       string   `validate:"omitempty,strong_password"`
+	ShhMasterKey   string   `validate:"required,strong_password"`
 }
 
 var validate = func() *validator.Validate {
@@ -73,6 +74,7 @@ func LoadEnv() Env {
 		ServerPort:     os.Getenv("SERVER_PORT"),
 		AllowedOrigins: strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
 		Password:       os.Getenv("PASSWORD"),
+		ShhMasterKey:   os.Getenv("SHH_MASTER_KEY"),
 	}
 	for i, origin := range env.AllowedOrigins {
 		env.AllowedOrigins[i] = strings.TrimSpace(origin)
@@ -93,9 +95,11 @@ func LoadEnv() Env {
 	if strings.TrimSpace(env.ServerPort) == "" {
 		log.Println("SERVER_PORT is not set, defaulting to 9788 this is dangerous as it allowed requests from all origins")
 		env.ServerPort = "9788"
-		env.AllowedOrigins = []string{"*"}
+		env.AllowedOrigins = []string{"*"} 
 	}
-
+	if env.Password == env.ShhMasterKey {
+		log.Fatalf("PASSWORD and SHH_MASTER_KEY should not be the same")
+	}
 	if err := validate.Struct(env); err != nil {
 		log.Fatalf("environment validation failed: %v", err)
 	}

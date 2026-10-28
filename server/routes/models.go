@@ -16,7 +16,7 @@ type LoginRequest struct {
 	Body struct {
 		Password string `json:"password" required:"true" doc:"The password for login" minLength:"16" maxLength:"128"`
 	}
-	UserAgent string `header:"User-Agent" required:"true"`
+	UserAgent string `header:"User-Agent" required:"true" hidden:"true"`
 }
 
 type LoginSuccessfulRedirectResponse struct {

@@ -19,14 +19,9 @@
     event.preventDefault();
     formError = "";
     submitting = true;
-    const { data, error } = await NewRequestClient().POST(
-      "/api/account/login",
-      {
-        body: {
-          password,
-        },
-      },
-    );
+    const { error } = await NewRequestClient().POST("/api/account/login", {
+      body: { password },
+    });
     submitting = false;
     if (error) {
       formError = error.detail ?? "An unknown error occurred";

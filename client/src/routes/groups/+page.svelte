@@ -4,6 +4,7 @@
   import Error from "#lib/components/base/error.svelte";
   import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
+  import NoItemsFound from "#lib/components/base/noItemsFound.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
@@ -20,6 +21,7 @@
       loadError = true;
       return;
     }
+    loadError = false;
     groups = data;
   }
   onMount(loadGroups);
@@ -38,12 +40,18 @@
       message="An error occurred while fetching the group list."
       onRetry={loadGroups}
     />
-  {/if}
-  {#if groups !== null && !loading}
-    <ul>
-      {#each groups as group (group.id)}
-        <li>{group.name}</li>
-      {/each}
-    </ul>
+  {:else if groups && !loading}
+    {#if groups.items?.length}
+      <ul>
+        {#each groups.items as group (group.id)}
+          <li>{group.name}</li>
+        {/each}
+      </ul>
+    {:else}
+      <NoItemsFound
+        title="No groups yet"
+        message="Create a group to keep related servers together."
+      />
+    {/if}
   {/if}
 </div>

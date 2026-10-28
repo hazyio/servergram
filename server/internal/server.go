@@ -48,7 +48,6 @@ func NewGroup(prefix string, api *huma.Group, database *gorm.DB) *Server {
 
 }
 
-
 func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   huma.GenerateOperationID(http.MethodGet, pattern, new(O)),
@@ -65,25 +64,21 @@ func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRoute
 	})
 }
 
-// Post registers an unauthenticated POST handler wrapped with recovery and logging.
-// Methods cannot have type parameters, so this is a package-level function.
-// func (s *Server) Post[I, O any](pattern string, next func(NormalRouteData[I]) (*O, error)) {
-// 	huma.Post(s.group, pattern, func(
-// 		ctx context.Context,
-// 		input *I,
-// 	) (*JsonResponse[O], error) {
-// 		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
-// 		if err != nil {
-// 			return nil, ToHumaError(err)
-// 		}
-// 		if resp == nil {
-// 			return nil, huma.Error500InternalServerError("internal error")
-// 		}
-
-// 		return NewResponse(*resp), nil
-// 	})
-
-// }
+func (s *Server) Delete[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Register(s.group, huma.Operation{
+		OperationID:   huma.GenerateOperationID(http.MethodDelete, pattern, new(O)),
+		Summary:       huma.GenerateSummary(http.MethodDelete, pattern, new(O)),
+		Method:        http.MethodDelete,
+		Path:          pattern,
+		DefaultStatus: status,
+	}, func(ctx context.Context, input *I) (*O, error) {
+		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		if err != nil {
+			return nil, ToHumaError(err)
+		}
+		return resp, nil
+	})
+}
 func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   huma.GenerateOperationID(http.MethodPost, pattern, new(O)),

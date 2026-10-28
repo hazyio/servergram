@@ -244,9 +244,7 @@ export interface operations {
     "post-login": {
         parameters: {
             query?: never;
-            header: {
-                "User-Agent": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };

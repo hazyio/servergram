@@ -293,16 +293,6 @@
     "/api/account/login": {
       "post": {
         "operationId": "post-login",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "User-Agent",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {

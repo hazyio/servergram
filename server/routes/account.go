@@ -17,6 +17,7 @@ import (
 func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/account", api, database)
 	server.Post("/login", http.StatusCreated, login)
+	// server.Delete("/logout", http.StatusOK, logout)
 
 }
 

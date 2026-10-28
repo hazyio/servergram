@@ -1,10 +1,16 @@
 const appPaths = {
   home: "/",
-  sshKeys: "/ssh-keys",
-  groups: "/groups",
-  account:{
-    login: "/account/login"
-  }
+  sshKeys: {
+    index: "/ssh-keys",
+    resources: (id: number) => `/ssh-keys/${id}/resources`,
+  },
+  groups: {
+    index: "/groups",
+    resources: (id: number) => `/groups/${id}/resources`,
+  },
+  account: {
+    login: "/account/login",
+  },
 };
 
 export default appPaths;

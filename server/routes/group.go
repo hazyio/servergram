@@ -3,6 +3,7 @@ package routes
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/group", api, database)
 	server.Post("/create", http.StatusCreated, createNewGroup)
 	server.Get("/list", http.StatusOK, listGroups)
+	server.Delete("/delete/{id}", http.StatusOK, deleteGroup)
 
 }
 
@@ -50,18 +52,48 @@ func listGroups(data internal.NormalRouteData[EmptyRR]) (*GroupListResponse, err
 	}
 	response := &GroupListResponse{}
 	response.Body.Items = make([]struct {
-		Id                uint   `json:"id"`
-		Name              string `json:"name"`
-		CreatedAt         string `json:"created_at"`
-		ResourcesAttached uint   `json:"resources_attached"`
+		Id                uint      `json:"id"`
+		Name              string    `json:"name"`
+		CreatedAt         time.Time `json:"created_at"`
+		ResourcesAttached uint      `json:"resources_attached"`
 	}, len(groups))
-	for i, group := range groups {
-		response.Body.Items[i].Id = group.ID
-		response.Body.Items[i].Name = group.Name
-		response.Body.Items[i].CreatedAt = group.CreatedAt.String()
-		response.Body.Items[i].ResourcesAttached = 0
-	}
+
+	database.Model(&db.Group{}).
+		Select("groups.id, groups.name, groups.created_at, COUNT(servers.id) AS resources_attached").
+		Joins("LEFT JOIN servers ON servers.group_id = groups.id").
+		Group("groups.id").
+		Scan(&response.Body.Items)
+
 	response.Body.Total = len(groups)
 
 	return response, nil
+}
+
+func deleteGroup(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error) {
+	database := data.Database
+	id := data.Input.ID
+
+	var group db.Group
+	if err := database.First(&group, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, internal.NewHumaError(http.StatusNotFound, "Group not found")
+		}
+		slog.Error("An error occurred while fetching group", "error", err)
+		return nil, internal.InternalServerError
+	}
+	// Check if there are any servers attached to the group
+	var count int64
+	if err := database.Model(&db.Server{}).Where("group_id = ?", id).Count(&count).Error; err != nil {
+		slog.Error("An error occurred while checking attached servers", "error", err)
+		return nil, internal.InternalServerError
+	}
+	if count > 0 {
+		return nil, internal.NewHumaError(http.StatusConflict, "Cannot delete group with attached servers")
+	}
+	if err := database.Delete(&group).Error; err != nil {
+		slog.Error("An error occurred while deleting group", "error", err)
+		return nil, internal.InternalServerError
+	}
+
+	return &EmptyRR{}, nil
 }

@@ -3,6 +3,7 @@ package routes
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"strings"
 
@@ -64,12 +65,32 @@ type GroupSearchData struct {
 type GroupListResponse struct {
 	Body struct {
 		Items []struct {
-			Id                uint   `json:"id"`
-			Name              string `json:"name"`
-			CreatedAt         string `json:"created_at"`
-			ResourcesAttached uint   `json:"resources_attached"`
+			Id                uint      `json:"id"`
+			Name              string    `json:"name"`
+			CreatedAt         time.Time `json:"created_at"`
+			ResourcesAttached uint      `json:"resources_attached"`
 		} `json:"items" required:"true" doc:"The list of groups"`
 		Total int `json:"total" required:"true" doc:"The total number of groups"`
+	}
+}
+type SSHKeyListResponse struct {
+	Body struct {
+		Items []struct {
+			Id                uint      `json:"id"`
+			Name              string    `json:"name"`
+			CreatedAt         time.Time `json:"created_at"`
+			Encrypted         bool      `json:"encrypted"`
+			ResourcesAttached uint      `json:"resources_attached"`
+		} `json:"items" required:"true" doc:"The list of SSH keys"`
+		Total int `json:"total" required:"true" doc:"The total number of SSH keys"`
+	}
+}
+type PathIdRequest struct {
+	ID uint `path:"id" minimum:"1" doc:"The ID of the current resource"`
+}
+type ViewSSHKeyResponse struct {
+	Body struct {
+		Private string `json:"private"`
 	}
 }
 

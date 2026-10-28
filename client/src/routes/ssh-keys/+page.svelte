@@ -1,0 +1,81 @@
+<script lang="ts">
+  import { NewRequestClient } from "#lib/api/request.ts";
+  import type { components } from "#lib/api/schema.js";
+  import Error from "#lib/components/base/error.svelte";
+  import CreateSSHKey from "#lib/components/base/ssh/createSHHKey.svelte";
+  import Loading from "#lib/components/base/loading.svelte";
+  import NoItemsFound from "#lib/components/base/noItemsFound.svelte";
+  import Button from "#lib/components/ui/button/button.svelte";
+  import Input from "#lib/components/ui/input/input.svelte";
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
+  import { onMount } from "svelte";
+  import appPaths from "#lib/appPaths.ts";
+  import ViewKeyInfo from "./viewKeyInfo.svelte";
+  import DeleteSSHKey from "./deleteSSHKey.svelte";
+  let loading = $state(true);
+  let sshKeys: components["schemas"]["SSHKeyListResponseBody"] | undefined =
+    $state();
+  let loadError = $state(false);
+  async function loadSSHKeys() {
+    loading = true;
+    const { data, error } = await NewRequestClient().GET("/api/ssh/list");
+    loading = false;
+    if (error) {
+      loadError = true;
+      return;
+    }
+    loadError = false;
+    sshKeys = data;
+  }
+  onMount(loadSSHKeys);
+</script>
+
+<div class="p-2">
+  <div class="flex gap-2 justify-center items-center">
+    <Input placeholder="Search SSH keys..." />
+    <Button variant="secondary" onclick={loadSSHKeys}><RefreshCw /></Button>
+    <CreateSSHKey text="Add SSH Key" onCreated={loadSSHKeys} />
+  </div>
+  <Loading class="mt-20" {loading} text="Loading..." />
+  {#if (loadError || !sshKeys) && !loading}
+    <Error
+      title="Failed to load SSH keys"
+      message="An error occurred while fetching the SSH key list."
+      onRetry={loadSSHKeys}
+    />
+  {:else if sshKeys && !loading}
+    {#if sshKeys.items?.length}
+      <ul class="mt-3">
+        {#each sshKeys.items as key (key.id)}
+          <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
+            <div class="flex gap-2 flex-col grow">
+              <span class="font-bold">{key.name}</span>
+              <small>Encrypted: {key.encrypted ? "Yes" : "No"}</small>
+              <small
+                ><a href={appPaths.sshKeys.resources(key.id)}
+                  >Resource: {key.resources_attached}</a
+                ></small
+              >
+              <small
+                >Created at: {new Date(key.created_at).toLocaleString()}</small
+              >
+            </div>
+            <div class="flex justify-center gap-2">
+              <ViewKeyInfo id={key.id} />
+              <DeleteSSHKey
+                id={key.id}
+                name={key.name}
+                onDeleted={loadSSHKeys}
+              />
+            </div>
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <NoItemsFound
+        title="No SSH keys yet"
+        message="Add an SSH key to manage your servers."
+      />
+    {/if}
+  {/if}
+</div>

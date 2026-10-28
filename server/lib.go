@@ -129,7 +129,7 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := database.AutoMigrate(db.Service{}, db.Sessions{}, db.SSHKey{}, db.Group{}); err != nil {
+	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}); err != nil {
 		log.Fatal(err)
 	}
 

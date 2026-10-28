@@ -54,6 +54,7 @@ func login(data internal.NormalRouteData[LoginRequest]) (*LoginSuccessfulRedirec
 	if err := data.Database.Where("expires < ?", time.Now()).Delete(&db.Sessions{}).Error; err != nil {
 		slog.Error("error deleting expired sessions", "err", err)
 	}
+	
 
 	return &LoginSuccessfulRedirectResponse{
 		Status: http.StatusCreated,

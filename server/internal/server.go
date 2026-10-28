@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/db"
@@ -22,7 +23,7 @@ type NormalRouteData[I any] struct {
 type AuthenticatedRouteData struct {
 	ResponseWriter http.ResponseWriter
 	Database       *gorm.DB
-	Service        db.Service
+	Service        db.Server
 }
 
 // AuthenticatedRouteHandler handles a request on behalf of an authenticated user.
@@ -35,6 +36,7 @@ type Middleware func(http.Handler) http.Handler
 type Server struct {
 	database *gorm.DB
 	group    *huma.Group
+	prefix   string
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
@@ -44,13 +46,19 @@ func NewGroup(prefix string, api *huma.Group, database *gorm.DB) *Server {
 	return &Server{
 		database: database,
 		group:    group,
+		prefix:   prefix,
 	}
 
 }
 
+func opSlug(parts ...string) string {
+	s := strings.ToLower(strings.Join(parts, "-"))
+	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
+	return strings.Trim(s, "-")
+}
 func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Register(s.group, huma.Operation{
-		OperationID:   huma.GenerateOperationID(http.MethodGet, pattern, new(O)),
+		OperationID:   "get-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodGet, pattern, new(O)),
 		Method:        http.MethodGet,
 		Path:          pattern,
@@ -66,7 +74,7 @@ func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRoute
 
 func (s *Server) Delete[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Register(s.group, huma.Operation{
-		OperationID:   huma.GenerateOperationID(http.MethodDelete, pattern, new(O)),
+		OperationID:   "delete-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodDelete, pattern, new(O)),
 		Method:        http.MethodDelete,
 		Path:          pattern,
@@ -81,7 +89,7 @@ func (s *Server) Delete[I, O any](pattern string, status int, next func(NormalRo
 }
 func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
 	huma.Register(s.group, huma.Operation{
-		OperationID:   huma.GenerateOperationID(http.MethodPost, pattern, new(O)),
+		OperationID:   "post-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodPost, pattern, new(O)),
 		Method:        http.MethodPost,
 		Path:          pattern,

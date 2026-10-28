@@ -31,18 +31,18 @@
           },
           {
             title: "Groups",
-            url: appPaths.groups,
+            url: appPaths.groups.index,
             breadcrumb: [
               { title: "Home", url: appPaths.home },
-              { title: "Groups", url: appPaths.groups },
+              { title: "Groups", url: appPaths.groups.index },
             ],
           },
           {
             title: "SSH Keys",
-            url: appPaths.sshKeys,
+            url: appPaths.sshKeys.index,
             breadcrumb: [
               { title: "Home", url: appPaths.home },
-              { title: "SSH Keys", url: appPaths.sshKeys },
+              { title: "SSH Keys", url: appPaths.sshKeys.index },
             ],
           },
         ],

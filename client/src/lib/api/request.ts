@@ -22,3 +22,24 @@ export function NewRequestClient() {
   client.use(authMiddleware);
   return client;
 }
+
+export function unWrapErrorMessage(
+  error: {
+    detail?: string | undefined;
+    errors?:
+      | {
+          location?: string | undefined;
+          message?: string | undefined;
+          value?: unknown;
+        }[]
+      | null
+      | undefined;
+    instance?: string | undefined;
+    status?: number | undefined;
+    title?: string | undefined;
+    type: string;
+  },
+  or: string,
+) {
+  return error.detail ?? error.title ?? or;
+}

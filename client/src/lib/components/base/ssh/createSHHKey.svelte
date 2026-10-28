@@ -8,7 +8,10 @@
   import { NewRequestClient } from "#lib/api/request.ts";
   import { toast } from "svelte-sonner";
   import Loader from "@lucide/svelte/icons/loader";
-  let { text } = $props();
+  let { text, onCreated }:{
+    text: string;
+    onCreated: () => void;
+  } = $props();
   let open = $state(false);
   let creating = $state(false);
   let sshName = $state("");
@@ -65,13 +68,14 @@
     creating = false;
 
     if (error) {
-      toast.error(error.title ?? "An error occurred while adding the SSH key");
+      toast.error(error.detail ??error.title ?? "An error occurred while adding the SSH key");
       return;
     }
     toast.success("SSH key added successfully");
     sshName = "";
     sshKey = "";
     open = false;
+    onCreated();
   }
 </script>
 

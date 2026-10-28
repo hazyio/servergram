@@ -50,7 +50,11 @@
     creating = false;
 
     if (error) {
-      toast.error(error.title ?? "An error occurred while creating the group");
+      toast.error(
+        error.detail ??
+          error.title ??
+          "An error occurred while creating the group",
+      );
       return;
     }
     toast.success("Group created successfully");

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
   import type { components } from "#lib/api/schema.js";
+  import appPaths from "#lib/appPaths.ts";
   import Error from "#lib/components/base/error.svelte";
   import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
@@ -9,6 +10,7 @@
   import Input from "#lib/components/ui/input/input.svelte";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
+  import DeleteGroup from "./deleteGroup.svelte";
   let loading = $state(true);
   let groups: components["schemas"]["GroupListResponseBody"] | undefined =
     $state();
@@ -29,7 +31,7 @@
 
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
-    <Input />
+    <Input placeholder="Search groups..." />
     <Button variant="secondary" onclick={loadGroups}><RefreshCw /></Button>
     <CreateGroup text="Create Group" onCreated={loadGroups} />
   </div>
@@ -42,9 +44,28 @@
     />
   {:else if groups && !loading}
     {#if groups.items?.length}
-      <ul>
+      <ul class="mt-3">
         {#each groups.items as group (group.id)}
-          <li>{group.name}</li>
+          <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
+            <div class="flex gap-2 flex-col grow">
+              <span class="font-bold">{group.name}</span>
+              <small
+                ><a href={appPaths.groups.resources(group.id)}
+                  >Resource: {group.resources_attached}</a
+                ></small
+              >
+              <small
+                >Created at: {new Date(
+                  group.created_at,
+                ).toLocaleString()}</small
+              >
+            </div>
+            <DeleteGroup
+              id={group.id}
+              name={group.name}
+              onDeleted={loadGroups}
+            />
+          </li>
         {/each}
       </ul>
     {:else}

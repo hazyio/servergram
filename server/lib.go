@@ -74,9 +74,7 @@ func NewRouter(database *gorm.DB) http.Handler {
 			}
 		})
 	}
-	routes.RegisterFilesRoutes(apiUmbrella, database)
-	routes.RegisterAccountRoutes(apiUmbrella, database)
-	routes.RegisterSSHRoutes(apiUmbrella, database)
+	routes.RegisterRoutes(apiUmbrella, database)
 
 	mux.HandleFunc("/", handleRoot)
 	// Write the OpenAPI specification to a file for reference
@@ -131,7 +129,7 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := database.AutoMigrate(db.Service{}, db.Sessions{}, db.SSHKey{}); err != nil {
+	if err := database.AutoMigrate(db.Service{}, db.Sessions{}, db.SSHKey{}, db.Group{}); err != nil {
 		log.Fatal(err)
 	}
 

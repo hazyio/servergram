@@ -10,13 +10,13 @@ import (
 	"hazyio.com/servergram/internal"
 )
 
-func RegisterSSHRoutes(api *huma.Group, database *gorm.DB) {
+func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/ssh", api, database)
 	server.Post("/add", http.StatusCreated, addSSHKey)
 
 }
 
-func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*SSHKeyAddedResponse, error) {
+func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyResponse, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -48,5 +48,5 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*SSHKeyAddedRes
 		return nil, internal.InternalServerError
 	}
 
-	return &SSHKeyAddedResponse{}, nil
+	return &EmptyResponse{}, nil
 }

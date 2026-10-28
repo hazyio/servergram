@@ -14,7 +14,7 @@ import (
 	"hazyio.com/servergram/internal"
 )
 
-func RegisterAccountRoutes(api *huma.Group, database *gorm.DB) {
+func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/account", api, database)
 	server.Post("/login", http.StatusCreated, login)
 

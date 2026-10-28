@@ -1,5 +1,5 @@
-import createClient, { type Middleware } from "openapi-fetch";
 import { goto } from "$app/navigation";
+import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "./schema";
 
 const authMiddleware: Middleware = {

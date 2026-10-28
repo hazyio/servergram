@@ -8,8 +8,8 @@
   import SelectSSHKey from "../ssh/selectSSHKey.svelte";
 
   let serverName = $state("");
-  let group = $state("");
-  let sshKey = $state("");
+  let group = $state(0);
+  let sshKey = $state(0);
   let formError = $state({
     serverName: "",
     group: "",
@@ -22,7 +22,7 @@
       .max(100, "Server name is too long")
       .trim(),
     group: z.string().min(1, "Group is required"),
-    sshKey: z.string().min(1, "SSH key is required"),
+    sshKey: z.number().min(1, "SSH key is required"),
   });
 
   function handleSubmit(event: SubmitEvent) {

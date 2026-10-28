@@ -31,6 +31,34 @@ type AddSSHKeyRequest struct {
 		Key  string `json:"key" required:"true" maxLength:"16384" doc:"The private SSH key (may be passphrase-encrypted)"`
 	}
 }
+type CreateGroupRequest struct {
+	Body struct {
+		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the group"`
+	}
+}
+type EmptyResponse struct {
+}
+type SearchRequest struct {
+	Body struct {
+		Query string `json:"query" required:"true" doc:"The search query"`
+	}
+}
+type SearchResponse[T any] struct {
+	Body struct {
+		Items []T `json:"items" required:"true" doc:"The search results"`
+		Total int `json:"total" required:"true" doc:"The total number of search results"`
+	}
+}
+type SSHKeySearchData struct {
+	Id        uint   `json:"id"`
+	Name      string `json:"name"`
+	Encrypted bool   `json:"encrypted"`
+}
+
+type GroupSearchData struct {
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
 
 func (r *AddSSHKeyRequest) Resolve() error {
 	// normalize (mutates the request, so the handler sees the cleaned value)
@@ -75,7 +103,4 @@ func (r *AddSSHKeyRequest) KeyEncrypted() bool {
 
 	return false // not a valid private key at all meaning it's invalid
 
-}
-
-type SSHKeyAddedResponse struct {
 }

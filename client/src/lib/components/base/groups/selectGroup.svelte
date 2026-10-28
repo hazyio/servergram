@@ -1,14 +1,20 @@
 <script lang="ts">
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import * as Command from "#lib/components/ui/command/index.js";
   import * as Popover from "#lib/components/ui/popover/index.js";
   import { Button } from "#lib/components/ui/button/index.js";
+  import CreateGroup from "./createGroup.svelte";
+  import { NewRequestClient } from "#lib/api/request.ts";
+  import type { components } from "#lib/api/schema.js";
 
-  const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"];
-
+  let availableGroups: components["schemas"]["GroupSearchData"][] = $state([]);
+  let searchQuery = $state("");
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement>(null!);
+  let timeoutId = $state(0);
+  let seq = $state(0);
+  let selectedName = $state("");
 
   // We want to refocus the trigger button when the user selects
   // an item from the list so users can continue navigating the
@@ -22,7 +28,30 @@
   let {
     value,
     onSelect,
-  }: { value: string; onSelect: (value: string) => void } = $props();
+  }: { value: number; onSelect: (value: number) => void } = $props();
+  async function fetchGroups(query: string) {
+    const mySeq = ++seq;
+    const { data } = await NewRequestClient().POST("/api/search/group", {
+      body: { query },
+    });
+    if (mySeq !== seq) return; // a newer request started
+    if (data) {
+      if (data.items === null) {
+        availableGroups = [];
+      }
+      if (data?.items)
+        availableGroups.splice(0, availableGroups.length, ...data.items);
+    }
+  }
+  async function debounceFetchGroups(query: string) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(async () => {
+      await fetchGroups(query);
+    }, 300);
+  }
+  onMount(() => {
+    fetchGroups(searchQuery);
+  });
 </script>
 
 <Popover.Root bind:open>
@@ -35,30 +64,38 @@
         role="combobox"
         aria-expanded={open}
       >
-        {value || "Select a group"}
+        {selectedName ? selectedName : "Select a group"}
         <ChevronDownIcon class="text-muted-foreground" />
       </Button>
     {/snippet}
   </Popover.Trigger>
   <Popover.Content class="w-(--bits-popover-anchor-width) p-0">
-    <Command.Root>
+    <Command.Root shouldFilter={false}>
       <div class="w-full flex gap-2 justify-center items-center">
-        <Command.Input placeholder="Search group..." class="p-0 grow" />
-        <Button>New</Button>
+        <Command.Input
+          placeholder="Search group..."
+          class="p-0 grow"
+          bind:value={searchQuery}
+          oninput={() => {
+            debounceFetchGroups(searchQuery);
+          }}
+        />
+        <CreateGroup text="New" />
       </div>
       <Command.List>
         <Command.Empty>No items found.</Command.Empty>
         <Command.Group>
-          {#each frameworks as framework (framework)}
+          {#each availableGroups as group (group.id)}
             <Command.Item
-              value={framework}
-              data-checked={value === framework}
+              value={group.id.toString()}
+              data-checked={value === group.id}
               onSelect={() => {
-                onSelect(framework);
+                selectedName = group.name;
+                onSelect(group.id);
                 closeAndFocusTrigger();
               }}
             >
-              {framework}
+              {group.name}
             </Command.Item>
           {/each}
         </Command.Group>

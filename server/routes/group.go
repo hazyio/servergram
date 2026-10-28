@@ -13,10 +13,11 @@ import (
 func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/group", api, database)
 	server.Post("/create", http.StatusCreated, createNewGroup)
+	server.Get("/list", http.StatusOK, listGroups)
 
 }
 
-func createNewGroup(data internal.NormalRouteData[CreateGroupRequest]) (*EmptyResponse, error) {
+func createNewGroup(data internal.NormalRouteData[CreateGroupRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -37,5 +38,30 @@ func createNewGroup(data internal.NormalRouteData[CreateGroupRequest]) (*EmptyRe
 		return nil, internal.InternalServerError
 	}
 
-	return &EmptyResponse{}, nil
+	return &EmptyRR{}, nil
+}
+
+func listGroups(data internal.NormalRouteData[EmptyRR]) (*GroupListResponse, error) {
+	database := data.Database
+	var groups []db.Group
+	if err := database.Find(&groups).Error; err != nil {
+		slog.Error("An error occurred while fetching groups", "error", err)
+		return nil, internal.InternalServerError
+	}
+	response := &GroupListResponse{}
+	response.Body.Items = make([]struct {
+		Id                uint   `json:"id"`
+		Name              string `json:"name"`
+		CreatedAt         string `json:"created_at"`
+		ResourcesAttached uint   `json:"resources_attached"`
+	}, len(groups))
+	for i, group := range groups {
+		response.Body.Items[i].Id = group.ID
+		response.Body.Items[i].Name = group.Name
+		response.Body.Items[i].CreatedAt = group.CreatedAt.String()
+		response.Body.Items[i].ResourcesAttached = 0
+	}
+	response.Body.Total = len(groups)
+
+	return response, nil
 }

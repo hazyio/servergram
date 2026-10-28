@@ -7,7 +7,13 @@
   import * as z from "zod";
   import { Button } from "../../ui/button";
   import * as Field from "../../ui/field";
-  let { text } = $props();
+  let {
+    text,
+    onCreated,
+  }: {
+    text: string;
+    onCreated?: () => void;
+  } = $props();
   let open = $state(false);
   let creating = $state(false);
   let groupName = $state("");
@@ -50,6 +56,7 @@
     toast.success("Group created successfully");
     groupName = "";
     open = false;
+    onCreated?.();
   }
 </script>
 

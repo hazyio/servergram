@@ -16,7 +16,7 @@ func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyResponse, error) {
+func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -48,5 +48,5 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyResponse,
 		return nil, internal.InternalServerError
 	}
 
-	return &EmptyResponse{}, nil
+	return &EmptyRR{}, nil
 }

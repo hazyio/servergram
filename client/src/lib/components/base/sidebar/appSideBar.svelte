@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import type { ComponentProps } from "svelte";
   import ThemeChanger from "./theme-changer.svelte";
@@ -9,7 +10,6 @@
     items?: {
       title: string;
       url: string;
-      isActive?: boolean;
       breadcrumb?: {
         title: string;
         url: string;
@@ -37,7 +37,10 @@
           <Sidebar.Menu>
             {#each group.items as item (item.title)}
               <Sidebar.MenuItem class="mt-0.5">
-                <Sidebar.MenuButton isActive={item.isActive}>
+                <Sidebar.MenuButton
+                  isActive={new URL(item.url, page.url.origin).pathname ===
+                    page.url.pathname}
+                >
                   {#snippet child({ props })}
                     <a href={item.url} {...props}>{item.title}</a>
                   {/snippet}

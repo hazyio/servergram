@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+type EmptyRR struct {
+}
 type LoginRequest struct {
 	Body struct {
 		Password string `json:"password" required:"true" doc:"The password for login" minLength:"16" maxLength:"128"`
@@ -36,8 +38,7 @@ type CreateGroupRequest struct {
 		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the group"`
 	}
 }
-type EmptyResponse struct {
-}
+
 type SearchRequest struct {
 	Body struct {
 		Query string `json:"query" required:"true" doc:"The search query"`
@@ -58,6 +59,18 @@ type SSHKeySearchData struct {
 type GroupSearchData struct {
 	Id   uint   `json:"id"`
 	Name string `json:"name"`
+}
+
+type GroupListResponse struct {
+	Body struct {
+		Items []struct {
+			Id                uint   `json:"id"`
+			Name              string `json:"name"`
+			CreatedAt         string `json:"created_at"`
+			ResourcesAttached uint   `json:"resources_attached"`
+		} `json:"items" required:"true" doc:"The list of groups"`
+		Total int `json:"total" required:"true" doc:"The total number of groups"`
+	}
 }
 
 func (r *AddSSHKeyRequest) Resolve() error {

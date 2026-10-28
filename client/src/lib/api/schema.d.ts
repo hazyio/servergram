@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/group/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get list */
+        get: operations["get-list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/group": {
         parameters: {
             query?: never;
@@ -161,10 +178,27 @@ export interface components {
              */
             type: string;
         };
+        GroupListResponseBody: {
+            /** @description The list of groups */
+            items: components["schemas"]["Item"][] | null;
+            /**
+             * Format: int64
+             * @description The total number of groups
+             */
+            total: number;
+        };
         GroupSearchData: {
             /** Format: int64 */
             id: number;
             name: string;
+        };
+        Item: {
+            created_at: string;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** Format: int64 */
+            resources_attached: number;
         };
         LoginRequestBody: {
             /** @description The password for login */
@@ -306,6 +340,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupListResponseBody"];
+                };
             };
             /** @description Unauthorized */
             401: {

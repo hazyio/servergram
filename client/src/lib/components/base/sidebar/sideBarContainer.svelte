@@ -15,7 +15,8 @@
     sideBarItems
       .flatMap((group) => group.items ?? [])
       .find(
-        (item) => new URL(item.url, page.url).pathname === page.url.pathname,
+        (item) =>
+          new URL(item.url, page.url.origin).pathname === page.url.pathname,
       ),
   );
   let breadcrumbItems = $derived(

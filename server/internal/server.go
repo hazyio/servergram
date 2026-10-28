@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -11,13 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type ctxKey struct{}
+
 type NormalRouteData[I any] struct {
 	Database *gorm.DB
 	Context  *context.Context
 	Input    I
 }
 type AuthenticatedRouteData struct {
-	Request        *http.Request
 	ResponseWriter http.ResponseWriter
 	Database       *gorm.DB
 	Service        db.Service
@@ -100,12 +102,49 @@ func (s *Server) PostRaw[I, O any](pattern string, status int, next func(NormalR
 		return resp, nil
 	})
 }
-func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context, func(huma.Context)) {
+func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 
 		req := http.Request{Header: http.Header{"Cookie": {ctx.Header("Cookie")}}}
 		c, err := req.Cookie("session_token")
-		if err != nil || c.Value == "" || !loginTokens.Valid(c.Value) {
+		if err != nil {
+
+			if isNavigating(ctx) {
+
+				return
+			}
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+		if c.Value == "" {
+			slog.Warn("Empty session token")
+			if isNavigating(ctx) {
+
+				return
+			}
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+		find_session := db.Sessions{}
+		if err := database.Where("token = ?", HashString(c.Value)).First(&find_session).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				slog.Warn("Session not found")
+				if isNavigating(ctx) {
+
+					return
+				}
+				_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
+				return
+			}
+			slog.Error("An internal error occurred while trying to check the session", "error", err)
+			_ = huma.WriteErr(api, ctx, http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		if find_session.IsExpired() {
+			slog.Warn("Session expired")
+			if isNavigating(ctx) {
+				return
+			}
 			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
@@ -113,6 +152,14 @@ func SessionMiddleware(loginTokens *LoginToken, api huma.API) func(huma.Context,
 		next(ctx)
 	}
 
+}
+func isNavigating(ctx huma.Context) bool {
+	if ctx.Header("Sec-Fetch-Mode") == "navigate" {
+		ctx.SetHeader("Location", "/account/login")
+		ctx.SetStatus(http.StatusSeeOther)
+		return true
+	}
+	return false
 }
 func LoggingMiddleware(api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {

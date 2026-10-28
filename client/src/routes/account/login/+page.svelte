@@ -4,6 +4,8 @@
   import Card from "#lib/components/ui/card/card.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
   import Input from "#lib/components/ui/input/input.svelte";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
   import Eye from "@lucide/svelte/icons/eye";
   import EyeOff from "@lucide/svelte/icons/eye-off";
   import Loader from "@lucide/svelte/icons/loader";
@@ -30,6 +32,13 @@
       formError = error.detail ?? "An unknown error occurred";
       return;
     }
+    // Only same-origin paths, to avoid open redirects.
+    const redirect = page.url.searchParams.get("redirect");
+    const target =
+      redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+        ? redirect
+        : "/";
+    await goto(target);
   }
 </script>
 

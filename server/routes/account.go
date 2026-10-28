@@ -8,25 +8,27 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/mileusna/useragent"
 	"gorm.io/gorm"
+	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
 )
 
-func RegisterAccountRoutes(api *huma.Group, database *gorm.DB, loginTokens *internal.LoginToken) {
+func RegisterAccountRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/account", api, database)
-	server.PostRaw("/login", http.StatusSeeOther, func(nrd internal.NormalRouteData[internal.BodyRequest[LoginRequestBody]]) (*LoginSuccessfulRedirectResponse, error) {
-		return login(nrd.Input.Body, loginTokens)
-	})
+	server.PostRaw("/login", http.StatusCreated, login)
 
 }
 
-func login(data LoginRequestBody, loginTokens *internal.LoginToken) (*LoginSuccessfulRedirectResponse, error) {
+func login(data internal.NormalRouteData[LoginRequestBody]) (*LoginSuccessfulRedirectResponse, error) {
+	input := data.Input
+	password := input.Body.Password
 	env := internal.LoadEnv()
 	if env.Password == "" {
 		slog.Error("server password is not configured")
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "server password is not configured")
 	}
-	a := sha256.Sum256([]byte(data.Password))
+	a := sha256.Sum256([]byte(password))
 	b := sha256.Sum256([]byte(env.Password))
 	if subtle.ConstantTimeCompare(a[:], b[:]) != 1 {
 		return nil, internal.NewHumaError(http.StatusUnauthorized, "Password incorrect")
@@ -37,12 +39,23 @@ func login(data LoginRequestBody, loginTokens *internal.LoginToken) (*LoginSucce
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error generating random token")
 	}
 	expires := time.Now().Add(24 * time.Hour)
-
-	loginTokens.Add(randomToken, expires)
+	ua := useragent.Parse(input.UserAgent)
+	new_session := db.Sessions{
+		Token:     internal.HashString(randomToken),
+		Expires:   expires,
+		Os:        ua.OS,
+		UserAgent: input.UserAgent,
+	}
+	if err := data.Database.Create(&new_session).Error; err != nil {
+		slog.Error("error creating new session", "err", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "error creating new session")
+	}
+	if err := data.Database.Where("expires < ?", time.Now()).Delete(&db.Sessions{}).Error; err != nil {
+		slog.Error("error deleting expired sessions", "err", err)
+	}
 
 	return &LoginSuccessfulRedirectResponse{
-		Status:   http.StatusSeeOther,
-		Location: "/",
+		Status: http.StatusCreated,
 		SetCookie: http.Cookie{
 			Name:     "session_token",
 			Value:    randomToken,

@@ -2,12 +2,14 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
@@ -30,7 +32,6 @@ var distFS embed.FS
 
 func NewRouter(database *gorm.DB) http.Handler {
 	env := internal.LoadEnv()
-	loginTokens := internal.NewLoginToken()
 
 	mux := http.NewServeMux()
 	slog.Info("Logger initialized")
@@ -39,7 +40,7 @@ func NewRouter(database *gorm.DB) http.Handler {
 
 	api := humago.New(mux, config)
 	loggingMW := internal.LoggingMiddleware(api)
-	sessionMW := internal.SessionMiddleware(loginTokens, api)
+	sessionMW := internal.SessionMiddleware(database, api)
 	api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
 		loggingMW(ctx, func(ctx huma.Context) {
 			if skipAuthForRoutes(ctx.URL().Path) {
@@ -74,10 +75,12 @@ func NewRouter(database *gorm.DB) http.Handler {
 		})
 	}
 	routes.RegisterFilesRoutes(apiUmbrella, database)
-	routes.RegisterAccountRoutes(apiUmbrella, database, loginTokens)
+	routes.RegisterAccountRoutes(apiUmbrella, database)
 
 	mux.HandleFunc("/", handleRoot)
-
+	// Write the OpenAPI specification to a file for reference
+	b, _ := json.MarshalIndent(api.OpenAPI(), "", "  ")
+	_ = os.WriteFile("../openapi.json", b, 0644)
 	return internal.CORS(env.AllowedOrigins)(mux)
 }
 func skipAuthForRoutes(path string) bool {
@@ -127,7 +130,7 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := database.AutoMigrate(db.Service{}); err != nil {
+	if err := database.AutoMigrate(db.Service{}, db.Sessions{}); err != nil {
 		log.Fatal(err)
 	}
 

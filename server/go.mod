@@ -37,6 +37,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/mileusna/useragent v1.3.5
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 )

@@ -40,8 +40,11 @@ func NewRawServer(prefix string, database *gorm.DB, mux *http.ServeMux) *RawServ
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
-func NewGroup(prefix string, api *huma.Group, database *gorm.DB) *Server {
+func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string) *Server {
 	group := huma.NewGroup(api, prefix)
+	group.UseSimpleModifier(func(op *huma.Operation) {
+		op.Tags = tags
+	})
 
 	return &Server{
 		database: database,
@@ -92,6 +95,21 @@ func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRout
 		OperationID:   "post-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodPost, pattern, new(O)),
 		Method:        http.MethodPost,
+		Path:          pattern,
+		DefaultStatus: status,
+	}, func(ctx context.Context, input *I) (*O, error) {
+		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		if err != nil {
+			return nil, ToHumaError(err)
+		}
+		return resp, nil
+	})
+}
+func (s *Server) Put[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+	huma.Register(s.group, huma.Operation{
+		OperationID:   "put-" + opSlug(s.prefix, pattern),
+		Summary:       huma.GenerateSummary(http.MethodPut, pattern, new(O)),
+		Method:        http.MethodPut,
 		Path:          pattern,
 		DefaultStatus: status,
 	}, func(ctx context.Context, input *I) (*O, error) {

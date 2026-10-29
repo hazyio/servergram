@@ -22,16 +22,17 @@ type ViewSSHKeyResponse struct {
 		Private string `json:"private"`
 	}
 }
+type SSHKeyListItem struct {
+	Id                uint      `json:"id"`
+	Name              string    `json:"name"`
+	CreatedAt         time.Time `json:"created_at"`
+	Encrypted         bool      `json:"encrypted"`
+	ResourcesAttached uint      `json:"resources_attached"`
+}
 type SSHKeyListResponse struct {
 	Body struct {
-		Items []struct {
-			Id                uint      `json:"id"`
-			Name              string    `json:"name"`
-			CreatedAt         time.Time `json:"created_at"`
-			Encrypted         bool      `json:"encrypted"`
-			ResourcesAttached uint      `json:"resources_attached"`
-		} `json:"items" required:"true" doc:"The list of SSH keys"`
-		Total int `json:"total" required:"true" doc:"The total number of SSH keys"`
+		Items []SSHKeyListItem `json:"items" required:"true" doc:"The list of SSH keys"`
+		Total int64            `json:"total" required:"true" doc:"The total number of SSH keys"`
 	}
 }
 

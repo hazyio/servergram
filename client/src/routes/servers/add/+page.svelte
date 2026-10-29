@@ -1,24 +1,21 @@
 <script lang="ts">
-  import Loader from "@lucide/svelte/icons/loader";
+  import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
   import SelectGroup from "#lib/components/base/groups/selectGroup.svelte";
   import SelectSSHKey from "#lib/components/base/ssh/selectSSHKey.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import Card from "#lib/components/ui/card/card.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
-  import Eye from "@lucide/svelte/icons/eye";
-  import EyeOff from "@lucide/svelte/icons/eye-off";
+  import Loader from "@lucide/svelte/icons/loader";
+  import { toast } from "svelte-sonner";
   import * as z from "zod";
 
   let serverName = $state("");
   let host = $state("");
   let username = $state("");
-  let port = $state("22");
+  let port = $state(22);
   let group = $state(0);
   let sshKey = $state(0);
-  let sshKeyPassphrase = $state("");
-  let sshKeyEncrypted = $state(false);
-  let showPassphrase = $state(false);
   let formError = $state({
     serverName: "",
     host: "",
@@ -26,7 +23,6 @@
     port: "",
     group: "",
     sshKey: "",
-    sshKeyPassphrase: "",
   });
   let submitting = $state(false);
   const hostnamePattern =
@@ -59,25 +55,16 @@
       .trim()
       .min(1, "SSH username is required")
       .max(255, "SSH username is too long"),
-    port: z.coerce
+    port: z
       .number()
       .int("Port must be a whole number")
       .min(1, "Port must be at least 1")
       .max(65535, "Port must not exceed 65535"),
     group: z.number().min(1, "Group is required"),
     sshKey: z.number().min(1, "SSH key is required"),
-    sshKeyPassphrase: z
-      .string()
-      .max(255, "SSH key passphrase is too long")
-      .min(1, "SSH key passphrase is required")
-      .optional()
-      .refine(
-        (val) => !sshKeyEncrypted || (val && val.length > 0),
-        "SSH key passphrase is required when the key is encrypted",
-      ),
   });
 
-  function handleSubmit(event: SubmitEvent) {
+  async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     formError.serverName = "";
     formError.host = "";
@@ -85,7 +72,6 @@
     formError.port = "";
     formError.group = "";
     formError.sshKey = "";
-    formError.sshKeyPassphrase = "";
 
     const result = formData.safeParse({
       serverName,
@@ -94,7 +80,6 @@
       port,
       group,
       sshKey,
-      sshKeyPassphrase,
     });
     if (!result.success) {
       for (const issue of result.error.issues) {
@@ -105,11 +90,34 @@
         if (field === "port") formError.port = issue.message;
         if (field === "group") formError.group = issue.message;
         if (field === "sshKey") formError.sshKey = issue.message;
-        if (field === "sshKeyPassphrase")
-          formError.sshKeyPassphrase = issue.message;
       }
       return;
     }
+
+    submitting = true;
+    const { data, error } = await NewRequestClient().POST("/api/servers/add", {
+      body: {
+        group_id: group,
+        host: host,
+        name: serverName,
+        port: port,
+        ssh_key_id: sshKey,
+        username: username,
+      },
+    });
+    submitting = false;
+    if (error) {
+      toast.error(unWrapErrorMessage(error, "Failed to add server"));
+      return;
+    }
+    toast.success("Server added successfully");
+    submitting = false;
+    serverName = "";
+    host = "";
+    username = "";
+    port = 22;
+    group = 0;
+    sshKey = 0;
   }
 </script>
 
@@ -211,9 +219,8 @@
         <Field.Label for="ssh-key">SSH Key</Field.Label>
         <SelectSSHKey
           value={sshKey}
-          onSelect={(val, encrypted) => {
+          onSelect={(val) => {
             sshKey = val;
-            sshKeyEncrypted = encrypted;
             formError.sshKey = "";
           }}
         />
@@ -223,40 +230,7 @@
           <Field.Error>{formError.sshKey}</Field.Error>
         {/if}
       </Field.Field>
-      {#if sshKeyEncrypted}
-        <Field.Field data-invalid={!!formError.sshKeyPassphrase}>
-          <Field.Label for="ssh-key-passphrase">SSH Key Passphrase</Field.Label>
-          <div class="relative">
-            <Input
-              disabled={submitting}
-              id="ssh-key-passphrase"
-              type={showPassphrase ? "text" : "password"}
-              autocomplete="current-password"
-              bind:value={sshKeyPassphrase}
-              required
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              class="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
-              onclick={() => (showPassphrase = !showPassphrase)}
-            >
-              {#if showPassphrase}
-                <EyeOff class="h-4 w-4" />
-              {:else}
-                <Eye class="h-4 w-4" />
-              {/if}
-            </Button>
-          </div>
-          <Field.Description
-            >This is not saved, this will be used only for verification</Field.Description
-          >
-          {#if formError.sshKeyPassphrase}
-            <Field.Error>{formError.sshKeyPassphrase}</Field.Error>
-          {/if}
-        </Field.Field>
-      {/if}
+
       <Button type="submit" form="create-server-form" disabled={submitting}>
         {#if submitting}
           <Loader class="animate-spin" />

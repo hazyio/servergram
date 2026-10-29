@@ -1,0 +1,38 @@
+package models
+
+import "time"
+
+type AddServerRequest struct {
+	Body struct {
+		Name     string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the server"`
+		Host     string `json:"host" required:"true" minLength:"1" maxLength:"100" doc:"The host of the server"`
+		UserName string `json:"username" required:"true" minLength:"1" maxLength:"100" doc:"The username for the server"`
+		Port     uint16 `json:"port" required:"true" minimum:"1" maximum:"65535" doc:"The port of the server"`
+		GroupID  uint   `json:"group_id" required:"true" minimum:"1" doc:"The group ID of the server"`
+		SSHKeyID uint   `json:"ssh_key_id" required:"true" minimum:"1" doc:"The SSH key for the server"`
+	}
+}
+
+type AddServerResponse struct {
+	Body struct {
+		ID uint `json:"id" doc:"The ID of the newly created server"`
+	}
+}
+
+type ListServersRequest struct {
+	Body struct {
+	}
+}
+type ServerItem struct {
+	ID        uint      `json:"id" doc:"The ID of the server"`
+	Name      string    `json:"name" doc:"The name of the server"`
+	Host      string    `json:"host" doc:"The host of the server"`
+	CreatedAt time.Time `json:"created_at" doc:"The creation time of the server"`
+}
+
+type ListServersResponse struct {
+	Body struct {
+		Items []ServerItem
+		Total int64 `json:"total" doc:"The total number of servers"`
+	}
+}

@@ -13,7 +13,7 @@ import (
 )
 
 func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/group", api, database)
+	server := internal.NewGroup("/group", api, database, []string{"Groups"})
 	server.Post("/create", http.StatusCreated, createNewGroup)
 	server.Get("/list", http.StatusOK, listGroups)
 	server.Delete("/delete/{id}", http.StatusOK, deleteGroup)
@@ -47,9 +47,9 @@ func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*
 
 func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListResponse, error) {
 	database := data.Database
-	var groups []db.Group
-	if err := database.Find(&groups).Error; err != nil {
-		slog.Error("An error occurred while fetching groups", "error", err)
+	var total int64
+	if err := database.Model(&db.Group{}).Count(&total).Error; err != nil {
+		slog.Error("count groups failed", "error", err)
 		return nil, internal.InternalServerError
 	}
 	response := &models.GroupListResponse{}
@@ -58,15 +58,14 @@ func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListRespon
 		Name              string    `json:"name"`
 		CreatedAt         time.Time `json:"created_at"`
 		ResourcesAttached uint      `json:"resources_attached"`
-	}, len(groups))
+	}, total)
 
 	database.Model(&db.Group{}).
 		Select("groups.id, groups.name, groups.created_at, COUNT(servers.id) AS resources_attached").
 		Joins("LEFT JOIN servers ON servers.group_id = groups.id").
 		Group("groups.id").
 		Scan(&response.Body.Items)
-
-	response.Body.Total = len(groups)
+	response.Body.Total = total
 
 	return response, nil
 }

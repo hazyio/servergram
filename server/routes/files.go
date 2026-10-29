@@ -13,7 +13,7 @@ import (
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func registerFilesRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/files", api, database)
+	server := internal.NewGroup("/files", api, database, []string{"Files"})
 
 	server.Get("/health", http.StatusOK, serverHealth)
 

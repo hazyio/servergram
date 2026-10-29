@@ -15,7 +15,7 @@
   let searchQuery = $state("");
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement>(null!);
-  let timeoutId = $state(0);
+  let timeoutId: NodeJS.Timeout = $state(null!);
   let seq = $state(0);
   let selectedName = $state("");
 
@@ -35,8 +35,8 @@
     $props();
   async function fetchSSHKeys(query: string) {
     const mySeq = ++seq;
-    const { data } = await NewRequestClient().POST("/api/search/ssh", {
-      body: { query },
+    const { data } = await NewRequestClient().GET("/api/search/ssh", {
+      params: { query: { query } },
     });
     if (mySeq !== seq) return; // a newer request started
     if (data) {

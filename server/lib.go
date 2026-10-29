@@ -104,6 +104,7 @@ func NewRouter(database *gorm.DB) *http.Server {
 	_ = os.WriteFile("../openapi.json", b, 0644)
 	return srv
 }
+
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here
 	skipRoutes := []string{

@@ -3,7 +3,6 @@ package routes
 import (
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
@@ -13,12 +12,11 @@ import (
 )
 
 func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/ssh", api, database)
+	server := internal.NewGroup("/ssh", api, database, []string{"SSH"})
 	server.Post("/add", http.StatusCreated, addSSHKey)
 	server.Get("/list", http.StatusOK, listSSHKeys)
 	server.Get("/view-key/{id}", http.StatusOK, viewSSHKey)
 	server.Delete("/delete/{id}", http.StatusNoContent, deleteSSHKey)
-
 }
 
 func addSSHKey(data internal.NormalRouteData[models.AddSSHKeyRequest]) (*EmptyRR, error) {
@@ -58,26 +56,20 @@ func addSSHKey(data internal.NormalRouteData[models.AddSSHKeyRequest]) (*EmptyRR
 
 func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResponse, error) {
 	database := data.Database
-	var keys []db.SSHKey
-	if err := database.Find(&keys).Error; err != nil {
-		slog.Error("An error occurred while fetching SSH keys", "error", err)
+	var total int64
+	if err := database.Model(&db.SSHKey{}).Count(&total).Error; err != nil {
+		slog.Error("count SSH keys failed", "error", err)
 		return nil, internal.InternalServerError
 	}
 	response := &models.SSHKeyListResponse{}
-	response.Body.Items = make([]struct {
-		Id                uint      `json:"id"`
-		Name              string    `json:"name"`
-		CreatedAt         time.Time `json:"created_at"`
-		Encrypted         bool      `json:"encrypted"`
-		ResourcesAttached uint      `json:"resources_attached"`
-	}, len(keys))
+	response.Body.Items = make([]models.SSHKeyListItem, total)
 	database.Model(&db.SSHKey{}).
 		Select("ssh_keys.id, ssh_keys.name, ssh_keys.created_at, ssh_keys.encrypted, COUNT(servers.id) AS resources_attached").
 		Joins("LEFT JOIN servers ON servers.ssh_key_id = ssh_keys.id").
 		Group("ssh_keys.id").
 		Scan(&response.Body.Items)
 
-	response.Body.Total = len(keys)
+	response.Body.Total = total
 
 	return response, nil
 }

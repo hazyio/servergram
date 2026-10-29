@@ -12,7 +12,7 @@
   let searchQuery = $state("");
   let open = $state(false);
   let triggerRef = $state<HTMLButtonElement>(null!);
-  let timeoutId = $state(0);
+  let timeoutId: NodeJS.Timeout = $state(null!);
   let seq = $state(0);
   let selectedName = $state("");
 
@@ -31,8 +31,8 @@
   }: { value: number; onSelect: (value: number) => void } = $props();
   async function fetchGroups(query: string) {
     const mySeq = ++seq;
-    const { data } = await NewRequestClient().POST("/api/search/group", {
-      body: { query },
+    const { data } = await NewRequestClient().GET("/api/search/group", {
+      params: { query: { query } },
     });
     if (mySeq !== seq) return; // a newer request started
     if (data) {

@@ -12,14 +12,14 @@ import (
 )
 
 func registerSearchRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/search", api, database)
-	server.Post("/ssh", http.StatusOK, searchSSHKeys)
-	server.Post("/group", http.StatusOK, searchGroups)
+	server := internal.NewGroup("/search", api, database, []string{"Search"})
+	server.Get("/ssh", http.StatusOK, searchSSHKeys)
+	server.Get("/group", http.StatusOK, searchGroups)
 }
 
 func searchSSHKeys(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.SSHKeySearchData], error) {
 	input := data.Input
-	query := input.Body.Query
+	query := input.Query
 	database := data.Database
 
 	var results []db.SSHKey
@@ -46,7 +46,7 @@ func searchSSHKeys(data internal.NormalRouteData[models.SearchRequest]) (*models
 
 func searchGroups(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.GroupSearchData], error) {
 	input := data.Input
-	query := input.Body.Query
+	query := input.Query
 	database := data.Database
 
 	var results []db.Group

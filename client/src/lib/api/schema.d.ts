@@ -96,10 +96,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get group */
+        get: operations["get-search--group"];
         put?: never;
-        /** Post group */
-        post: operations["post-search--group"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -113,10 +113,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Get SSH */
+        get: operations["get-search--ssh"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/servers/add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         get?: never;
         put?: never;
-        /** Post SSH */
-        post: operations["post-search--ssh"];
+        /** Post add */
+        post: operations["post-servers--add"];
         delete?: never;
         options?: never;
         head?: never;
@@ -200,6 +217,36 @@ export interface components {
             key: string;
             /** @description The name of the SSH key */
             name: string;
+        };
+        AddServerRequestBody: {
+            /**
+             * Format: int64
+             * @description The group ID of the server
+             */
+            group_id: number;
+            /** @description The host of the server */
+            host: string;
+            /** @description The name of the server */
+            name: string;
+            /**
+             * Format: int32
+             * @description The port of the server
+             */
+            port: number;
+            /**
+             * Format: int64
+             * @description The SSH key for the server
+             */
+            ssh_key_id: number;
+            /** @description The username for the server */
+            username: string;
+        };
+        AddServerResponseBody: {
+            /**
+             * Format: int64
+             * @description The ID of the newly created server
+             */
+            id: number;
         };
         CreateGroupRequestBody: {
             /** @description The name of the group */
@@ -298,10 +345,6 @@ export interface components {
             id: number;
             name: string;
         };
-        SearchRequestBody: {
-            /** @description The search query */
-            query: string;
-        };
         SearchResponseGroupSearchDataBody: {
             /** @description The search results */
             items: components["schemas"]["GroupSearchData"][] | null;
@@ -353,15 +396,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -385,19 +419,9 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
-                    Message?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
             };
             /** @description Error */
             default: {
@@ -430,15 +454,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -469,15 +484,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -507,15 +513,6 @@ export interface operations {
                     "application/json": components["schemas"]["GroupListResponseBody"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -527,18 +524,17 @@ export interface operations {
             };
         };
     };
-    "post-search--group": {
+    "get-search--group": {
         parameters: {
-            query?: never;
+            query: {
+                /** @description The search query */
+                query: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SearchRequestBody"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -549,13 +545,36 @@ export interface operations {
                     "application/json": components["schemas"]["SearchResponseGroupSearchDataBody"];
                 };
             };
-            /** @description Unauthorized */
-            401: {
+            /** @description Error */
+            default: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-search--ssh": {
+        parameters: {
+            query: {
+                /** @description The search query */
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponseSSHKeySearchDataBody"];
                 };
             };
             /** @description Error */
@@ -569,7 +588,7 @@ export interface operations {
             };
         };
     };
-    "post-search--ssh": {
+    "post-servers--add": {
         parameters: {
             query?: never;
             header?: never;
@@ -578,26 +597,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SearchRequestBody"];
+                "application/json": components["schemas"]["AddServerRequestBody"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SearchResponseSSHKeySearchDataBody"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
+                    "application/json": components["schemas"]["AddServerResponseBody"];
                 };
             };
             /** @description Error */
@@ -631,15 +641,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -670,15 +671,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
             /** @description Error */
             default: {
                 headers: {
@@ -706,15 +698,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SSHKeyListResponseBody"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
                 };
             };
             /** @description Error */
@@ -747,15 +730,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ViewSSHKeyResponseBody"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
                 };
             };
             /** @description Error */

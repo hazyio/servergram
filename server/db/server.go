@@ -24,11 +24,12 @@ type Server struct {
 	OS   OS   `gorm:"not null;size:20;check:chk_servers_os,os IN ('linux','windows','darwin')"`
 	Arch Arch `gorm:"not null;size:20;check:chk_servers_arch,arch IN ('amd64','arm64')"`
 
-	GroupID  uint   `gorm:"not null;index"`
-	SSHKeyID uint   `gorm:"not null;index"`
-	Group    Group  `gorm:"foreignKey:GroupID"`
-	SSHKey   SSHKey `gorm:"foreignKey:SSHKeyID"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	GroupID            uint   `gorm:"not null;index"`
+	SSHKeyID           uint   `gorm:"not null;index"`
+	Group              Group  `gorm:"foreignKey:GroupID"`
+	SSHKey             SSHKey `gorm:"foreignKey:SSHKeyID"`
+	HostKeyFingerprint string `gorm:"size:100"`
+	Trusted            bool   `gorm:"not null;default:false"`
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }

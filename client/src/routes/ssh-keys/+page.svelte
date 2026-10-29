@@ -80,10 +80,15 @@
           <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
             <div class="flex gap-2 flex-col grow">
               <span class="font-bold">{key.name}</span>
-              <small>Encrypted: {key.encrypted ? "Yes" : "No"}</small>
               <small
-                ><a href={appPaths.sshKeys.resources(key.id)}
-                  >Resource: {key.resources_attached}</a
+                >Encrypted: <span
+                  class={key.encrypted ? "text-green-500" : "text-amber-500"}
+                  >{key.encrypted ? "Yes" : "No"}</span
+                ></small
+              >
+              <small
+                >Resources: <a href={appPaths.sshKeys.resources(key.id)}>
+                  {key.resources_attached}</a
                 ></small
               >
               <small

@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/routes/models"
 )
 
 func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
@@ -21,7 +22,7 @@ func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func login(data internal.NormalRouteData[LoginRequest]) (*LoginSuccessfulRedirectResponse, error) {
+func login(data internal.NormalRouteData[models.LoginRequest]) (*models.LoginSuccessfulRedirectResponse, error) {
 	input := data.Input
 	password := input.Body.Password
 	env := internal.LoadEnv()
@@ -54,9 +55,8 @@ func login(data internal.NormalRouteData[LoginRequest]) (*LoginSuccessfulRedirec
 	if err := data.Database.Where("expires < ?", time.Now()).Delete(&db.Sessions{}).Error; err != nil {
 		slog.Error("error deleting expired sessions", "err", err)
 	}
-	
 
-	return &LoginSuccessfulRedirectResponse{
+	return &models.LoginSuccessfulRedirectResponse{
 		Status: http.StatusCreated,
 		SetCookie: http.Cookie{
 			Name:     "session_token",

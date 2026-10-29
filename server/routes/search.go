@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/routes/models"
 )
 
 func registerSearchRoutes(api *huma.Group, database *gorm.DB) {
@@ -16,7 +17,7 @@ func registerSearchRoutes(api *huma.Group, database *gorm.DB) {
 	server.Post("/group", http.StatusOK, searchGroups)
 }
 
-func searchSSHKeys(data internal.NormalRouteData[SearchRequest]) (*SearchResponse[SSHKeySearchData], error) {
+func searchSSHKeys(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.SSHKeySearchData], error) {
 	input := data.Input
 	query := input.Body.Query
 	database := data.Database
@@ -28,22 +29,22 @@ func searchSSHKeys(data internal.NormalRouteData[SearchRequest]) (*SearchRespons
 		return nil, internal.InternalServerError
 	}
 
-	var searchData []SSHKeySearchData
+	var searchData []models.SSHKeySearchData
 	for _, r := range results {
-		searchData = append(searchData, SSHKeySearchData{
+		searchData = append(searchData, models.SSHKeySearchData{
 			Id:        r.ID,
 			Name:      r.Name,
 			Encrypted: r.Encrypted,
 		})
 	}
 
-	return &SearchResponse[SSHKeySearchData]{Body: struct {
-		Items []SSHKeySearchData `json:"items" required:"true" doc:"The search results"`
-		Total int                `json:"total" required:"true" doc:"The total number of search results"`
+	return &models.SearchResponse[models.SSHKeySearchData]{Body: struct {
+		Items []models.SSHKeySearchData `json:"items" required:"true" doc:"The search results"`
+		Total int                       `json:"total" required:"true" doc:"The total number of search results"`
 	}{Items: searchData, Total: len(searchData)}}, nil
 }
 
-func searchGroups(data internal.NormalRouteData[SearchRequest]) (*SearchResponse[GroupSearchData], error) {
+func searchGroups(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.GroupSearchData], error) {
 	input := data.Input
 	query := input.Body.Query
 	database := data.Database
@@ -55,16 +56,16 @@ func searchGroups(data internal.NormalRouteData[SearchRequest]) (*SearchResponse
 		return nil, internal.InternalServerError
 	}
 
-	var searchData []GroupSearchData
+	var searchData []models.GroupSearchData
 	for _, r := range results {
-		searchData = append(searchData, GroupSearchData{
+		searchData = append(searchData, models.GroupSearchData{
 			Id:   r.ID,
 			Name: r.Name,
 		})
 	}
 
-	return &SearchResponse[GroupSearchData]{Body: struct {
-		Items []GroupSearchData `json:"items" required:"true" doc:"The search results"`
-		Total int               `json:"total" required:"true" doc:"The total number of search results"`
+	return &models.SearchResponse[models.GroupSearchData]{Body: struct {
+		Items []models.GroupSearchData `json:"items" required:"true" doc:"The search results"`
+		Total int                      `json:"total" required:"true" doc:"The total number of search results"`
 	}{Items: searchData, Total: len(searchData)}}, nil
 }

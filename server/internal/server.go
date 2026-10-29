@@ -13,6 +13,24 @@ import (
 	"gorm.io/gorm"
 )
 
+type RawServer struct {
+	database *gorm.DB
+	server   *http.ServeMux
+	prefix   string
+}
+
+func (s *RawServer) WebSocket[I, O any](pattern string) {
+	s.server.HandleFunc("GET "+pattern, func(w http.ResponseWriter, r *http.Request) {
+		// conn, err := websocket.Accept(w, r, nil)
+		// if err != nil {
+		// 	return
+		// }
+		// defer conn.CloseNow()
+		// read/write loop
+		w.Write([]byte("hellow"))
+	})
+}
+
 type ctxKey struct{}
 
 type NormalRouteData[I any] struct {
@@ -36,7 +54,16 @@ type Middleware func(http.Handler) http.Handler
 type Server struct {
 	database *gorm.DB
 	group    *huma.Group
+	mux      *http.ServeMux
 	prefix   string
+}
+
+func NewRawServer(prefix string, database *gorm.DB, mux *http.ServeMux) *RawServer {
+	return &RawServer{
+		database: database,
+		server:   mux,
+		prefix:   prefix,
+	}
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
@@ -102,6 +129,7 @@ func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRout
 		return resp, nil
 	})
 }
+
 func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 
@@ -152,6 +180,31 @@ func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(
 		next(ctx)
 	}
 
+}
+func CorsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
+	allowed := make(map[string]struct{}, len(allowedOrigins))
+	for _, o := range allowedOrigins {
+		allowed[o] = struct{}{}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if _, ok := allowed[origin]; ok {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
+		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept-Language")
+			w.Header().Set("Access-Control-Max-Age", "600")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 func isNavigating(ctx huma.Context) bool {
 	if ctx.Header("Sec-Fetch-Mode") == "navigate" {

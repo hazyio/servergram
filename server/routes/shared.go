@@ -12,3 +12,10 @@ func RegisterRoutes(api *huma.Group, database *gorm.DB) {
 	registerSearchRoutes(api, database)
 	registerGroupRoutes(api, database)
 }
+
+type EmptyRR struct {
+}
+
+type PathIdRequest struct {
+	ID uint `path:"id" minimum:"1" doc:"The ID of the current resource"`
+}

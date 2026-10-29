@@ -2,14 +2,20 @@ import tailwindcss from "@tailwindcss/vite";
 import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
+import fs from "fs";
 
 export default defineConfig({
   server: {
     proxy: {
       "/api/": {
-        target: "http://0.0.0.0:9788",
+        target: "https://localhost:9788",
         changeOrigin: true,
+        secure: false,
       },
+    },
+    https: {
+      cert: fs.readFileSync("../certs/localhost+2.pem"),
+      key: fs.readFileSync("../certs/localhost+2-key.pem"),
     },
   },
   plugins: [

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -26,20 +27,39 @@ import (
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
 	"hazyio.com/servergram/routes"
+	"hazyio.com/servergram/routes/websockets"
 )
 
 //go:embed all:dist
 var distFS embed.FS
 
-func NewRouter(database *gorm.DB) http.Handler {
+func NewRouter(database *gorm.DB) *http.Server {
 	env := internal.LoadEnv()
 
+	cert, err := tls.LoadX509KeyPair(env.SSLPublicKey, env.SSLPrivateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
 	mux := http.NewServeMux()
-	slog.Info("Logger initialized")
+
+	srv := &http.Server{
+		Addr: ":" + env.ServerPort,
+		// wrap the mux with CORS middleware
+		Handler: internal.CorsMiddleware(env.AllowedOrigins, mux),
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{
+				cert,
+			},
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
 
 	api := humago.New(mux, config)
+	apiUmbrella := huma.NewGroup(api, "/api")
+
 	loggingMW := internal.LoggingMiddleware(api)
 	sessionMW := internal.SessionMiddleware(database, api)
 	api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
@@ -52,6 +72,19 @@ func NewRouter(database *gorm.DB) http.Handler {
 			// add session middleware only if password is set
 			if env.Password == "" {
 				slog.Info("Skipping authentication because password is not set", "path", ctx.URL().Path)
+				// Middleware responses are invisible to Huma, so the 401 is added to the spec here.
+				errSchema := api.OpenAPI().Components.Schemas.Schema(reflect.TypeFor[huma.ErrorModel](), true, "ErrorModel")
+				apiUmbrella.UseSimpleModifier(func(op *huma.Operation) {
+					if op.Responses == nil {
+						op.Responses = map[string]*huma.Response{}
+					}
+					op.Responses["401"] = &huma.Response{
+						Description: "Unauthorized",
+						Content: map[string]*huma.MediaType{
+							"application/problem+json": {Schema: errSchema},
+						},
+					}
+				})
 				next(ctx)
 				return
 			}
@@ -59,29 +92,17 @@ func NewRouter(database *gorm.DB) http.Handler {
 		})
 
 	})
-	apiUmbrella := huma.NewGroup(api, "/api")
-	// Middleware responses are invisible to Huma, so the 401 is added to the spec here.
-	if env.Password != "" {
-		errSchema := api.OpenAPI().Components.Schemas.Schema(reflect.TypeFor[huma.ErrorModel](), true, "ErrorModel")
-		apiUmbrella.UseSimpleModifier(func(op *huma.Operation) {
-			if op.Responses == nil {
-				op.Responses = map[string]*huma.Response{}
-			}
-			op.Responses["401"] = &huma.Response{
-				Description: "Unauthorized",
-				Content: map[string]*huma.MediaType{
-					"application/problem+json": {Schema: errSchema},
-				},
-			}
-		})
-	}
+	// Register application routes and websockets
 	routes.RegisterRoutes(apiUmbrella, database)
+	websockets.RegisterWebSockets(mux, database)
 
+	// handle root and frontend route
 	mux.HandleFunc("/", handleRoot)
+
 	// Write the OpenAPI specification to a file for reference
 	b, _ := json.MarshalIndent(api.OpenAPI(), "", "  ")
 	_ = os.WriteFile("../openapi.json", b, 0644)
-	return internal.CORS(env.AllowedOrigins)(mux)
+	return srv
 }
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here

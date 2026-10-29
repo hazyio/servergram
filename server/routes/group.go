@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/routes/models"
 )
 
 func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
@@ -19,7 +20,7 @@ func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func createNewGroup(data internal.NormalRouteData[CreateGroupRequest]) (*EmptyRR, error) {
+func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -43,14 +44,14 @@ func createNewGroup(data internal.NormalRouteData[CreateGroupRequest]) (*EmptyRR
 	return &EmptyRR{}, nil
 }
 
-func listGroups(data internal.NormalRouteData[EmptyRR]) (*GroupListResponse, error) {
+func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListResponse, error) {
 	database := data.Database
 	var groups []db.Group
 	if err := database.Find(&groups).Error; err != nil {
 		slog.Error("An error occurred while fetching groups", "error", err)
 		return nil, internal.InternalServerError
 	}
-	response := &GroupListResponse{}
+	response := &models.GroupListResponse{}
 	response.Body.Items = make([]struct {
 		Id                uint      `json:"id"`
 		Name              string    `json:"name"`

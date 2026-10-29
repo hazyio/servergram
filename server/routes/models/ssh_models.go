@@ -1,77 +1,25 @@
-package routes
+package models
 
 import (
 	"errors"
-	"net/http"
-	"time"
-
+	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"golang.org/x/crypto/ssh"
 )
-
-type EmptyRR struct {
-}
-type LoginRequest struct {
-	Body struct {
-		Password string `json:"password" required:"true" doc:"The password for login" minLength:"16" maxLength:"128"`
-	}
-	UserAgent string `header:"User-Agent" required:"true" hidden:"true"`
-}
-
-type LoginSuccessfulRedirectResponse struct {
-	Status    int
-	SetCookie http.Cookie `header:"Set-Cookie"`
-}
-type MessageResponse struct {
-	Message string `json:"message"`
-}
 
 type AddSSHKeyRequest struct {
 	Body struct {
 		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the SSH key"`
 		Key  string `json:"key" required:"true" maxLength:"16384" doc:"The private SSH key (may be passphrase-encrypted)"`
 	}
-	encrypted bool
+	Encrypted bool
 }
-type CreateGroupRequest struct {
+type ViewSSHKeyResponse struct {
 	Body struct {
-		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the group"`
-	}
-}
-
-type SearchRequest struct {
-	Body struct {
-		Query string `json:"query" required:"true" doc:"The search query"`
-	}
-}
-type SearchResponse[T any] struct {
-	Body struct {
-		Items []T `json:"items" required:"true" doc:"The search results"`
-		Total int `json:"total" required:"true" doc:"The total number of search results"`
-	}
-}
-type SSHKeySearchData struct {
-	Id        uint   `json:"id"`
-	Name      string `json:"name"`
-	Encrypted bool   `json:"encrypted"`
-}
-
-type GroupSearchData struct {
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
-}
-
-type GroupListResponse struct {
-	Body struct {
-		Items []struct {
-			Id                uint      `json:"id"`
-			Name              string    `json:"name"`
-			CreatedAt         time.Time `json:"created_at"`
-			ResourcesAttached uint      `json:"resources_attached"`
-		} `json:"items" required:"true" doc:"The list of groups"`
-		Total int `json:"total" required:"true" doc:"The total number of groups"`
+		Private string `json:"private"`
 	}
 }
 type SSHKeyListResponse struct {
@@ -84,14 +32,6 @@ type SSHKeyListResponse struct {
 			ResourcesAttached uint      `json:"resources_attached"`
 		} `json:"items" required:"true" doc:"The list of SSH keys"`
 		Total int `json:"total" required:"true" doc:"The total number of SSH keys"`
-	}
-}
-type PathIdRequest struct {
-	ID uint `path:"id" minimum:"1" doc:"The ID of the current resource"`
-}
-type ViewSSHKeyResponse struct {
-	Body struct {
-		Private string `json:"private"`
 	}
 }
 
@@ -122,7 +62,8 @@ func (r *AddSSHKeyRequest) Resolve() error {
 	}
 	var missing *ssh.PassphraseMissingError
 	if errors.As(err, &missing) {
-		r.encrypted = true
+		slog.Info("private key is passphrase-protected")
+		r.Encrypted = true
 		return nil // valid, but passphrase-protected
 	}
 

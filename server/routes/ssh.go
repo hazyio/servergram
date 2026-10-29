@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/routes/models"
 )
 
 func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
@@ -20,7 +21,7 @@ func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error) {
+func addSSHKey(data internal.NormalRouteData[models.AddSSHKeyRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -37,7 +38,7 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error
 	if find.Error != nil && find.Error != gorm.ErrRecordNotFound {
 		return nil, internal.InternalServerError
 	}
-	encryptedSSHKey, encryptedSSHKeyErr := internal.EncryptString(key, env.ShhMasterKey)
+	encryptedSSHKey, encryptedSSHKeyErr := internal.EncryptString(key, env.EncryptionMasterKey)
 	if encryptedSSHKeyErr != nil {
 		slog.Error("An error occurred while encrypting the SSH key", "error", encryptedSSHKeyErr)
 		return nil, internal.InternalServerError
@@ -45,7 +46,7 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error
 	newKey := db.SSHKey{
 		Name:      name,
 		Key:       encryptedSSHKey,
-		Encrypted: input.encrypted,
+		Encrypted: input.Encrypted,
 	}
 	if err := database.Create(&newKey).Error; err != nil {
 		slog.Error("An error occurred while saving ssh key", "error", err)
@@ -55,14 +56,14 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error
 	return &EmptyRR{}, nil
 }
 
-func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*SSHKeyListResponse, error) {
+func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResponse, error) {
 	database := data.Database
 	var keys []db.SSHKey
 	if err := database.Find(&keys).Error; err != nil {
 		slog.Error("An error occurred while fetching SSH keys", "error", err)
 		return nil, internal.InternalServerError
 	}
-	response := &SSHKeyListResponse{}
+	response := &models.SSHKeyListResponse{}
 	response.Body.Items = make([]struct {
 		Id                uint      `json:"id"`
 		Name              string    `json:"name"`
@@ -71,7 +72,7 @@ func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*SSHKeyListResponse, e
 		ResourcesAttached uint      `json:"resources_attached"`
 	}, len(keys))
 	database.Model(&db.SSHKey{}).
-		Select("ssh_keys.id, ssh_keys.name, ssh_keys.created_at, COUNT(servers.id) AS resources_attached").
+		Select("ssh_keys.id, ssh_keys.name, ssh_keys.created_at, ssh_keys.encrypted, COUNT(servers.id) AS resources_attached").
 		Joins("LEFT JOIN servers ON servers.ssh_key_id = ssh_keys.id").
 		Group("ssh_keys.id").
 		Scan(&response.Body.Items)
@@ -81,7 +82,7 @@ func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*SSHKeyListResponse, e
 	return response, nil
 }
 
-func viewSSHKey(data internal.NormalRouteData[PathIdRequest]) (*ViewSSHKeyResponse, error) {
+func viewSSHKey(data internal.NormalRouteData[PathIdRequest]) (*models.ViewSSHKeyResponse, error) {
 	env := internal.LoadEnv()
 
 	database := data.Database
@@ -94,12 +95,12 @@ func viewSSHKey(data internal.NormalRouteData[PathIdRequest]) (*ViewSSHKeyRespon
 		slog.Error("An error occurred while fetching SSH key", "error", err)
 		return nil, internal.InternalServerError
 	}
-	decryptedKey, err := internal.DecryptString(key.Key, env.ShhMasterKey)
+	decryptedKey, err := internal.DecryptString(key.Key, env.EncryptionMasterKey)
 	if err != nil {
 		slog.Error("An error occurred while decrypting SSH key", "error", err)
 		return nil, internal.InternalServerError
 	}
-	response := &ViewSSHKeyResponse{}
+	response := &models.ViewSSHKeyResponse{}
 	response.Body.Private = decryptedKey
 
 	return response, nil

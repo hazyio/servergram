@@ -2,7 +2,6 @@ package main
 
 import (
 	"log/slog"
-	"net/http"
 	"os"
 
 	"hazyio.com/servergram/internal"
@@ -20,7 +19,8 @@ func startServer() {
 
 	router := NewRouter(database)
 	slog.Info("Starting server at http://0.0.0.0:" + env.ServerPort)
-	if err := http.ListenAndServe(":"+env.ServerPort, router); err != nil {
+	// tls certificate and key are provided by the server configuration, so empty strings are passed here
+	if err := router.ListenAndServeTLS("", ""); err != nil {
 		slog.Error("HTTP server stopped", "error", err)
 		os.Exit(1)
 	}

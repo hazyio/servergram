@@ -14,11 +14,13 @@ import (
 )
 
 type Env struct {
-	DatabaseUrl    string   `validate:"required,database_url"`
-	ServerPort     string   `validate:"required"`
-	AllowedOrigins []string `validate:"required,dive,required"`
-	Password       string   `validate:"omitempty,strong_password"`
-	ShhMasterKey   string   `validate:"required,strong_password"`
+	DatabaseUrl         string   `validate:"required,database_url"`
+	ServerPort          string   `validate:"required"`
+	AllowedOrigins      []string `validate:"required,dive,required"`
+	Password            string   `validate:"omitempty,strong_password"`
+	EncryptionMasterKey string   `validate:"required,strong_password"`
+	SSLPublicKey        string   `validate:"required"`
+	SSLPrivateKey       string   `validate:"required"`
 }
 
 var validate = func() *validator.Validate {
@@ -70,11 +72,13 @@ func LoadEnv() Env {
 
 	env := Env{
 
-		DatabaseUrl:    os.Getenv("DATABASE_URL"),
-		ServerPort:     os.Getenv("SERVER_PORT"),
-		AllowedOrigins: strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
-		Password:       os.Getenv("PASSWORD"),
-		ShhMasterKey:   os.Getenv("SHH_MASTER_KEY"),
+		DatabaseUrl:         os.Getenv("DATABASE_URL"),
+		ServerPort:          os.Getenv("SERVER_PORT"),
+		AllowedOrigins:      strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),
+		Password:            os.Getenv("PASSWORD"),
+		EncryptionMasterKey: os.Getenv("SHH_MASTER_KEY"),
+		SSLPublicKey:        os.Getenv("SSL_PUBLIC_KEY"),
+		SSLPrivateKey:       os.Getenv("SSL_PRIVATE_KEY"),
 	}
 	for i, origin := range env.AllowedOrigins {
 		env.AllowedOrigins[i] = strings.TrimSpace(origin)
@@ -95,14 +99,16 @@ func LoadEnv() Env {
 	if strings.TrimSpace(env.ServerPort) == "" {
 		log.Println("SERVER_PORT is not set, defaulting to 9788 this is dangerous as it allowed requests from all origins")
 		env.ServerPort = "9788"
-		env.AllowedOrigins = []string{"*"} 
+		env.AllowedOrigins = []string{"*"}
 	}
-	if env.Password == env.ShhMasterKey {
+	if env.Password == env.EncryptionMasterKey {
 		log.Fatalf("PASSWORD and SHH_MASTER_KEY should not be the same")
 	}
 	if err := validate.Struct(env); err != nil {
 		log.Fatalf("environment validation failed: %v", err)
 	}
-
+	if !FileExists(env.SSLPublicKey) || !FileExists(env.SSLPrivateKey) {
+		log.Fatalf("SSL_PUBLIC_KEY and SSL_PRIVATE_KEY must point to existing files")
+	}
 	return env
 }

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -108,4 +109,17 @@ func DecryptString(encrypted, password string) (string, error) {
 		return "", errors.New("decrypt encrypted string: authentication failed")
 	}
 	return string(plaintext), nil
+}
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true // File exists
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false // File specifically does not exist
+	}
+	// Any other error means the file might exist, but we couldn't stat it
+	// (e.g., permission denied issues)
+	return false
 }

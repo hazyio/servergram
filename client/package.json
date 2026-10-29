@@ -41,6 +41,7 @@
 	},
 	"dependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",
+		"@types/node": "^26.6.6",
 		"openapi-fetch": "^0.17.0",
 		"zod": "^4.6.7"
 	}

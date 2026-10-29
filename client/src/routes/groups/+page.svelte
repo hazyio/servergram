@@ -47,6 +47,14 @@
   onMount(loadGroups);
 </script>
 
+<svelte:head>
+  <title>Groups | ServerGram</title>
+  <meta
+    name="description"
+    content="Create and manage groups to organize your ServerGram servers."
+  />
+</svelte:head>
+
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
     <Input

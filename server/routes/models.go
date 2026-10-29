@@ -33,6 +33,7 @@ type AddSSHKeyRequest struct {
 		Name string `json:"name" required:"true" minLength:"1" maxLength:"100" pattern:"^[A-Za-z0-9_ .@-]+$" doc:"The name of the SSH key"`
 		Key  string `json:"key" required:"true" maxLength:"16384" doc:"The private SSH key (may be passphrase-encrypted)"`
 	}
+	encrypted bool
 }
 type CreateGroupRequest struct {
 	Body struct {
@@ -119,22 +120,11 @@ func (r *AddSSHKeyRequest) Resolve() error {
 	if err == nil {
 		return nil // valid, unencrypted
 	}
-
-	return fail("not a valid private key")
-}
-
-// Ensure you call [Resolve()] before calling [KeyEncrypted()] to normalize and validate the key.
-func (r *AddSSHKeyRequest) KeyEncrypted() bool {
-	_, err := ssh.ParsePrivateKey([]byte(r.Body.Key))
-	if err == nil {
-		return false
-	}
-
 	var missing *ssh.PassphraseMissingError
 	if errors.As(err, &missing) {
-		return true // valid structure, needs a passphrase
+		r.encrypted = true
+		return nil // valid, but passphrase-protected
 	}
 
-	return false // not a valid private key at all meaning it's invalid
-
+	return fail("not a valid private key")
 }

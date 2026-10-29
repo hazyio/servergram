@@ -26,9 +26,26 @@
         new URL(item.url, page.url.origin).pathname === page.url.pathname,
     ),
   );
-  let breadcrumbItems = $derived(
-    activeItem?.url ? [{ title: activeItem.title, url: activeItem.url }] : [],
-  );
+  let breadcrumbItems = $derived.by(() => {
+    if (!activeItem?.url) return [];
+    if (activeItem.breadcrumb) return activeItem.breadcrumb;
+
+    const pathBreadcrumbs = unTetheredBreadcrumbs.find((breadcrumbs) =>
+      breadcrumbs.some(
+        (item) =>
+          new URL(item.url, page.url.origin).pathname === page.url.pathname,
+      ),
+    );
+    if (!pathBreadcrumbs) {
+      return [{ title: activeItem.title, url: activeItem.url }];
+    }
+
+    const activeIndex = pathBreadcrumbs.findIndex(
+      (item) =>
+        new URL(item.url, page.url.origin).pathname === page.url.pathname,
+    );
+    return pathBreadcrumbs.slice(0, activeIndex + 1);
+  });
 </script>
 
 <Sidebar.Provider>

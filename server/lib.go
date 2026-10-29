@@ -12,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
@@ -125,9 +126,28 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	database, err := gorm.Open(dialector, &gorm.Config{})
+	database, err := gorm.Open(dialector, &gorm.Config{TranslateError: true})
 	if err != nil {
 		log.Fatal(err)
+	}
+	sqlDB, err := database.DB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if database.Dialector.Name() == "sqlite" {
+		// SQLite serializes writes: one connection avoids "database is locked"
+		sqlDB.SetMaxOpenConns(1)
+		sqlDB.SetMaxIdleConns(1)
+		sqlDB.SetConnMaxLifetime(0) // never expire; an expired in-memory DB would vanish
+		// WAL mode and a busy timeout so concurrent readers and a writer don’t collide
+		database.Exec("PRAGMA journal_mode = WAL")
+		database.Exec("PRAGMA busy_timeout = 5000")
+		database.Exec("PRAGMA foreign_keys = ON")
+	} else {
+		sqlDB.SetMaxOpenConns(10)
+		sqlDB.SetMaxIdleConns(5)
+		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}); err != nil {
 		log.Fatal(err)
@@ -149,7 +169,14 @@ func getDatabaseDialector(dbURL string) (gorm.Dialector, error) {
 	case "postgres", "postgresql":
 		return postgres.Open(dbURL), nil
 	case "mysql":
-		return mysql.Open(dbURL), nil
+		pw, _ := parsedURL.User.Password()
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?%s",
+			parsedURL.User.Username(), pw, parsedURL.Host,
+			strings.TrimPrefix(parsedURL.Path, "/"), parsedURL.RawQuery)
+		if parsedURL.RawQuery == "" {
+			dsn = strings.TrimSuffix(dsn, "?") + "?parseTime=true"
+		}
+		return mysql.Open(dsn), nil
 	case "sqlserver", "mssql":
 		return sqlserver.Open(dbURL), nil
 	default:

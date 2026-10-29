@@ -14,11 +14,14 @@ const appPaths = {
   servers: {
     index: "/servers",
     add: "/servers/add",
-    
   },
   databases: {
-    index: "/servers",
+    index: "/databases",
     add: "/databases/add",
+  },
+  cronJobs: {
+    index: "/cron-jobs",
+    add: "/cron-jobs/add",
   },
 };
 

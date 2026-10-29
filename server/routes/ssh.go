@@ -30,7 +30,6 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error
 	if err != nil {
 		return nil, err
 	}
-	encrypted := input.KeyEncrypted()
 	find := database.Where("name = ?", name).First(&db.SSHKey{})
 	if find.Error == nil {
 		return nil, internal.NewHumaError(http.StatusConflict, "SSH key with that name already exists")
@@ -46,7 +45,7 @@ func addSSHKey(data internal.NormalRouteData[AddSSHKeyRequest]) (*EmptyRR, error
 	newKey := db.SSHKey{
 		Name:      name,
 		Key:       encryptedSSHKey,
-		Encrypted: encrypted,
+		Encrypted: input.encrypted,
 	}
 	if err := database.Create(&newKey).Error; err != nil {
 		slog.Error("An error occurred while saving ssh key", "error", err)

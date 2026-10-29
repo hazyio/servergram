@@ -31,7 +31,8 @@
   let {
     value,
     onSelect,
-  }: { value: number; onSelect: (value: number) => void } = $props();
+  }: { value: number; onSelect: (value: number, encrypted: boolean) => void } =
+    $props();
   async function fetchSSHKeys(query: string) {
     const mySeq = ++seq;
     const { data } = await NewRequestClient().POST("/api/search/ssh", {
@@ -94,7 +95,7 @@
               data-checked={value === sshKey.id}
               onSelect={() => {
                 selectedName = sshKey.name;
-                onSelect(sshKey.id);
+                onSelect(sshKey.id, sshKey.encrypted);
                 closeAndFocusTrigger();
               }}
             >

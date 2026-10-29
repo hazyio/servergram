@@ -48,6 +48,14 @@
   onMount(loadSSHKeys);
 </script>
 
+<svelte:head>
+  <title>SSH Keys | ServerGram</title>
+  <meta
+    name="description"
+    content="Manage SSH keys used to connect to your ServerGram servers."
+  />
+</svelte:head>
+
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
     <Input
@@ -82,7 +90,7 @@
                 >Created at: {new Date(key.created_at).toLocaleString()}</small
               >
             </div>
-            <div class="flex justify-center gap-2 max-md:flex-col">
+            <div class="flex justify-start gap-2 flex-col">
               <ViewKeyInfo id={key.id} />
               <DeleteSSHKey
                 id={key.id}

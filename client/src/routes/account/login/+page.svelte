@@ -37,6 +37,14 @@
   }
 </script>
 
+<svelte:head>
+  <title>Sign In | ServerGram</title>
+  <meta
+    name="description"
+    content="Sign in to unlock and access your protected ServerGram resources."
+  />
+</svelte:head>
+
 <div class="h-dvh flex justify-center items-center">
   <Card class="max-w-sm w-[90%] md:min-w-120 p-4 px-5">
     <form onsubmit={handleLogin}>

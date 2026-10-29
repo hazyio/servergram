@@ -7,22 +7,25 @@
   let deleting = $state(false);
   let deleteError = $state("");
   let open = $state(false);
-  let { id, name, onDeleted } = $props();
-  async function deleteSSHKey() {
+  let { id, name, onDeleted, type } = $props();
+  async function deleteServer() {
     deleting = true;
-    const { error } = await NewRequestClient().DELETE("/api/ssh/delete/{id}", {
-      params: {
-        path: {
-          id: id,
+    const { error } = await NewRequestClient().DELETE(
+      `/api/${type}/delete/{id}` as any,
+      {
+        params: {
+          path: {
+            id: id,
+          },
         },
       },
-    });
+    );
     deleting = false;
 
     if (error) {
       deleteError = unWrapErrorMessage(
         error,
-        "An error occurred while deleting the SSH key",
+        `An error occurred while deleting the ${type}`,
       );
       return;
     }
@@ -34,33 +37,30 @@
 <AlertDialog.Root bind:open>
   <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
     Delete
-    <div>sjs</div>
   </AlertDialog.Trigger>
   <AlertDialog.Content>
     {#if deleting}
-      <Loading class="h-50" text="Deleting SSH key..." loading={deleting} />
+      <Loading class="h-50" text={`Deleting ${type}...`} loading={deleting} />
     {:else if deleteError !== ""}
       <Error message={deleteError} />
       <AlertDialog.Footer>
         <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-        <AlertDialog.Action onclick={deleteSSHKey} variant="destructive"
+        <AlertDialog.Action onclick={deleteServer} variant="destructive"
           >Try Again</AlertDialog.Action
         >
       </AlertDialog.Footer>
     {:else}
       <AlertDialog.Header>
         <AlertDialog.Title
-          >Are you absolutely sure you want to delete SSH key "{name}"?</AlertDialog.Title
+          >Are you absolutely sure you want to delete {type} "{name}"?</AlertDialog.Title
         >
         <AlertDialog.Description>
-          This action cannot be undone. This will permanently delete your SSH
-          key "{name}". It cannot be deleted if there is any server associated
-          with this SSH key.
+          This action cannot be undone. This will permanently delete your {type} "{name}".
         </AlertDialog.Description>
       </AlertDialog.Header>
       <AlertDialog.Footer>
         <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-        <AlertDialog.Action onclick={deleteSSHKey} variant="destructive"
+        <AlertDialog.Action onclick={deleteServer} variant="destructive"
           >Continue</AlertDialog.Action
         >
       </AlertDialog.Footer>

@@ -62,7 +62,7 @@
       return;
     }
     creating = true;
-    const { error } = await NewRequestClient().POST("/api/ssh/add", {
+    const { error } = await NewRequestClient().POST("/api/ssh-key/add", {
       body: {
         name: sshName,
         key: sshKey,

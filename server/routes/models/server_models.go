@@ -27,12 +27,13 @@ type ServerItem struct {
 	ID        uint      `json:"id" doc:"The ID of the server"`
 	Name      string    `json:"name" doc:"The name of the server"`
 	Host      string    `json:"host" doc:"The host of the server"`
+	Trusted   bool      `json:"trusted" doc:"Whether the server is trusted"`
 	CreatedAt time.Time `json:"created_at" doc:"The creation time of the server"`
 }
 
 type ListServersResponse struct {
 	Body struct {
-		Items []ServerItem
-		Total int64 `json:"total" doc:"The total number of servers"`
+		Items []ServerItem `json:"items" doc:"The list of servers"`
+		Total int64        `json:"total" doc:"The total number of servers"`
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/ssh", api, database, []string{"SSH"})
+	server := internal.NewGroup("/ssh-key", api, database, []string{"SSH"})
 	server.Post("/add", http.StatusCreated, addSSHKey)
 	server.Get("/list", http.StatusOK, listSSHKeys)
 	server.Get("/view-key/{id}", http.StatusOK, viewSSHKey)
@@ -62,7 +62,7 @@ func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResp
 		return nil, internal.InternalServerError
 	}
 	response := &models.SSHKeyListResponse{}
-	response.Body.Items = make([]models.SSHKeyListItem, total)
+	response.Body.Items = make([]models.SSHKeyListItem, 0)
 	database.Model(&db.SSHKey{}).
 		Select("ssh_keys.id, ssh_keys.name, ssh_keys.created_at, ssh_keys.encrypted, COUNT(servers.id) AS resources_attached").
 		Joins("LEFT JOIN servers ON servers.ssh_key_id = ssh_keys.id").

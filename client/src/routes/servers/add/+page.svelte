@@ -9,6 +9,7 @@
   import Loader from "@lucide/svelte/icons/loader";
   import { toast } from "svelte-sonner";
   import * as z from "zod";
+  import ServerAddedToast from "./ServerAddedToast.svelte";
 
   let serverName = $state("");
   let host = $state("");
@@ -95,7 +96,7 @@
     }
 
     submitting = true;
-    const { data, error } = await NewRequestClient().POST("/api/servers/add", {
+    const { data, error } = await NewRequestClient().POST("/api/server/add", {
       body: {
         group_id: group,
         host: host,
@@ -110,7 +111,7 @@
       toast.error(unWrapErrorMessage(error, "Failed to add server"));
       return;
     }
-    toast.success("Server added successfully");
+    toast.success(ServerAddedToast);
     submitting = false;
     serverName = "";
     host = "";

@@ -13,9 +13,10 @@ import (
 )
 
 func registerServerRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/servers", api, database, []string{"Servers"})
+	server := internal.NewGroup("/server", api, database, []string{"Servers"})
 	server.Post("/add", http.StatusCreated, addServer)
 	server.Get("/list", http.StatusOK, listServers)
+	server.Delete("/delete/{id}", http.StatusOK, deleteServer)
 }
 
 func addServer(data internal.NormalRouteData[models.AddServerRequest]) (*models.AddServerResponse, error) {
@@ -77,14 +78,29 @@ func listServers(data internal.NormalRouteData[EmptyRR]) (*models.ListServersRes
 		return nil, internal.InternalServerError
 	}
 	response := &models.ListServersResponse{}
-	response.Body.Items = make([]models.ServerItem, total)
+	response.Body.Items = make([]models.ServerItem, 0)
 
 	database.Model(&db.Server{}).
-		Select("servers.id, servers.name, servers.host, servers.created_at").
-		Joins("LEFT JOIN groups ON servers.group_id = groups.id").
-		Group("servers.id").
+		Select("servers.id, servers.name, servers.host, servers.created_at, servers.trusted").Order("servers.id").
 		Scan(&response.Body.Items)
 	response.Body.Total = total
 
 	return response, nil
+}
+
+func deleteServer(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error) {
+	database := data.Database
+	id := data.Input.ID
+	server, err := db.FindServerByID(id, database)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, internal.NewHumaError(http.StatusNotFound, "Server does not exist")
+	}
+	if err != nil {
+		return nil, internal.InternalServerError
+	}
+	if err := database.Delete(server).Error; err != nil {
+		return nil, internal.InternalServerError
+	}
+	db.AddLog(db.Delete, "Deleted server "+server.Name+"", database)
+	return &EmptyRR{}, nil
 }

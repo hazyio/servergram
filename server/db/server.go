@@ -47,3 +47,11 @@ func FindServerByName(name string, db *gorm.DB) (*Server, error) {
 	}
 	return &server, nil
 }
+
+func FindServerByID(id uint, db *gorm.DB) (*Server, error) {
+	var server Server
+	if err := db.Where("id = ?", id).First(&server).Error; err != nil {
+		return nil, err
+	}
+	return &server, nil
+}

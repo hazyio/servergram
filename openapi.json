@@ -253,7 +253,8 @@
       "ListServersResponseBody": {
         "additionalProperties": false,
         "properties": {
-          "Items": {
+          "items": {
+            "description": "The list of servers",
             "items": {
               "$ref": "#/components/schemas/ServerItem"
             },
@@ -269,7 +270,7 @@
           }
         },
         "required": [
-          "Items",
+          "items",
           "total"
         ],
         "type": "object"
@@ -440,12 +441,17 @@
           "name": {
             "description": "The name of the server",
             "type": "string"
+          },
+          "trusted": {
+            "description": "Whether the server is trusted",
+            "type": "boolean"
           }
         },
         "required": [
           "id",
           "name",
           "host",
+          "trusted",
           "created_at"
         ],
         "type": "object"
@@ -726,9 +732,9 @@
         ]
       }
     },
-    "/api/servers/add": {
+    "/api/server/add": {
       "post": {
-        "operationId": "post-servers--add",
+        "operationId": "post-server--add",
         "requestBody": {
           "content": {
             "application/json": {
@@ -767,9 +773,47 @@
         ]
       }
     },
-    "/api/servers/list": {
+    "/api/server/delete/{id}": {
+      "delete": {
+        "operationId": "delete-server--delete-id",
+        "parameters": [
+          {
+            "description": "The ID of the current resource",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID of the current resource",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete delete by ID",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/api/server/list": {
       "get": {
-        "operationId": "get-servers--list",
+        "operationId": "get-server--list",
         "responses": {
           "200": {
             "content": {
@@ -798,9 +842,9 @@
         ]
       }
     },
-    "/api/ssh/add": {
+    "/api/ssh-key/add": {
       "post": {
-        "operationId": "post-ssh--add",
+        "operationId": "post-ssh-key--add",
         "requestBody": {
           "content": {
             "application/json": {
@@ -832,9 +876,9 @@
         ]
       }
     },
-    "/api/ssh/delete/{id}": {
+    "/api/ssh-key/delete/{id}": {
       "delete": {
-        "operationId": "delete-ssh--delete-id",
+        "operationId": "delete-ssh-key--delete-id",
         "parameters": [
           {
             "description": "The ID of the current resource",
@@ -870,9 +914,9 @@
         ]
       }
     },
-    "/api/ssh/list": {
+    "/api/ssh-key/list": {
       "get": {
-        "operationId": "get-ssh--list",
+        "operationId": "get-ssh-key--list",
         "responses": {
           "200": {
             "content": {
@@ -901,9 +945,9 @@
         ]
       }
     },
-    "/api/ssh/view-key/{id}": {
+    "/api/ssh-key/view-key/{id}": {
       "get": {
-        "operationId": "get-ssh--view-key-id",
+        "operationId": "get-ssh-key--view-key-id",
         "parameters": [
           {
             "description": "The ID of the current resource",

@@ -123,7 +123,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/servers/add": {
+    "/api/server/add": {
         parameters: {
             query?: never;
             header?: never;
@@ -133,31 +133,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Post add */
-        post: operations["post-servers--add"];
+        post: operations["post-server--add"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/ssh/add": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Post add */
-        post: operations["post-ssh--add"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ssh/delete/{id}": {
+    "/api/server/delete/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -168,13 +151,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete delete by ID */
-        delete: operations["delete-ssh--delete-id"];
+        delete: operations["delete-server--delete-id"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/ssh/list": {
+    "/api/server/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -182,7 +165,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get list */
-        get: operations["get-ssh--list"];
+        get: operations["get-server--list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -191,7 +174,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ssh/view-key/{id}": {
+    "/api/ssh-key/add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post add */
+        post: operations["post-ssh-key--add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ssh-key/delete/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete delete by ID */
+        delete: operations["delete-ssh-key--delete-id"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ssh-key/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get list */
+        get: operations["get-ssh-key--list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ssh-key/view-key/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -199,7 +233,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get view key by ID */
-        get: operations["get-ssh--view-key-id"];
+        get: operations["get-ssh-key--view-key-id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -295,7 +329,7 @@ export interface components {
         };
         GroupListResponseBody: {
             /** @description The list of groups */
-            items: components["schemas"]["Item1"][] | null;
+            items: components["schemas"]["Item"][] | null;
             /**
              * Format: int64
              * @description The total number of groups
@@ -310,6 +344,28 @@ export interface components {
         Item: {
             /** Format: date-time */
             created_at: string;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** Format: int64 */
+            resources_attached: number;
+        };
+        ListServersResponseBody: {
+            /** @description The list of servers */
+            items: components["schemas"]["ServerItem"][] | null;
+            /**
+             * Format: int64
+             * @description The total number of servers
+             */
+            total: number;
+        };
+        LoginRequestBody: {
+            /** @description The password for login */
+            password: string;
+        };
+        SSHKeyListItem: {
+            /** Format: date-time */
+            created_at: string;
             encrypted: boolean;
             /** Format: int64 */
             id: number;
@@ -317,22 +373,9 @@ export interface components {
             /** Format: int64 */
             resources_attached: number;
         };
-        Item1: {
-            /** Format: date-time */
-            created_at: string;
-            /** Format: int64 */
-            id: number;
-            name: string;
-            /** Format: int64 */
-            resources_attached: number;
-        };
-        LoginRequestBody: {
-            /** @description The password for login */
-            password: string;
-        };
         SSHKeyListResponseBody: {
             /** @description The list of SSH keys */
-            items: components["schemas"]["Item"][] | null;
+            items: components["schemas"]["SSHKeyListItem"][] | null;
             /**
              * Format: int64
              * @description The total number of SSH keys
@@ -362,6 +405,24 @@ export interface components {
              * @description The total number of search results
              */
             total: number;
+        };
+        ServerItem: {
+            /**
+             * Format: date-time
+             * @description The creation time of the server
+             */
+            created_at: string;
+            /** @description The host of the server */
+            host: string;
+            /**
+             * Format: int64
+             * @description The ID of the server
+             */
+            id: number;
+            /** @description The name of the server */
+            name: string;
+            /** @description Whether the server is trusted */
+            trusted: boolean;
         };
         ViewSSHKeyResponseBody: {
             private: string;
@@ -526,9 +587,9 @@ export interface operations {
     };
     "get-search--group": {
         parameters: {
-            query: {
+            query?: {
                 /** @description The search query */
-                query: string;
+                query?: string;
             };
             header?: never;
             path?: never;
@@ -558,9 +619,9 @@ export interface operations {
     };
     "get-search--ssh": {
         parameters: {
-            query: {
+            query?: {
                 /** @description The search query */
-                query: string;
+                query?: string;
             };
             header?: never;
             path?: never;
@@ -588,7 +649,7 @@ export interface operations {
             };
         };
     };
-    "post-servers--add": {
+    "post-server--add": {
         parameters: {
             query?: never;
             header?: never;
@@ -621,7 +682,66 @@ export interface operations {
             };
         };
     };
-    "post-ssh--add": {
+    "delete-server--delete-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-server--list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListServersResponseBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-ssh-key--add": {
         parameters: {
             query?: never;
             header?: never;
@@ -652,7 +772,7 @@ export interface operations {
             };
         };
     };
-    "delete-ssh--delete-id": {
+    "delete-ssh-key--delete-id": {
         parameters: {
             query?: never;
             header?: never;
@@ -682,7 +802,7 @@ export interface operations {
             };
         };
     };
-    "get-ssh--list": {
+    "get-ssh-key--list": {
         parameters: {
             query?: never;
             header?: never;
@@ -711,7 +831,7 @@ export interface operations {
             };
         };
     };
-    "get-ssh--view-key-id": {
+    "get-ssh-key--view-key-id": {
         parameters: {
             query?: never;
             header?: never;

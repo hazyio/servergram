@@ -13,7 +13,7 @@
   import { onMount } from "svelte";
   import appPaths from "#lib/appPaths.ts";
   import ViewKeyInfo from "./viewKeyInfo.svelte";
-  import DeleteSSHKey from "./deleteSSHKey.svelte";
+  import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
   let loading = $state(true);
   let sshKeys: components["schemas"]["SSHKeyListResponseBody"] | undefined =
     $state();
@@ -36,7 +36,7 @@
   }
   async function loadSSHKeys() {
     loading = true;
-    const { data, error } = await NewRequestClient().GET("/api/ssh/list");
+    const { data, error } = await NewRequestClient().GET("/api/ssh-key/list");
     loading = false;
     if (error) {
       loadError = true;
@@ -97,10 +97,11 @@
             </div>
             <div class="flex justify-start gap-2 flex-col">
               <ViewKeyInfo id={key.id} />
-              <DeleteSSHKey
+              <DeleteRequestDialog
                 id={key.id}
                 name={key.name}
                 onDeleted={loadSSHKeys}
+                type="ssh-key"
               />
             </div>
           </li>

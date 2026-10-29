@@ -12,7 +12,7 @@
   import Input from "#lib/components/ui/input/input.svelte";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
-  import DeleteGroup from "./deleteGroup.svelte";
+  import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
   let loading = $state(true);
   let groups: components["schemas"]["GroupListResponseBody"] | undefined =
     $state();
@@ -90,10 +90,11 @@
                 ).toLocaleString()}</small
               >
             </div>
-            <DeleteGroup
+            <DeleteRequestDialog
               id={group.id}
               name={group.name}
               onDeleted={loadGroups}
+              type="group"
             />
           </li>
         {/each}

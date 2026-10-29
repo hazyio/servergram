@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -13,24 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type RawServer struct {
-	database *gorm.DB
-	server   *http.ServeMux
-	prefix   string
-}
-
-func (s *RawServer) WebSocket[I, O any](pattern string) {
-	s.server.HandleFunc("GET "+pattern, func(w http.ResponseWriter, r *http.Request) {
-		// conn, err := websocket.Accept(w, r, nil)
-		// if err != nil {
-		// 	return
-		// }
-		// defer conn.CloseNow()
-		// read/write loop
-		w.Write([]byte("hellow"))
-	})
-}
-
 type ctxKey struct{}
 
 type NormalRouteData[I any] struct {
@@ -38,14 +19,6 @@ type NormalRouteData[I any] struct {
 	Context  *context.Context
 	Input    I
 }
-type AuthenticatedRouteData struct {
-	ResponseWriter http.ResponseWriter
-	Database       *gorm.DB
-	Service        db.Server
-}
-
-// AuthenticatedRouteHandler handles a request on behalf of an authenticated user.
-type AuthenticatedRouteHandler func(AuthenticatedRouteData)
 
 // Middleware wraps an http.Handler with additional behaviour.
 type Middleware func(http.Handler) http.Handler
@@ -129,7 +102,6 @@ func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRout
 		return resp, nil
 	})
 }
-
 func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 
@@ -153,27 +125,8 @@ func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(
 			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		find_session := db.Sessions{}
-		if err := database.Where("token = ?", HashString(c.Value)).First(&find_session).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				slog.Warn("Session not found")
-				if isNavigating(ctx) {
-
-					return
-				}
-				_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
-				return
-			}
-			slog.Error("An internal error occurred while trying to check the session", "error", err)
-			_ = huma.WriteErr(api, ctx, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-		if find_session.IsExpired() {
-			slog.Warn("Session expired")
-			if isNavigating(ctx) {
-				return
-			}
-			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
+		if !db.TokenIsValid(HashString(c.Value), database) {
+			huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 

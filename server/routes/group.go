@@ -40,6 +40,7 @@ func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*
 		slog.Error("An error occurred while saving group", "error", err)
 		return nil, internal.InternalServerError
 	}
+	db.AddLog(db.Create, "Group \""+name+"\" created", data.Database)
 
 	return &EmptyRR{}, nil
 }
@@ -95,6 +96,7 @@ func deleteGroup(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error)
 		slog.Error("An error occurred while deleting group", "error", err)
 		return nil, internal.InternalServerError
 	}
+	db.AddLog(db.Delete, "Group \""+group.Name+"\" deleted", data.Database)
 
 	return &EmptyRR{}, nil
 }

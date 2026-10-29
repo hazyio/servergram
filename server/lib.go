@@ -27,7 +27,7 @@ import (
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
 	"hazyio.com/servergram/routes"
-	"hazyio.com/servergram/routes/websockets"
+	"hazyio.com/servergram/websockets"
 )
 
 //go:embed all:dist
@@ -170,7 +170,7 @@ func InitDatabase() *gorm.DB {
 		sqlDB.SetMaxIdleConns(5)
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
-	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}); err != nil {
+	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}, db.Log{}); err != nil {
 		log.Fatal(err)
 	}
 

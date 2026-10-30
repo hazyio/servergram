@@ -86,9 +86,9 @@
                   >{key.encrypted ? "Yes" : "No"}</span
                 ></small
               >
-              <small
-                >Resources: <a href={appPaths.sshKeys.resources(key.id)}>
-                  {key.resources_attached}</a
+              <small>
+                <a href={appPaths.sshKeys.resources(key.id)}>
+                  Resources: {key.resources_attached}</a
                 ></small
               >
               <small

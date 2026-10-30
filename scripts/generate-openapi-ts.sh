@@ -2,4 +2,4 @@
 set -e
 bunx openapi-typescript \
   ../openapi.json \
-  -o ../client/src/lib/api/schema.d.ts
+  -o ../client/src/lib/types/request-schema.d.ts

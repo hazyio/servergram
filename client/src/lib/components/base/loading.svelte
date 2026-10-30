@@ -15,10 +15,10 @@
 </script>
 
 {#if loading}
-  <div class={cn("flex flex-col justify-center items-center", className)} {...restProps}>
-    <Loader class="h-1/10 w-1/10 animate-spin" />
-    {#if text}
-      <span class="ml-2">{text}</span>
-    {/if}
-  </div>
+  <!-- <div class={cn("flex flex-col justify-center items-center", className)} {...restProps}> -->
+  <Loader class={cn("h-1/10 w-1/10 animate-spin", className)} />
+  {#if text}
+    <span class="ml-2">{text}</span>
+  {/if}
+  <!-- </div> -->
 {/if}

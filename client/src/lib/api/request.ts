@@ -1,6 +1,6 @@
+import type { paths } from "#lib/types/request-schema.js";
 import { goto } from "$app/navigation";
 import createClient, { type Middleware } from "openapi-fetch";
-import type { paths } from "./schema";
 
 const authMiddleware: Middleware = {
   async onResponse({ response }) {

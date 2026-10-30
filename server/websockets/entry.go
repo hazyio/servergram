@@ -1,14 +1,12 @@
 package websockets
 
 import (
-	"net/http"
+	"context"
 
-	"gorm.io/gorm"
 	"hazyio.com/servergram/internal"
 )
 
-func RegisterWebSockets(server *http.ServeMux, database *gorm.DB) {
-	s := internal.NewRawServer("/ws", database, server)
-	s.WebSocket[any, any]("/ws")
+func RegisterWebSockets(server *internal.RawServer) {
+	server.WebSocket("/services", handleServicesWebSocket)
 
 }

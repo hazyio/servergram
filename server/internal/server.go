@@ -31,13 +31,6 @@ type Server struct {
 	prefix   string
 }
 
-func NewRawServer(prefix string, database *gorm.DB, mux *http.ServeMux) *RawServer {
-	return &RawServer{
-		database: database,
-		server:   mux,
-		prefix:   prefix,
-	}
-}
 
 // NewGroup wraps mux with a Server whose queries use pool.
 func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string) *Server {

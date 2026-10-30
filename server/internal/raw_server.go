@@ -4,32 +4,76 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
 )
 
 type RawServer struct {
-	database *gorm.DB
-	server   *http.ServeMux
-	prefix   string
+	database       *gorm.DB
+	server         *http.ServeMux
+	allowedOrigins []string
 }
-type RawServerRouteData struct {
-	ResponseWriter http.ResponseWriter
-	Database       *gorm.DB
-	Service        db.Server
+type RawServerRouteData[I any] struct {
+	Database *gorm.DB
+	Input    I
 }
 
-func (s *RawServer) WebSocket[I, O any](pattern string) {
-	// h :=
-	s.server.Handle("GET /ws"+pattern, WebSocketSessionMiddleware(s.database, func(w http.ResponseWriter, r *http.Request) {
+// WSHandler defines the type for WebSocket handlers, taking an input of type I and returning an output of type O and an error. when you return an error, the socket connection will be closed.
 
-		// conn, err := websocket.Accept(w, r, nil)
-		// if err != nil {
-		// 	return
-		// }
-		// defer conn.CloseNow()
-		// read/write loop
-		w.Write([]byte("hellow"))
+func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string) *RawServer {
+	return &RawServer{
+		database:       database,
+		server:         mux,
+		allowedOrigins: allowedOrigins,
+	}
+}
+
+func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I]) (any, error)) {
+	s.server.Handle("GET /ws"+pattern, WebSocketSessionMiddleware(s.database, func(w http.ResponseWriter, req *http.Request) {
+
+		conn, err := websocket.Accept(w, req, &websocket.AcceptOptions{
+			OriginPatterns: s.allowedOrigins,
+		})
+		if err != nil {
+			return // Accept already responded
+		}
+		defer conn.CloseNow()
+		ctx := req.Context()
+
+		for {
+			c, err := req.Cookie("session_token")
+			if err != nil {
+				conn.Close(websocket.StatusPolicyViolation, "missing session token")
+				return
+			}
+			if !db.TokenIsValid(HashString(c.Value), s.database) {
+				conn.Close(websocket.StatusPolicyViolation, "invalid session token")
+				return
+			}
+			var input I
+			if err := wsjson.Read(ctx, conn, &input); err != nil {
+				switch websocket.CloseStatus(err) {
+				case websocket.StatusNormalClosure, websocket.StatusGoingAway:
+				default:
+					slog.Error("ws read error", "error", err)
+				}
+				return
+			}
+			output, err := handle(RawServerRouteData[I]{
+				Database: s.database,
+				Input:    input,
+			})
+			if err != nil {
+				conn.Close(websocket.StatusInternalError, "function errored, closing connection")
+				return
+			}
+			if output != nil {
+				wsjson.Write(ctx, conn, output)
+			}
+		}
+
 	}))
 }
 

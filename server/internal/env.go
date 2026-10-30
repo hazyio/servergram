@@ -71,7 +71,6 @@ func LoadEnv() Env {
 	}
 
 	env := Env{
-
 		DatabaseUrl:         os.Getenv("DATABASE_URL"),
 		ServerPort:          os.Getenv("SERVER_PORT"),
 		AllowedOrigins:      strings.Split(os.Getenv("ALLOWED_ORIGINS"), ","),

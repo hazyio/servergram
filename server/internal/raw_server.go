@@ -20,8 +20,6 @@ type RawServerRouteData[I any] struct {
 	Input    I
 }
 
-// WSHandler defines the type for WebSocket handlers, taking an input of type I and returning an output of type O and an error. when you return an error, the socket connection will be closed.
-
 func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string) *RawServer {
 	return &RawServer{
 		database:       database,
@@ -30,6 +28,7 @@ func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string
 	}
 }
 
+// WSHandler defines the type for WebSocket handlers, taking an input of type I and returning an output of type O and an error. when you return an error, the socket connection will be closed.
 func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I]) (any, error)) {
 	s.server.Handle("GET /ws"+pattern, WebSocketSessionMiddleware(s.database, func(w http.ResponseWriter, req *http.Request) {
 
@@ -37,6 +36,8 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 			OriginPatterns: s.allowedOrigins,
 		})
 		if err != nil {
+			slog.Error("ws accept error", "error", err)
+
 			return // Accept already responded
 		}
 		defer conn.CloseNow()

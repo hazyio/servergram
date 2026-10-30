@@ -1,10 +1,10 @@
-<script lang="ts">
+<script lang="ts" module>
   import * as Popover from "#lib/components/ui/popover/index.js";
   import * as Tabs from "#lib/components/ui/tabs/index.js";
+  import { getWebSocketUrl } from "#lib/utils.ts";
   import { Button } from "../../ui/button";
-  import Loading from "../loading.svelte";
   import ServiceItem, { type ServiceItemProps } from "./ServiceItem.svelte";
-
+  let ws: WebSocket;
   let open = $state(true);
   let keepOpened = $state(true);
   let services: ServiceItemProps[] = $state([
@@ -19,6 +19,29 @@
       status: "pending",
     },
   ]);
+  export function connect(serviceId: number) {
+    if (ws && ws.OPEN && ws.CONNECTING) {
+      console.log("WebSocket already open");
+      return;
+    }
+    ws = new WebSocket(getWebSocketUrl("/ws/services"));
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ serviceId, text: "hello" }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("got:", data);
+    };
+
+    ws.onerror = (e) => console.error("ws error", e);
+
+    ws.onclose = (e) => console.log("closed", e.code, e.reason);
+
+    // later
+    // ws.close(1000, "bye"); 
+  }
 </script>
 
 <div
@@ -64,7 +87,6 @@
           {/each}
         </Tabs.Content>
         <Tabs.Content value="pending">
-     
           {#each services.filter((s) => s.status === "pending") as service (service.id)}
             <ServiceItem
               id={service.id}

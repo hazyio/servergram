@@ -6,7 +6,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import CreateSHHKey from "./createSHHKey.svelte";
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/api/schema.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import Badge from "#lib/components/ui/badge/badge.svelte";
 
   let availableSSHKeys: components["schemas"]["SSHKeySearchData"][] = $state(

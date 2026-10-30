@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/api/schema.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import Error from "#lib/components/base/error.svelte";
   import CreateSSHKey from "#lib/components/base/ssh/createSHHKey.svelte";
   import Loading from "#lib/components/base/loading.svelte";

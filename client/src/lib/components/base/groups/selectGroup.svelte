@@ -6,7 +6,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import CreateGroup from "./createGroup.svelte";
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/api/schema.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
 
   let availableGroups: components["schemas"]["GroupSearchData"][] = $state([]);
   let searchQuery = $state("");

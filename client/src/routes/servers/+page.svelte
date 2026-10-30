@@ -1,6 +1,6 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/api/schema.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import appPaths from "#lib/appPaths.ts";
   import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
   import Error from "#lib/components/base/error.svelte";
@@ -13,6 +13,7 @@
   import { page } from "$app/state";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
+  import { connect } from "#lib/components/base/services/connectedServices.svelte";
   let sortDirection: SortDirection = $state("asc");
   let sortValue: "Name" | "Date" | "Size" = $state("Name");
   let loading = $state(true);
@@ -101,6 +102,9 @@
                 ).toLocaleString()}</small
               >
             </div>
+            <Button onclick={() => {
+              connect(server.id)
+            }}>Connect</Button>
             <DeleteRequestDialog
               id={server.id}
               name={server.name}

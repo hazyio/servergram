@@ -12,6 +12,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/ws/": {
+        target: "https://localhost:9788",
+        changeOrigin: true,
+        secure: false, // accept your self-signed cert
+        ws: true, // proxy the Upgrade request
+      },
     },
     https: {
       cert: fs.readFileSync("../certs/localhost+2.pem"),

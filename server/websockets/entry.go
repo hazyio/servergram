@@ -1,8 +1,6 @@
 package websockets
 
 import (
-	"context"
-
 	"hazyio.com/servergram/internal"
 )
 

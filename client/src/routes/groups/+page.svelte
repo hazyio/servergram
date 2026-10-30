@@ -1,6 +1,6 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/api/schema.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import appPaths from "#lib/appPaths.ts";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";

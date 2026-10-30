@@ -8,23 +8,26 @@ import (
 	"github.com/coder/websocket/wsjson"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/db"
+	"hazyio.com/servergram/internal/sshmanager"
 )
 
 type RawServer struct {
 	database       *gorm.DB
 	server         *http.ServeMux
 	allowedOrigins []string
+	SSHManager     *sshmanager.SSHManager
 }
 type RawServerRouteData[I any] struct {
 	Database *gorm.DB
 	Input    I
 }
 
-func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string) *RawServer {
+func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string, sshManager *sshmanager.SSHManager) *RawServer {
 	return &RawServer{
 		database:       database,
 		server:         mux,
 		allowedOrigins: allowedOrigins,
+		SSHManager:     sshManager,
 	}
 }
 

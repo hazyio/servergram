@@ -6,7 +6,7 @@
   import SideBarContainer from "#lib/components/base/sidebar/sideBarContainer.svelte";
   import appPaths from "#lib/appPaths.ts";
   import { page } from "$app/state";
-  import ConnectedServices from "#lib/components/base/services/connectedServices.svelte";
+  import ConnectedServices from "#lib/components/base/services/ConnectedServices.svelte";
 
   let { children }: LayoutProps = $props();
   const homeBreadcrumbs = [

@@ -8,49 +8,57 @@
     value: T;
     direction: SortDirection;
     items: T[];
-    onSelect?: (value: T, direction: SortDirection) => void;
   }
-  let { value, items, direction, onSelect }: SortOption<any> = $props();
+  let {
+    value = $bindable(),
+    items,
+    direction = $bindable("asc"),
+  }: SortOption<any> = $props();
 </script>
 
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger>
-      <Button variant="outline"><SlidersHorizontal /> {value}</Button>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content>
-      <DropdownMenu.Group>
-        {#each items as item}
-          <DropdownMenu.Item
-            class="flex justify-between items-center"
-            onclick={() => onSelect?.(item, direction)}
-            ><span>{item}</span>{#if item === value}
-              <Check />
-            {/if}</DropdownMenu.Item
-          >
-        {/each}
-      </DropdownMenu.Group>
-      <DropdownMenu.Separator />
-      <DropdownMenu.Group>
+<DropdownMenu.Root>
+  <DropdownMenu.Trigger>
+    <Button variant="outline"><SlidersHorizontal /> {value}</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Group>
+      {#each items as item}
         <DropdownMenu.Item
           class="flex justify-between items-center"
-          onclick={() => onSelect?.(value, "asc")}
-        >
-          <span>Ascending</span>
-          {#if direction === "asc"}
+          onclick={() => {
+            value = item;
+          }}
+          ><span>{item}</span>{#if item === value}
             <Check />
-          {/if}
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          class="flex justify-between items-center"
-          onclick={() => onSelect?.(value, "desc")}
+          {/if}</DropdownMenu.Item
         >
-          <span>Descending</span>
+      {/each}
+    </DropdownMenu.Group>
+    <DropdownMenu.Separator />
+    <DropdownMenu.Group>
+      <DropdownMenu.Item
+        class="flex justify-between items-center"
+        onclick={() => {
+          direction = "asc";
+        }}
+      >
+        <span>Ascending</span>
+        {#if direction === "asc"}
+          <Check />
+        {/if}
+      </DropdownMenu.Item>
+      <DropdownMenu.Item
+        class="flex justify-between items-center"
+        onclick={() => {
+          direction = "desc";
+        }}
+      >
+        <span>Descending</span>
 
-          {#if direction === "desc"}
-            <Check />
-          {/if}
-        </DropdownMenu.Item>
-      </DropdownMenu.Group>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-    
+        {#if direction === "desc"}
+          <Check />
+        {/if}
+      </DropdownMenu.Item>
+    </DropdownMenu.Group>
+  </DropdownMenu.Content>
+</DropdownMenu.Root>

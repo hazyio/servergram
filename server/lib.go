@@ -26,6 +26,7 @@ import (
 
 	"hazyio.com/servergram/db"
 	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/internal/sshmanager"
 	"hazyio.com/servergram/routes"
 	"hazyio.com/servergram/websockets"
 )
@@ -53,10 +54,10 @@ func NewRouter(database *gorm.DB) *http.Server {
 			MinVersion: tls.VersionTLS12,
 		},
 	}
-
+	ssh_manager := sshmanager.NewSSHManager()
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
-	raw_server := internal.NewRawServer(database, mux, env.AllowedOrigins)
+	raw_server := internal.NewRawServer(database, mux, env.AllowedOrigins, ssh_manager)
 	api := humago.New(mux, config)
 	apiUmbrella := huma.NewGroup(api, "/api")
 

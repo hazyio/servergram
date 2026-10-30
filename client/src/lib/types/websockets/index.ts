@@ -3,8 +3,26 @@
 //////////
 // source: server_models.go
 
-export type ServerMessage = string;
-export const Add: ServerMessage = "add";
-export interface ServerWebSocketMessages {
-  message: ServerMessage;
+export type WebSocketServiceMessage = string;
+export const Connect: WebSocketServiceMessage = "connect";
+export const PassPhraseRequired: WebSocketServiceMessage = "pass_phrase_required";
+export const Error: WebSocketServiceMessage = "error";
+export interface ConnectServerWSMessage {
+  id: number /* uint */;
+}
+export interface PassPhraseRequiredWSData {
+  id: number /* uint */;
+  name: any;
+}
+export type ServiceWSMessage = WebSocketMessage<WebSocketServiceMessage>;
+
+//////////
+// source: shared.go
+
+export interface WebSocketMessage<A extends any> {
+  action: A;
+  data: any;
+}
+export interface WSError {
+  message: string;
 }

@@ -16,7 +16,7 @@ func startServer() {
 
 	initLogger()
 	database := InitDatabase()
-
+	
 	router := NewRouter(database)
 	slog.Info("Starting server at https://localhost:" + env.ServerPort)
 	// tls certificate and key are provided by the server configuration, so empty strings are passed here

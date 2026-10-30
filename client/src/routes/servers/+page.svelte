@@ -13,7 +13,7 @@
   import { page } from "$app/state";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
-  import { connect } from "#lib/components/base/services/connectedServices.svelte";
+  import { startServerConnection } from "#lib/components/base/services/services.svelte.ts";
   let sortDirection: SortDirection = $state("asc");
   let sortValue: "Name" | "Date" | "Size" = $state("Name");
   let loading = $state(true);
@@ -60,16 +60,18 @@
 
 <div class="p-2">
   <div class="flex gap-2">
-    <Input placeholder="Search..." oninput={updateSearch} />
+    <Input
+      name="filter-servers"
+      placeholder="Search..."
+      autocomplete="off"
+      type="search"
+      oninput={updateSearch}
+      bind:value={search}
+    />
     <Sort
-      value={sortValue}
+      bind:value={sortValue}
       items={["Name", "Date", "Size"]}
-      direction={sortDirection}
-      onSelect={(value, direction) => {
-        console.log(`Selected sort: ${value} ${direction}`);
-        sortValue = value;
-        sortDirection = direction;
-      }}
+      bind:direction={sortDirection}
     />
     <Button variant="secondary" onclick={loadServers}><RefreshCw /></Button>
 
@@ -102,9 +104,11 @@
                 ).toLocaleString()}</small
               >
             </div>
-            <Button onclick={() => {
-              connect(server.id)
-            }}>Connect</Button>
+            <Button
+              onclick={() => {
+                startServerConnection(server.id);
+              }}>Connect</Button
+            >
             <DeleteRequestDialog
               id={server.id}
               name={server.name}

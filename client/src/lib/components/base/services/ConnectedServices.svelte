@@ -19,10 +19,10 @@
   import CollectPassPhrase from "./CollectPassPhrase.svelte";
   import ServiceItem, { type ServiceItemProps } from "./ServiceItem.svelte";
   import {
+    checkWs,
     servicesState,
     startWebSocket,
     stopWebSocket,
-    checkWs,
   } from "./services.svelte.ts";
 
   let open = $state(false);
@@ -65,9 +65,6 @@
 </script>
 
 <CollectPassPhrase bind:data={collectPassPhraseFor} />
-<div
-  class=" fixed bottom-2 right-2 rounded-full p-3 h-15 w-15 flex justify-center items-center"
->
   <Popover.Root
     {open}
     onOpenChange={(value) => {
@@ -78,7 +75,7 @@
       ><Button
         title={servicesState.error ? servicesState.error : "connected services"}
         variant={servicesState.error ? "destructive" : "outline"}
-        class="h-15 w-15 rounded-full"
+        class="h-10 w-10 rounded-md"
         onclick={() => {
           checkWs();
         }}
@@ -145,4 +142,3 @@
       {/if}
     </Popover.Content>
   </Popover.Root>
-</div>

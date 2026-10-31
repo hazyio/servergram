@@ -6,23 +6,26 @@ import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 
 const columnHelper = createColumnHelper<
   DataTableFeatures,
-  components["schemas"]["Item"]
+  components["schemas"]["LogListItem"]
 >();
 
 export const getColumns = () =>
   columnHelper.columns([
-    columnHelper.accessor("name", {
+    columnHelper.accessor("action", {
       header: ({ column }) =>
         renderComponent(SortableTableHeader, {
-          text: "Name",
+          text: "Action",
           onclick: column.getToggleSortingHandler(),
         }),
     }),
- 
+    columnHelper.accessor("message", {
+      header: "Message",
+    }),
+
     columnHelper.accessor("created_at", {
       header: ({ column }) =>
         renderComponent(SortableTableHeader, {
-          text: "Created",
+          text: "Time",
           onclick: column.getToggleSortingHandler(),
         }),
       cell: ({ row }) =>
@@ -30,5 +33,4 @@ export const getColumns = () =>
           datetime: row.original.created_at,
         }),
     }),
-    
   ]);

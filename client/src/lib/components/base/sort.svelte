@@ -6,19 +6,30 @@
   export type SortDirection = "asc" | "desc";
   interface SortOption<T> {
     value: T;
-    direction: SortDirection;
+    direction?: SortDirection;
     items: T[];
+    capitalize?: boolean;
+    caption?: string;
+    onChange?: (value: T, direction?: SortDirection) => void;
   }
   let {
     value = $bindable(),
     items,
-    direction = $bindable("asc"),
+    direction = $bindable(undefined),
+    capitalize = true,
+    caption = "Sort",
+    onChange,
   }: SortOption<any> = $props();
 </script>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger>
-    <Button variant="outline"><SlidersHorizontal /> {value}</Button>
+  <DropdownMenu.Trigger title={caption}>
+    <Button variant="outline"
+      ><SlidersHorizontal />
+      {capitalize
+        ? value.charAt(0).toUpperCase() + value.slice(1)
+        : value}</Button
+    >
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     <DropdownMenu.Group>
@@ -27,38 +38,48 @@
           class="flex justify-between items-center"
           onclick={() => {
             value = item;
+            onChange?.(value, direction);
           }}
-          ><span>{item}</span>{#if item === value}
+          ><span
+            >{capitalize
+              ? item.charAt(0).toUpperCase() + item.slice(1)
+              : item}</span
+          >{#if item === value}
             <Check />
           {/if}</DropdownMenu.Item
         >
       {/each}
     </DropdownMenu.Group>
-    <DropdownMenu.Separator />
-    <DropdownMenu.Group>
-      <DropdownMenu.Item
-        class="flex justify-between items-center"
-        onclick={() => {
-          direction = "asc";
-        }}
-      >
-        <span>Ascending</span>
-        {#if direction === "asc"}
-          <Check />
-        {/if}
-      </DropdownMenu.Item>
-      <DropdownMenu.Item
-        class="flex justify-between items-center"
-        onclick={() => {
-          direction = "desc";
-        }}
-      >
-        <span>Descending</span>
+    {#if direction !== undefined}
+      <DropdownMenu.Separator />
 
-        {#if direction === "desc"}
-          <Check />
-        {/if}
-      </DropdownMenu.Item>
-    </DropdownMenu.Group>
+      <DropdownMenu.Group>
+        <DropdownMenu.Item
+          class="flex justify-between items-center"
+          onclick={() => {
+            direction = "asc";
+            onChange?.(value, direction);
+          }}
+        >
+          <span>{capitalize ? "Ascending" : "Ascending"}</span>
+          {#if direction === "asc"}
+            <Check />
+          {/if}
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          class="flex justify-between items-center"
+          onclick={() => {
+            direction = "desc";
+            onChange?.(value, direction);
+          }}
+        >
+          <span>{capitalize ? "Descending" : "Descending"}</span>
+
+          {#if direction === "desc"}
+            <Check />
+          {/if}
+        </DropdownMenu.Item>
+      </DropdownMenu.Group>
+    {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

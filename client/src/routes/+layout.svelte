@@ -1,12 +1,11 @@
 <script lang="ts">
-  import "./layout.css";
-  import favicon from "#lib/assets/favicon.svg";
-  import type { LayoutProps } from "./$types";
-  import { Toaster } from "#lib/components/ui/sonner/index.ts";
-  import SideBarContainer from "#lib/components/base/sidebar/sideBarContainer.svelte";
   import appPaths from "#lib/appPaths.ts";
+  import favicon from "#lib/assets/favicon.svg";
+  import SideBarContainer from "#lib/components/base/sidebar/sideBarContainer.svelte";
+  import { Toaster } from "#lib/components/ui/sonner/index.ts";
   import { page } from "$app/state";
-  import ConnectedServices from "#lib/components/base/services/ConnectedServices.svelte";
+  import type { LayoutProps } from "./$types";
+  import "./layout.css";
 
   let { children }: LayoutProps = $props();
   const homeBreadcrumbs = [
@@ -111,6 +110,5 @@
     ]}
   >
     {@render children()}
-    <ConnectedServices />
   </SideBarContainer>
 {/if}

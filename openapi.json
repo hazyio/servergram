@@ -263,6 +263,62 @@
         ],
         "type": "object"
       },
+      "LogListItem": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "message",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "LogListResponseBody": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LogListItem"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "next_index": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "previous_index": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "next_index",
+          "previous_index"
+        ],
+        "type": "object"
+      },
       "LoginRequestBody": {
         "additionalProperties": false,
         "properties": {
@@ -623,6 +679,65 @@
         "summary": "Get list",
         "tags": [
           "Groups"
+        ]
+      }
+    },
+    "/api/logs/list": {
+      "get": {
+        "operationId": "get-logs--list",
+        "parameters": [
+          {
+            "description": "The start index for collecting logs",
+            "explode": false,
+            "in": "query",
+            "name": "start-index",
+            "required": true,
+            "schema": {
+              "description": "The start index for collecting logs",
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The maximum number of logs to return",
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "required": true,
+            "schema": {
+              "description": "The maximum number of logs to return",
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogListResponseBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get list",
+        "tags": [
+          "Logs"
         ]
       }
     },

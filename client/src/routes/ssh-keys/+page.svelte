@@ -6,19 +6,17 @@
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import type { components } from "#lib/types/request-schema.d.ts";
-  import { page } from "$app/state";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
 
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import * as Table from "#lib/components/ui/table/index.js";
   import { createTable, FlexRender } from "@tanstack/svelte-table";
   import { getColumns } from "./columns.js";
-  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
 
   let loading = $state(true);
   let sshKeys: components["schemas"]["SSHKeyListResponseBody"] | undefined =
     $state();
-  let search = $state(page.url.searchParams.get("search") ?? "");
 
   let loadError = $state(false);
 
@@ -56,7 +54,6 @@
   <div class="flex gap-2 justify-center items-center">
     <Input
       placeholder="Search SSH keys by name..."
-      bind:value={search}
       onchange={(e) => {
         table.getColumn("name")?.setFilterValue(e.currentTarget.value);
       }}

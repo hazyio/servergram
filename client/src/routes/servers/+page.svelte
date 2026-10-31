@@ -1,36 +1,23 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/types/request-schema.d.ts";
   import appPaths from "#lib/appPaths.ts";
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import Error from "#lib/components/base/error.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import * as Table from "#lib/components/ui/table/index.js";
-  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
-  import { onMount } from "svelte";
   import { createTable, FlexRender } from "@tanstack/svelte-table";
+  import { onMount } from "svelte";
   import { getColumns } from "./columns.js";
 
   let loading = $state(true);
   let servers: components["schemas"]["ListServersResponseBody"] | undefined =
     $state();
   let loadError = $state(false);
-  let search = $state(page.url.searchParams.get("search") ?? "");
-  function updateSearch(event: Event) {
-    const value = (event.currentTarget as HTMLInputElement).value;
-    table.getColumn("name")?.setFilterValue(value);
-    const url = new URL(page.url.href);
-    if (value) {
-      url.searchParams.set("search", value);
-    } else {
-      url.searchParams.delete("search");
-    }
-    goto(url, { state: page.state, shallow: true, replace: true });
-  }
+
   async function loadServers() {
     loading = true;
     const { data, error } = await NewRequestClient().GET("/api/server/list");
@@ -51,7 +38,6 @@
     columns,
   });
   onMount(() => {
-    table.getColumn("name")?.setFilterValue(search);
     loadServers();
   });
 </script>
@@ -71,8 +57,12 @@
       placeholder="Search..."
       autocomplete="off"
       type="search"
-      oninput={updateSearch}
-      bind:value={search}
+      onchange={(e) => {
+        table.getColumn("name")?.setFilterValue(e.currentTarget.value);
+      }}
+      oninput={(e) => {
+        table.getColumn("name")?.setFilterValue(e.currentTarget.value);
+      }}
     />
     <Button variant="secondary" onclick={loadServers}><RefreshCw /></Button>
 

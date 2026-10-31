@@ -36,6 +36,12 @@ func NewHumaError(status int, message string) error {
 		Detail: message,
 	}
 }
+func NewBadRequestError(message string) error {
+	return NewHumaError(http.StatusBadRequest, message)
+}
+func NewUnauthorizedError(message string) error {
+	return NewHumaError(http.StatusUnauthorized, message)
+}
 
 func ToHumaError(err error) error {
 	// Already a Huma error: pass through untouched.

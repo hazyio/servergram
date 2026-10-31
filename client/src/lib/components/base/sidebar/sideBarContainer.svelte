@@ -6,6 +6,7 @@
   import AppSidebar from "./appSideBar.svelte";
   import type { Snippet } from "svelte";
   import type { SideBarItem } from "./appSideBar.svelte";
+  import ConnectedServices from "../services/ConnectedServices.svelte";
 
   let {
     children,
@@ -51,7 +52,7 @@
 <Sidebar.Provider>
   <AppSidebar items={sideBarItems} />
   <Sidebar.Inset>
-    <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+    <header class="flex flex-col h-16 shrink-0 items-center gap-2 border-b px-4">
       <Sidebar.Trigger class="-ms-1" />
       <Separator
         orientation="vertical"
@@ -80,6 +81,7 @@
           </Breadcrumb.List>
         </Breadcrumb.Root>
       {/if}
+      <ConnectedServices />
     </header>
     {@render children?.()}
   </Sidebar.Inset>

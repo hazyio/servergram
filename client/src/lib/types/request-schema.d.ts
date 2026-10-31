@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/logs/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get list */
+        get: operations["get-logs--list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/group": {
         parameters: {
             query?: never;
@@ -349,6 +366,20 @@ export interface components {
             /** @description The list of servers */
             items: components["schemas"]["ServerItem"][] | null;
         };
+        LogListItem: {
+            action: string;
+            created_at: string;
+            /** Format: int64 */
+            id: number;
+            message: string;
+        };
+        LogListResponseBody: {
+            items: components["schemas"]["LogListItem"][] | null;
+            /** Format: int64 */
+            next_index: number;
+            /** Format: int64 */
+            previous_index: number;
+        };
         LoginRequestBody: {
             /** @description The password for login */
             password: string;
@@ -557,6 +588,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupListResponseBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-logs--list": {
+        parameters: {
+            query: {
+                /** @description The start index for collecting logs */
+                "start-index": number;
+                /** @description The maximum number of logs to return */
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogListResponseBody"];
                 };
             };
             /** @description Error */

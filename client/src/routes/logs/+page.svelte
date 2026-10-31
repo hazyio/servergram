@@ -1,58 +1,57 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
-  import type { components } from "#lib/types/request-schema.d.ts";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import Error from "#lib/components/base/error.svelte";
-  import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
+  import Sort from "#lib/components/base/sort.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import * as Table from "#lib/components/ui/table/index.js";
-  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
-  import { onMount } from "svelte";
   import { createTable, FlexRender } from "@tanstack/svelte-table";
+  import { onMount } from "svelte";
   import { getColumns } from "./columns.js";
 
   let loading = $state(true);
-  let groups: components["schemas"]["GroupListResponseBody"] | undefined =
-    $state();
+  let logs: components["schemas"]["LogListResponseBody"] | undefined = $state();
+  let sortOption = $state<"all" | "delete" | "create" | "add" | "update">(
+    "all",
+  );
   let loadError = $state(false);
-  let search = $state(page.url.searchParams.get("search") ?? "");
-  function updateSearch(event: Event) {
-    const value = (event.currentTarget as HTMLInputElement).value;
-    table.getColumn("name")?.setFilterValue(value);
-    const url = new URL(page.url.href);
-    if (value) {
-      url.searchParams.set("search", value);
-    } else {
-      url.searchParams.delete("search");
-    }
-    goto(url, { state: page.state, shallow: true, replace: true });
-  }
-  async function loadGroups() {
+  let startIndex = $state(1);
+  let previousIndex = $state(0);
+  let loadLimit = $state(10);
+  async function loadLogs() {
     loading = true;
-    const { data, error } = await NewRequestClient().GET("/api/group/list");
+    const { data, error } = await NewRequestClient().GET("/api/logs/list", {
+      params: {
+        query: {
+          "start-index": startIndex,
+          limit: loadLimit,
+        },
+      },
+    });
     loading = false;
     if (error) {
       loadError = true;
       return;
     }
     loadError = false;
-    groups = data;
+    logs = data;
+    startIndex = data?.next_index ?? startIndex;
+    previousIndex = data?.previous_index ?? previousIndex;
   }
   const columns = getColumns();
   const table = createTable({
     features: dataTableFeatures,
     get data() {
-      return groups?.items ?? [];
+      return logs?.items ?? [];
     },
     columns,
   });
   onMount(() => {
-    table.getColumn("name")?.setFilterValue(search);
-    loadGroups();
+    loadLogs();
   });
 </script>
 
@@ -67,22 +66,55 @@
 <div class="p-2">
   <div class="flex gap-2 justify-center items-center">
     <Input
-      placeholder="Search groups..."
-      bind:value={search}
-      oninput={updateSearch}
+      placeholder="Search logs..."
+      onchange={(e) => {
+        table.getColumn("message")?.setFilterValue(e.currentTarget.value);
+      }}
+      oninput={(e) => {
+        table.getColumn("message")?.setFilterValue(e.currentTarget.value);
+      }}
     />
-    <Button variant="secondary" onclick={loadGroups}><RefreshCw /></Button>
-    <CreateGroup text="Create Group" onCreated={loadGroups} />
+    <Button variant="secondary" onclick={loadLogs}><RefreshCw /></Button>
+    <Sort
+      items={["all", "delete", "create", "add", "update"]}
+      bind:value={sortOption}
+      caption="Sort logs"
+      onChange={(value) => {
+        table
+          .getColumn("action")
+          ?.setFilterValue(value === "all" ? undefined : value);
+      }}
+    />
+    <Button
+      variant="outline"
+      onclick={() => {
+        startIndex = previousIndex;
+        loadLogs();
+      }}
+      disabled={previousIndex === 0}
+    >
+      Previous
+    </Button>
+    <Button
+      variant="outline"
+      onclick={() => {
+        loadLogs();
+      }}
+      disabled={logs?.items?.length === 0 ||
+        (logs?.items?.length ?? 0) < loadLimit}
+    >
+      Next
+    </Button>
   </div>
   <Loading class="mt-20" {loading} text="Loading..." />
-  {#if (loadError || !groups) && !loading}
+  {#if (loadError || !logs) && !loading}
     <Error
-      title="Failed to load groups"
-      message="An error occurred while fetching the group list."
-      onRetry={loadGroups}
+      title="Failed to load logs"
+      message="An error occurred while fetching the log list."
+      onRetry={loadLogs}
     />
-  {:else if groups && !loading}
-    <div class="rounded-md border mt-12">
+  {:else if logs && !loading}
+    <div class="mt-7 rounded-md border">
       <Table.Root>
         <Table.Header>
           {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
@@ -109,32 +141,12 @@
           {:else}
             <Table.Row>
               <Table.Cell colspan={columns.length} class="h-24 text-center">
-                {groups.items?.length
-                  ? "No matching groups."
-                  : "No groups yet. Create a group to organize related servers."}
+                {logs.items?.length ? "No matching logs." : "No logs yet."}
               </Table.Cell>
             </Table.Row>
           {/each}
         </Table.Body>
       </Table.Root>
-      <div class="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div>
     </div>
   {/if}
 </div>

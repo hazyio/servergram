@@ -3,6 +3,7 @@ import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
 import ServerActions from "./ServerActions.svelte";
+import TimeAgo from "#lib/components/base/TimeAgo.svelte";
 
 const columnHelper = createColumnHelper<
   DataTableFeatures,
@@ -19,11 +20,7 @@ export const getColumns = (onDeleted: () => void) =>
         }),
     }),
     columnHelper.accessor("host", {
-      header: ({ column }) =>
-        renderComponent(SortableTableHeader, {
-          text: "Host",
-          onclick: column.getToggleSortingHandler(),
-        }),
+      header: "Host",
     }),
     columnHelper.accessor("trusted", {
       header: "Trusted",
@@ -35,7 +32,11 @@ export const getColumns = (onDeleted: () => void) =>
           text: "Created",
           onclick: column.getToggleSortingHandler(),
         }),
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleString(),
+      cell: ({ row }) => {
+        return renderComponent(TimeAgo, {
+          datetime: row.original.created_at,
+        });
+      },
     }),
     columnHelper.display({
       id: "actions",

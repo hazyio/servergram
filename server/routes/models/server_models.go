@@ -34,6 +34,5 @@ type ServerItem struct {
 type ListServersResponse struct {
 	Body struct {
 		Items []ServerItem `json:"items" doc:"The list of servers"`
-		Total int64        `json:"total" doc:"The total number of servers"`
 	}
 }

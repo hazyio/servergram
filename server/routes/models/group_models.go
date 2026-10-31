@@ -15,6 +15,5 @@ type GroupListResponse struct {
 			CreatedAt         time.Time `json:"created_at"`
 			ResourcesAttached uint      `json:"resources_attached"`
 		} `json:"items" required:"true" doc:"The list of groups"`
-		Total int64 `json:"total" required:"true" doc:"The total number of groups"`
 	}
 }

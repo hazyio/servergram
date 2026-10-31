@@ -69,7 +69,6 @@ func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResp
 		Group("ssh_keys.id").
 		Scan(&response.Body.Items)
 
-	response.Body.Total = total
 
 	return response, nil
 }

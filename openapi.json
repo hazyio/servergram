@@ -190,16 +190,10 @@
               "array",
               "null"
             ]
-          },
-          "total": {
-            "description": "The total number of groups",
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": [
-          "items",
-          "total"
+          "items"
         ],
         "type": "object"
       },
@@ -262,16 +256,10 @@
               "array",
               "null"
             ]
-          },
-          "total": {
-            "description": "The total number of servers",
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": [
-          "items",
-          "total"
+          "items"
         ],
         "type": "object"
       },
@@ -335,16 +323,10 @@
               "array",
               "null"
             ]
-          },
-          "total": {
-            "description": "The total number of SSH keys",
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": [
-          "items",
-          "total"
+          "items"
         ],
         "type": "object"
       },

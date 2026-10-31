@@ -47,25 +47,20 @@ func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*
 
 func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListResponse, error) {
 	database := data.Database
-	var total int64
-	if err := database.Model(&db.Group{}).Count(&total).Error; err != nil {
-		slog.Error("count groups failed", "error", err)
-		return nil, internal.InternalServerError
-	}
+
 	response := &models.GroupListResponse{}
 	response.Body.Items = make([]struct {
 		Id                uint      `json:"id"`
 		Name              string    `json:"name"`
 		CreatedAt         time.Time `json:"created_at"`
 		ResourcesAttached uint      `json:"resources_attached"`
-	}, total)
+	}, 0)
 
 	database.Model(&db.Group{}).
 		Select("groups.id, groups.name, groups.created_at, COUNT(servers.id) AS resources_attached").
 		Joins("LEFT JOIN servers ON servers.group_id = groups.id").
 		Group("groups.id").
 		Scan(&response.Body.Items)
-	response.Body.Total = total
 
 	return response, nil
 }

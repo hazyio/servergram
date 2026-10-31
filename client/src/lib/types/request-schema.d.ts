@@ -330,11 +330,6 @@ export interface components {
         GroupListResponseBody: {
             /** @description The list of groups */
             items: components["schemas"]["Item"][] | null;
-            /**
-             * Format: int64
-             * @description The total number of groups
-             */
-            total: number;
         };
         GroupSearchData: {
             /** Format: int64 */
@@ -353,11 +348,6 @@ export interface components {
         ListServersResponseBody: {
             /** @description The list of servers */
             items: components["schemas"]["ServerItem"][] | null;
-            /**
-             * Format: int64
-             * @description The total number of servers
-             */
-            total: number;
         };
         LoginRequestBody: {
             /** @description The password for login */
@@ -376,11 +366,6 @@ export interface components {
         SSHKeyListResponseBody: {
             /** @description The list of SSH keys */
             items: components["schemas"]["SSHKeyListItem"][] | null;
-            /**
-             * Format: int64
-             * @description The total number of SSH keys
-             */
-            total: number;
         };
         SSHKeySearchData: {
             encrypted: boolean;

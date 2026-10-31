@@ -32,7 +32,6 @@ type SSHKeyListItem struct {
 type SSHKeyListResponse struct {
 	Body struct {
 		Items []SSHKeyListItem `json:"items" required:"true" doc:"The list of SSH keys"`
-		Total int64            `json:"total" required:"true" doc:"The total number of SSH keys"`
 	}
 }
 

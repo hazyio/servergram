@@ -2,7 +2,6 @@ package routes
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -72,18 +71,13 @@ func addServer(data internal.NormalRouteData[models.AddServerRequest]) (*models.
 
 func listServers(data internal.NormalRouteData[EmptyRR]) (*models.ListServersResponse, error) {
 	database := data.Database
-	var total int64
-	if err := database.Model(&db.Server{}).Count(&total).Error; err != nil {
-		slog.Error("count servers failed", "error", err)
-		return nil, internal.InternalServerError
-	}
+
 	response := &models.ListServersResponse{}
 	response.Body.Items = make([]models.ServerItem, 0)
 
 	database.Model(&db.Server{}).
 		Select("servers.id, servers.name, servers.host, servers.created_at, servers.trusted").Order("servers.id").
 		Scan(&response.Body.Items)
-	response.Body.Total = total
 
 	return response, nil
 }

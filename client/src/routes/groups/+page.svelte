@@ -1,30 +1,28 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
   import type { components } from "#lib/types/request-schema.d.ts";
-  import appPaths from "#lib/appPaths.ts";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import Error from "#lib/components/base/error.svelte";
   import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
-  import NoItemsFound from "#lib/components/base/noItemsFound.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
+  import * as Table from "#lib/components/ui/table/index.js";
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { onMount } from "svelte";
-  import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
+  import { createTable, FlexRender } from "@tanstack/svelte-table";
+  import { getColumns } from "./columns.js";
+
   let loading = $state(true);
   let groups: components["schemas"]["GroupListResponseBody"] | undefined =
     $state();
   let loadError = $state(false);
   let search = $state(page.url.searchParams.get("search") ?? "");
-  let filteredGroups = $derived(
-    groups?.items?.filter((group) =>
-      group.name.toLowerCase().includes(search.trim().toLowerCase()),
-    ) ?? [],
-  );
   function updateSearch(event: Event) {
     const value = (event.currentTarget as HTMLInputElement).value;
+    table.getColumn("name")?.setFilterValue(value);
     const url = new URL(page.url.href);
     if (value) {
       url.searchParams.set("search", value);
@@ -44,7 +42,18 @@
     loadError = false;
     groups = data;
   }
-  onMount(loadGroups);
+  const columns = getColumns(loadGroups);
+  const table = createTable({
+    features: dataTableFeatures,
+    get data() {
+      return groups?.items ?? [];
+    },
+    columns,
+  });
+  onMount(() => {
+    table.getColumn("name")?.setFilterValue(search);
+    loadGroups();
+  });
 </script>
 
 <svelte:head>
@@ -73,42 +82,41 @@
       onRetry={loadGroups}
     />
   {:else if groups && !loading}
-    {#if groups.items?.length && filteredGroups.length}
-      <ul class="mt-3 grid md:grid-cols-2 lg:grid-cols-3 gap-2">
-        {#each filteredGroups as group (group.id)}
-          <li class="bg-secondary rounded-md mt-2 py-3 px-2 flex flex-row">
-            <div class="flex gap-2 flex-col grow">
-              <span class="font-bold">{group.name}</span>
-              <small
-                ><a href={appPaths.groups.resources(group.id)}
-                  >Resource: {group.resources_attached}</a
-                ></small
-              >
-              <small
-                >Created at: {new Date(
-                  group.created_at,
-                ).toLocaleString()}</small
-              >
-            </div>
-            <DeleteRequestDialog
-              id={group.id}
-              name={group.name}
-              onDeleted={loadGroups}
-              type="group"
-            />
-          </li>
-        {/each}
-      </ul>
-    {:else if groups.items?.length}
-      <NoItemsFound
-        title="No matching groups"
-        message="Try a different name."
-      />
-    {:else}
-      <NoItemsFound
-        title="No groups yet"
-        message="Create a group to keep related servers together."
-      />
-    {/if}
+    <div class="rounded-md border mt-12">
+      <Table.Root>
+        <Table.Header>
+          {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+            <Table.Row>
+              {#each headerGroup.headers as header (header.id)}
+                <Table.Head colspan={header.colSpan}>
+                  {#if !header.isPlaceholder}
+                    <FlexRender {header} />
+                  {/if}
+                </Table.Head>
+              {/each}
+            </Table.Row>
+          {/each}
+        </Table.Header>
+        <Table.Body>
+          {#each table.getRowModel().rows as row (row.id)}
+            <Table.Row>
+              {#each row.getVisibleCells() as cell (cell.id)}
+                <Table.Cell>
+                  <FlexRender {cell} />
+                </Table.Cell>
+              {/each}
+            </Table.Row>
+          {:else}
+            <Table.Row>
+              <Table.Cell colspan={columns.length} class="h-24 text-center">
+                {groups.items?.length
+                  ? "No matching groups."
+                  : "No groups yet. Create a group to organize related servers."}
+              </Table.Cell>
+            </Table.Row>
+          {/each}
+        </Table.Body>
+      </Table.Root>
+    </div>
   {/if}
 </div>

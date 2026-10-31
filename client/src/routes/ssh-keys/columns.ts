@@ -1,10 +1,10 @@
-import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
+import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
+import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
+import TimeAgo from "#lib/components/base/TimeAgo.svelte";
 import type { components } from "#lib/types/request-schema.js";
 import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
-import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
-import ViewKeyInfo from "./viewKeyInfo.svelte";
 import ResourcesLink from "./ResourcesLink.svelte";
-import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
+import SSHKeyActions from "./SSHKeyActions.svelte";
 
 const columnHelper = createColumnHelper<
   DataTableFeatures,
@@ -43,27 +43,19 @@ export const getColumns = (onDeleted: () => void) =>
           onclick: column.getToggleSortingHandler(),
         }),
       cell: ({ row }) => {
-        return new Date(row.original.created_at).toLocaleString();
-      },
-    }),
-    columnHelper.display({
-      id: "view-key",
-      cell: ({ row }) => {
-        return renderComponent(ViewKeyInfo, {
-          id: row.original.id,
+        return renderComponent(TimeAgo, {
+          datetime: row.original.created_at,
         });
       },
     }),
     columnHelper.display({
-      id: "delete-key",
-      cell: ({ row }) => {
-        return renderComponent(DeleteRequestDialog, {
+      id: "actions",
+      cell: ({ row }) =>
+        renderComponent(SSHKeyActions, {
           id: row.original.id,
           name: row.original.name,
-          type: "ssh-key",
-          useIcon: true,
           onDeleted,
-        });
-      },
+        }),
     }),
+
   ]);

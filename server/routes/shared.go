@@ -12,6 +12,7 @@ func RegisterRoutes(api *huma.Group, database *gorm.DB) {
 	registerSearchRoutes(api, database)
 	registerGroupRoutes(api, database)
 	registerServerRoutes(api, database)
+	registerLogRoutes(api, database)
 }
 
 type EmptyRR struct {

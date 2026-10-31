@@ -16,3 +16,7 @@ export function getWebSocketUrl(path: string = "/ws"): string {
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   return url.toString();
 }
+
+export function castType<T>(value: unknown, callback: (value: T) => void) {
+  callback(value as T);
+}

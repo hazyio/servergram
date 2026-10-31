@@ -6,6 +6,6 @@ import (
 
 func RegisterWebSockets(server *internal.RawServer) {
 
-	server.WebSocket("/services", handleServicesWebSocket)
+	server.WebSocket("/services", handleServicesWebSocket,onServiceSocketStated)
 
 }

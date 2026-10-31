@@ -4,6 +4,7 @@ import "sync"
 
 type SSHManager struct {
 	mu sync.Mutex
+	
 }
 
 func NewSSHManager() *SSHManager {

@@ -27,6 +27,11 @@ type RawServerRouteData[I any] struct {
 	DataQueue *DataQueue
 	Polls     *Polls
 }
+type OnStartedRawServerRouteData struct {
+	Database  *gorm.DB
+	DataQueue *DataQueue
+	Polls     *Polls
+}
 
 func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string, sshManager *sshmanager.SSHManager, polls *Polls) *RawServer {
 	return &RawServer{
@@ -40,7 +45,7 @@ func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string
 }
 
 // WSHandler defines the type for WebSocket handlers, taking an input of type I wrapped in RawServerRouteData. close data queue if you want the connection to be closed gracefully.
-func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I])) {
+func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I]), runOnStart func(in OnStartedRawServerRouteData)) {
 	s.server.Handle("GET /ws"+pattern, WebSocketSessionMiddleware(s.database, func(w http.ResponseWriter, req *http.Request) {
 
 		conn, err := websocket.Accept(w, req, &websocket.AcceptOptions{
@@ -55,6 +60,7 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 		defer conn.CloseNow()
 		ctx := req.Context()
 		dataQueue := s.DataQueue
+		// watch for new messages in the data queue and send them over the WebSocket connection
 		poller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
 			messages, ok := dataQueue.Dequeue()
 			if !ok {
@@ -71,9 +77,17 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				}
 			}
 		}))
+
 		poller.Start(ctx)
 		defer poller.Stop()
-
+		go func() {
+			// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
+			runOnStart(OnStartedRawServerRouteData{
+				Database:  s.database,
+				DataQueue: s.DataQueue,
+				Polls:     s.Polls,
+			})
+		}()
 		for {
 			c, err := req.Cookie("session_token")
 			if err != nil {

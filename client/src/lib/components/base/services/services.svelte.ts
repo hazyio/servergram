@@ -1,24 +1,26 @@
-// services.svelte.ts
 import {
-  type ConnectServerWSMessage,
-  type ServiceWSMessage,
-  ConnectToSSH,
+  WSServiceMessageConnectServer,
+  WSServiceServerServiceType,
+  type WSServiceConnectedListItem,
+  type WSServiceConnectServerData,
+  type WSServiceMessage,
+  type WSServicePassPhraseRequiredData,
+  type WSServiceTrustHostFingerPrintData
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
-import type { ServiceItemProps } from "./ServiceItem.svelte";
+import handleWebSocketMessage from "./handleWebsocket";
 let ws: WebSocket | undefined;
 
 export const servicesState = $state({
-  services: [] as ServiceItemProps[],
+  services: [] as WSServiceConnectedListItem[],
   connecting: true,
   error: null as string | null,
+  pendingHostTrustCollection: [] as WSServiceTrustHostFingerPrintData[],
+  pendingPassPhraseCollection: [] as WSServicePassPhraseRequiredData[],
 });
 
-export function startWebSocket<T>(
-  onOpen: () => void,
-  onMessage: (message: T) => void,
-) {
+export function startWebSocket(onOpen: () => void) {
   if (ws?.readyState === WebSocket.OPEN) {
     console.log("WebSocket already open");
     return;
@@ -34,21 +36,14 @@ export function startWebSocket<T>(
     servicesState.error = "Could not connect, webSocket error";
   };
   ws.onmessage = (e) => {
-    onMessage(JSON.parse(e.data));
+    handleWebSocketMessage(JSON.parse(e.data));
   };
 }
-
 export function stopWebSocket() {
   ws?.close(1000, "bye");
   ws = undefined;
 }
-
-export function removeServiceFunction(serviceId: number) {
-  servicesState.services = servicesState.services.filter(
-    (service) => service.id !== serviceId,
-  );
-}
-
+export type ServiceState = "connected";
 export function checkWs(): boolean {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     servicesState.error = "WebSocket is not connected";
@@ -60,19 +55,27 @@ export function checkWs(): boolean {
   return true;
 }
 
-export function startServerConnection(serviceId: number, name: string) {
-  if (!checkWs()) return;
-  let data: ServiceWSMessage = {
-    action: ConnectToSSH,
-    data: {
-      id: serviceId,
-    } as ConnectServerWSMessage,
-  };
-  let findService = servicesState.services.find((s) => s.id === serviceId);
-  if (findService) {
-    toast.error(`Service with id ${serviceId} already connected or pending`);
-    return;
+export class ConnectedServices {
+  static findServer(serviceId: number) {
+    return servicesState.services.find(
+      (service) =>
+        service.id === serviceId && service.type === WSServiceServerServiceType,
+    );
   }
-  servicesState.services.push({ id: serviceId, status: "pending", name: name });
-  ws?.send(JSON.stringify(data));
+
+  static startServerConnection(serviceId: number, name: string) {
+    if (!checkWs()) return;
+    let data: WSServiceMessage = {
+      action: WSServiceMessageConnectServer,
+      data: {
+        id: serviceId,
+      } as WSServiceConnectServerData,
+    };
+    let findService = ConnectedServices.findServer(serviceId);
+    if (findService) {
+      toast.error(`Service with id ${serviceId} already connected or pending`);
+      return;
+    }
+    ws?.send(JSON.stringify(data));
+  }
 }

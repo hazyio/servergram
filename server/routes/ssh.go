@@ -110,10 +110,6 @@ func deleteSSHKey(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error
 		return nil, internal.InternalServerError
 	}
 
-	if err := database.Delete(&db.SSHKey{}, id).Error; err != nil {
-		slog.Error("An error occurred while deleting SSH key", "error", err)
-		return nil, internal.InternalServerError
-	}
 	// Check if there are any servers attached to the SSH key
 	var count int64
 	if err := database.Model(&db.Server{}).Where("ssh_key_id = ?", id).Count(&count).Error; err != nil {

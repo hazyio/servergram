@@ -4,7 +4,7 @@
 // source: server_models.go
 
 export type WebSocketServiceMessage = string;
-export const Connect: WebSocketServiceMessage = "connect";
+export const ConnectToSSH: WebSocketServiceMessage = "connect_to_ssh";
 export const PassPhraseRequired: WebSocketServiceMessage = "pass_phrase_required";
 export const Error: WebSocketServiceMessage = "error";
 export interface ConnectServerWSMessage {

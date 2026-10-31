@@ -2,7 +2,7 @@
   import * as Popover from "#lib/components/ui/popover/index.js";
   import * as Tabs from "#lib/components/ui/tabs/index.js";
   import {
-    Connect,
+    ConnectToSSH,
     PassPhraseRequired,
     Error as ServerWSError,
     type PassPhraseRequiredWSData,
@@ -30,7 +30,7 @@
   let services: ServiceItemProps[] = $state([]);
   function handleWebSocketMessage(message: ServiceWSMessage) {
     switch (message.action) {
-      case Connect:
+      case ConnectToSSH:
         break;
       case PassPhraseRequired:
         let findIndex = collectPassPhraseFor.findIndex(

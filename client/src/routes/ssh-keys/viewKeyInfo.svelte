@@ -2,10 +2,10 @@
   import { NewRequestClient } from "#lib/api/request.ts";
   import Error from "#lib/components/base/error.svelte";
   import Loading from "#lib/components/base/loading.svelte";
-  import { Button } from "#lib/components/ui/button/index.ts";
+  import { buttonVariants } from "#lib/components/ui/button/index.js";
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
   import { Textarea } from "#lib/components/ui/textarea/index.ts";
-  import { buttonVariants } from "#lib/components/ui/button/index.js";
+  import { Eye } from "@lucide/svelte";
 
   let loading = $state(false);
   let sshKey = $state("");
@@ -14,7 +14,7 @@
   async function loadKey() {
     loading = true;
     const { data, error } = await NewRequestClient().GET(
-      `/api/ssh/view-key/{id}`,
+      `/api/ssh-key/view-key/{id}`,
       {
         params: {
           path: {
@@ -38,13 +38,16 @@
 <Dialog.Root>
   <Dialog.Trigger
     class={buttonVariants({ variant: "outline" })}
-    onclick={loadKey}>View Key</Dialog.Trigger
-  >
+    onclick={loadKey}
+    title="View SSH key"
+    ><Eye />
+    <span class="sr-only">View SSH key</span>
+  </Dialog.Trigger>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>{loading ? "Loading..." : "SSH Key"}</Dialog.Title>
     </Dialog.Header>
-    <Loading class="mt-4 h-50 w-full" {loading} />
+    <Loading containerClass="mt-4 w-full h-50" {loading} />
     {#if !loading && loadError}
       <Error message={loadError} />
     {/if}

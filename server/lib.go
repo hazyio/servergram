@@ -34,7 +34,7 @@ import (
 //go:embed all:dist
 var distFS embed.FS
 
-func NewRouter(database *gorm.DB) *http.Server {
+func NewRouter(database *gorm.DB,polls *internal.Polls) *http.Server {
 	env := internal.LoadEnv()
 
 	cert, err := tls.LoadX509KeyPair(env.SSLPublicKey, env.SSLPrivateKey)
@@ -57,7 +57,7 @@ func NewRouter(database *gorm.DB) *http.Server {
 	ssh_manager := sshmanager.NewSSHManager()
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
-	raw_server := internal.NewRawServer(database, mux, env.AllowedOrigins, ssh_manager)
+	raw_server := internal.NewRawServer(database, mux, env.AllowedOrigins, ssh_manager, polls)
 	api := humago.New(mux, config)
 	apiUmbrella := huma.NewGroup(api, "/api")
 

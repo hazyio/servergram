@@ -4,10 +4,23 @@
   import Loading from "#lib/components/base/loading.svelte";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/index.js";
+  import { Trash } from "@lucide/svelte";
   let deleting = $state(false);
   let deleteError = $state("");
   let open = $state(false);
-  let { id, name, onDeleted, type } = $props();
+  let {
+    id,
+    name,
+    onDeleted,
+    type,
+    useIcon = false,
+  }: {
+    useIcon: boolean;
+    id: number;
+    name: string;
+    onDeleted?: () => void;
+    type: string;
+  } = $props();
   async function deleteServer() {
     deleting = true;
     const { error } = await NewRequestClient().DELETE(
@@ -36,7 +49,12 @@
 
 <AlertDialog.Root bind:open>
   <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-    Delete
+    {#if useIcon}
+      <Trash />
+      <span class="sr-only">Delete</span>
+    {:else}
+      Delete
+    {/if}
   </AlertDialog.Trigger>
   <AlertDialog.Content>
     {#if deleting}

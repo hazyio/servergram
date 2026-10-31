@@ -4,11 +4,13 @@
   import type { HTMLAttributes } from "svelte/elements";
 
   let {
+    containerClass = "",
     class: className = "",
     text = "",
     loading,
     ...restProps
   }: HTMLAttributes<HTMLDivElement> & {
+    containerClass?: string;
     loading: boolean;
     text?: string;
   } = $props();
@@ -16,10 +18,10 @@
 
 {#if loading}
   <div
-    class={cn("flex flex-col justify-center items-center", className)}
+    class={cn("flex flex-col justify-center items-center", containerClass)}
     {...restProps}
   >
-    <Loader class={cn("h-1/10 w-1/10 animate-spin", className)} />
+    <Loader class={cn("h-3/10 w-3/10 animate-spin", className)} />
     {#if text}
       <span class="ml-2">{text}</span>
     {/if}

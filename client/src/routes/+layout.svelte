@@ -55,17 +55,26 @@
           {
             title: "Servers",
             url: appPaths.servers.index,
-            breadcrumb: [{ title: "Home", url: appPaths.servers.index }],
+            breadcrumb: [
+              ...homeBreadcrumbs,
+              { title: "Servers", url: appPaths.servers.index },
+            ],
           },
           {
             title: "Databases",
             url: appPaths.databases.index,
-            breadcrumb: [{ title: "Home", url: appPaths.databases.index }],
+            breadcrumb: [
+              ...homeBreadcrumbs,
+              { title: "Databases", url: appPaths.databases.index },
+            ],
           },
           {
             title: "Cron Jobs",
             url: appPaths.cronJobs.index,
-            breadcrumb: [{ title: "Home", url: appPaths.cronJobs.index }],
+            breadcrumb: [
+              ...homeBreadcrumbs,
+              { title: "Cron Jobs", url: appPaths.cronJobs.index },
+            ],
           },
         ],
       },
@@ -89,11 +98,19 @@
               { title: "SSH Keys", url: appPaths.sshKeys.index },
             ],
           },
+          {
+            title: "Logs",
+            url: appPaths.logs.index,
+            breadcrumb: [
+              ...homeBreadcrumbs,
+              { title: "Logs", url: appPaths.logs.index },
+            ],
+          },
         ],
       },
     ]}
   >
     {@render children()}
-    <ConnectedServices/>
+    <ConnectedServices />
   </SideBarContainer>
 {/if}

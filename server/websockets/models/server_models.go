@@ -3,7 +3,7 @@ package models
 type WebSocketServiceMessage string
 
 const (
-	Connect            WebSocketServiceMessage = "connect"
+	ConnectToSSH       WebSocketServiceMessage = "connect_to_ssh"
 	PassPhraseRequired WebSocketServiceMessage = "pass_phrase_required"
 	Error              WebSocketServiceMessage = "error"
 )

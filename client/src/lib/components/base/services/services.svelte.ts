@@ -1,14 +1,12 @@
 // services.svelte.ts
-import { getWebSocketUrl } from "#lib/utils.ts";
-import type { ServiceItemProps } from "./ServiceItem.svelte";
 import {
   type ConnectServerWSMessage,
   type ServiceWSMessage,
-  Connect,
-  PassPhraseRequired,
+  ConnectToSSH
 } from "#lib/types/websockets/index.ts";
-import { boolean } from "zod";
+import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
+import type { ServiceItemProps } from "./ServiceItem.svelte";
 let ws: WebSocket | undefined;
 
 export const servicesState = $state({
@@ -61,7 +59,7 @@ export function checkWs(): boolean {
 export function startServerConnection(serviceId: number) {
   if (!checkWs()) return;
   let data: ServiceWSMessage = {
-    action: Connect,
+    action: ConnectToSSH,
     data: {
       id: serviceId,
     } as ConnectServerWSMessage,

@@ -16,8 +16,11 @@ func startServer() {
 
 	initLogger()
 	database := InitDatabase()
-	
-	router := NewRouter(database)
+	polls := &internal.Polls{}
+	// ensure all polls are stopped when the server shuts down
+	defer polls.StopAll()
+
+	router := NewRouter(database, polls)
 	slog.Info("Starting server at https://localhost:" + env.ServerPort)
 	// tls certificate and key are provided by the server configuration, so empty strings are passed here
 	if err := router.ListenAndServeTLS("", ""); err != nil {

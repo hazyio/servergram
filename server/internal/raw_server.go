@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
@@ -16,23 +18,29 @@ type RawServer struct {
 	server         *http.ServeMux
 	allowedOrigins []string
 	SSHManager     *sshmanager.SSHManager
+	DataQueue      *DataQueue
+	Polls          *Polls
 }
 type RawServerRouteData[I any] struct {
-	Database *gorm.DB
-	Input    I
+	Database  *gorm.DB
+	Input     I
+	DataQueue *DataQueue
+	Polls     *Polls
 }
 
-func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string, sshManager *sshmanager.SSHManager) *RawServer {
+func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string, sshManager *sshmanager.SSHManager, polls *Polls) *RawServer {
 	return &RawServer{
 		database:       database,
 		server:         mux,
 		allowedOrigins: allowedOrigins,
 		SSHManager:     sshManager,
+		DataQueue:      NewDataQueue(),
+		Polls:          polls,
 	}
 }
 
-// WSHandler defines the type for WebSocket handlers, taking an input of type I and returning an output of type O and an error. when you return an error, the socket connection will be closed.
-func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I]) (any, error)) {
+// WSHandler defines the type for WebSocket handlers, taking an input of type I wrapped in RawServerRouteData. close data queue if you want the connection to be closed gracefully.
+func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRouteData[I])) {
 	s.server.Handle("GET /ws"+pattern, WebSocketSessionMiddleware(s.database, func(w http.ResponseWriter, req *http.Request) {
 
 		conn, err := websocket.Accept(w, req, &websocket.AcceptOptions{
@@ -43,8 +51,28 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 
 			return // Accept already responded
 		}
+
 		defer conn.CloseNow()
 		ctx := req.Context()
+		dataQueue := s.DataQueue
+		poller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
+			messages, ok := dataQueue.Dequeue()
+			if !ok {
+				return
+			}
+			if messages == nil && dataQueue.Closed {
+				// If there are no more messages and the queue is closed, close the connection.
+				conn.Close(websocket.StatusNormalClosure, "no more messages, closing connection")
+				return
+			}
+			if messages != nil {
+				for _, message := range messages {
+					wsjson.Write(ctx, conn, message)
+				}
+			}
+		}))
+		poller.Start(ctx)
+		defer poller.Stop()
 
 		for {
 			c, err := req.Cookie("session_token")
@@ -65,17 +93,12 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				}
 				return
 			}
-			output, err := handle(RawServerRouteData[I]{
-				Database: s.database,
-				Input:    input,
+			handle(RawServerRouteData[I]{
+				Database:  s.database,
+				Input:     input,
+				DataQueue: s.DataQueue,
+				Polls:     s.Polls,
 			})
-			if err != nil {
-				conn.Close(websocket.StatusInternalError, "function errored, closing connection")
-				return
-			}
-			if output != nil {
-				wsjson.Write(ctx, conn, output)
-			}
 		}
 
 	}))

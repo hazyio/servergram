@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type WebSocketMessage[A any] struct {
 	Action A   `json:"action"`
@@ -10,6 +12,7 @@ type WebSocketMessage[A any] struct {
 type WSError struct {
 	Message string `json:"message"`
 }
+
 
 func NewUnknownError(err string) WSError {
 	return WSError{

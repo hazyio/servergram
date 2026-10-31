@@ -23,6 +23,9 @@ const appPaths = {
     index: "/cron-jobs",
     add: "/cron-jobs/add",
   },
+  logs: {
+    index: "/logs",
+  },
 };
 
 export default appPaths;

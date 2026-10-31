@@ -11,11 +11,8 @@
   import { onMount } from "svelte";
 
   import * as Table from "#lib/components/ui/table/index.js";
-  import {
-    createTable,
-    FlexRender
-  } from "@tanstack/svelte-table";
-  import { columns } from "./columns.js";
+  import { createTable, FlexRender } from "@tanstack/svelte-table";
+  import { getColumns } from "./columns.js";
   import { features } from "./data-table-features.js";
 
   let loading = $state(true);
@@ -37,6 +34,7 @@
     sshKeys = data;
   }
   onMount(loadSSHKeys);
+  const columns = getColumns(loadSSHKeys);
   const table = createTable({
     features,
     get data() {

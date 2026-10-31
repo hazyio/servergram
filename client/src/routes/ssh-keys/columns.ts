@@ -1,7 +1,7 @@
 import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
 import type { components } from "#lib/types/request-schema.js";
 import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
-import type { DataTableFeatures } from "./data-table-features.js";
+import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
 import ViewKeyInfo from "./viewKeyInfo.svelte";
 import ResourcesLink from "./ResourcesLink.svelte";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";

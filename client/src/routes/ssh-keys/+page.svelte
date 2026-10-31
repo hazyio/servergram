@@ -13,7 +13,7 @@
   import * as Table from "#lib/components/ui/table/index.js";
   import { createTable, FlexRender } from "@tanstack/svelte-table";
   import { getColumns } from "./columns.js";
-  import { features } from "./data-table-features.js";
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
 
   let loading = $state(true);
   let sshKeys: components["schemas"]["SSHKeyListResponseBody"] | undefined =
@@ -36,7 +36,7 @@
   onMount(loadSSHKeys);
   const columns = getColumns(loadSSHKeys);
   const table = createTable({
-    features,
+    features: dataTableFeatures,
     get data() {
       return sshKeys?.items ?? [];
     },

@@ -34,7 +34,7 @@ import (
 //go:embed all:dist
 var distFS embed.FS
 
-func NewRouter(database *gorm.DB,polls *internal.Polls) *http.Server {
+func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
 	env := internal.LoadEnv()
 
 	cert, err := tls.LoadX509KeyPair(env.SSLPublicKey, env.SSLPrivateKey)
@@ -70,26 +70,27 @@ func NewRouter(database *gorm.DB,polls *internal.Polls) *http.Server {
 				next(ctx)
 				return
 			}
-			// add session middleware only if password is set
 			if env.Password == "" {
 				slog.Info("Skipping authentication because password is not set", "path", ctx.URL().Path)
-				// Middleware responses are invisible to Huma, so the 401 is added to the spec here.
-				errSchema := api.OpenAPI().Components.Schemas.Schema(reflect.TypeFor[huma.ErrorModel](), true, "ErrorModel")
-				apiUmbrella.UseSimpleModifier(func(op *huma.Operation) {
-					if op.Responses == nil {
-						op.Responses = map[string]*huma.Response{}
-					}
-					op.Responses["401"] = &huma.Response{
-						Description: "Unauthorized",
-						Content: map[string]*huma.MediaType{
-							"application/problem+json": {Schema: errSchema},
-						},
-					}
-				})
 				next(ctx)
 				return
 			}
+			// Middleware responses are invisible to Huma, so the 401 is added to the spec here.
+			errSchema := api.OpenAPI().Components.Schemas.Schema(reflect.TypeFor[huma.ErrorModel](), true, "UnauthorizedErrorModel")
+			apiUmbrella.UseSimpleModifier(func(op *huma.Operation) {
+				if op.Responses == nil {
+					op.Responses = map[string]*huma.Response{}
+				}
+				op.Responses["401"] = &huma.Response{
+					Description: "Unauthorized",
+					Content: map[string]*huma.MediaType{
+						"application/problem+json": {Schema: errSchema},
+					},
+				}
+			})
 			sessionMW(ctx, next)
+			return
+
 		})
 
 	})
@@ -172,7 +173,7 @@ func InitDatabase() *gorm.DB {
 		sqlDB.SetMaxIdleConns(5)
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
-	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}, db.Log{}); err != nil {
+	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}, db.Log{}, db.Notification{}); err != nil {
 		log.Fatal(err)
 	}
 

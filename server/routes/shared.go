@@ -13,6 +13,7 @@ func RegisterRoutes(api *huma.Group, database *gorm.DB) {
 	registerGroupRoutes(api, database)
 	registerServerRoutes(api, database)
 	registerLogRoutes(api, database)
+	registerNotificationRoutes(api, database)
 }
 
 type EmptyRR struct {
@@ -20,4 +21,10 @@ type EmptyRR struct {
 
 type PathIdRequest struct {
 	ID uint `path:"id" minimum:"1" doc:"The ID of the current resource"`
+}
+
+type BooleanResponse struct {
+	Body struct {
+		Value bool `json:"value"`
+	}
 }

@@ -1,0 +1,54 @@
+package routes
+
+import (
+	"net/http"
+
+	"github.com/danielgtaylor/huma/v2"
+	"gorm.io/gorm"
+	"hazyio.com/servergram/db"
+	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/routes/models"
+)
+
+func registerNotificationRoutes(api *huma.Group, database *gorm.DB) {
+	server := internal.NewGroup("/notification", api, database, []string{"Notifications"})
+	server.Get("/available", http.StatusOK, notificationAvailable)
+	server.Get("/unread", http.StatusOK, notificationAvailable)
+	server.Get("/read", http.StatusOK, notificationAvailable)
+	server.Put("/mark-as-read", http.StatusOK, markAsRead)
+	server.Get("/all", http.StatusOK, allNotifications)
+
+}
+
+func notificationAvailable(data internal.NormalRouteData[EmptyRR]) (*BooleanResponse, error) {
+	database := data.Database
+	available, err := db.NewNotificationAvailable(database)
+	if err != nil {
+		return nil, err
+	}
+	response := &BooleanResponse{}
+	response.Body.Value = available
+	return response, nil
+}
+
+func allNotifications(data internal.NormalRouteData[EmptyRR]) (*models.NotificationListResponse, error) {
+	database := data.Database
+	response := &models.NotificationListResponse{}
+	response.Body = make([]models.NotificationListItem, 0)
+	database.Model(&db.Notification{}).
+		Select("notifications.id, notifications.title, notifications.message, notifications.url, notifications.created_at").
+		Scan(&response.Body)
+	return response, nil
+}
+
+func markAsRead(data internal.NormalRouteData[models.MarkNotificationAsReadRequest]) (*BooleanResponse, error) {
+	database := data.Database
+	ids := data.Input.Body
+	err := db.MarkNotificationsAsRead(database, ids)
+	if err != nil {
+		return nil, err
+	}
+	response := &BooleanResponse{}
+	response.Body.Value = true
+	return response, nil
+}

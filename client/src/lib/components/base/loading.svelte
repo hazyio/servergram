@@ -23,7 +23,7 @@
   >
     <Loader class={cn("h-3/10 w-3/10 animate-spin", className)} />
     {#if text}
-      <span class="ml-2">{text}</span>
+      <span class="mt-5">{text}</span>
     {/if}
   </div>
 {/if}

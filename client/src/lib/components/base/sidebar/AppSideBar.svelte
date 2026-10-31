@@ -2,7 +2,7 @@
   import { page } from "$app/state";
   import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import type { ComponentProps } from "svelte";
-  import ThemeChanger from "./theme-changer.svelte";
+  import ThemeChanger from "./ThemeChanger.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   export interface SideBarItem {
     title: string;

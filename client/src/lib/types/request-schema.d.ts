@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notification/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get available */
+        get: operations["get-notification--available"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/group": {
         parameters: {
             query?: never;
@@ -298,6 +315,9 @@ export interface components {
              * @description The ID of the newly created server
              */
             id: number;
+        };
+        BooleanResponseBody: {
+            value: boolean;
         };
         CreateGroupRequestBody: {
             /** @description The name of the group */
@@ -622,6 +642,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogListResponseBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-notification--available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BooleanResponseBody"];
                 };
             };
             /** @description Error */

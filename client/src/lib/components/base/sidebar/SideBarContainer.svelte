@@ -3,10 +3,11 @@
   import * as Breadcrumb from "#lib/components/ui/breadcrumb/index.js";
   import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
-  import AppSidebar from "./appSideBar.svelte";
+  import AppSidebar from "./AppSideBar.svelte";
   import type { Snippet } from "svelte";
-  import type { SideBarItem } from "./appSideBar.svelte";
+  import type { SideBarItem } from "./AppSideBar.svelte";
   import ConnectedServices from "../services/ConnectedServices.svelte";
+  import Notifications from "./Notifications.svelte";
 
   let {
     children,
@@ -81,8 +82,10 @@
           </Breadcrumb.List>
         </Breadcrumb.Root>
       {/if}
-      <div class="ms-auto flex items-center">
+      <div class="ms-auto gap-3 flex items-center">
         <ConnectedServices />
+
+        <Notifications />
       </div>
     </header>
     {@render children?.()}

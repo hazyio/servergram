@@ -1,7 +1,7 @@
 <script lang="ts">
   import appPaths from "#lib/appPaths.ts";
   import favicon from "#lib/assets/favicon.svg";
-  import SideBarContainer from "#lib/components/base/sidebar/sideBarContainer.svelte";
+  import SideBarContainer from "#lib/components/base/sidebar/SideBarContainer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.ts";
   import { page } from "$app/state";
   import type { LayoutProps } from "./$types";

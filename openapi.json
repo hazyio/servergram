@@ -346,6 +346,26 @@
         ],
         "type": "object"
       },
+      "MarkNotificationAsReadRequestBody": {
+        "additionalProperties": false,
+        "properties": {
+          "notification_ids": {
+            "description": "The IDs of the notifications to mark as read",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "notification_ids"
+        ],
+        "type": "object"
+      },
       "NotificationListItem": {
         "additionalProperties": false,
         "properties": {
@@ -790,44 +810,6 @@
         ]
       }
     },
-    "/api/notification/all": {
-      "get": {
-        "operationId": "get-notification--all",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "The list of notifications",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationListItem"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "default": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorModel"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "List all",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
     "/api/notification/available": {
       "get": {
         "operationId": "get-notification--available",
@@ -859,6 +841,120 @@
         ]
       }
     },
+    "/api/notification/list/all": {
+      "get": {
+        "operationId": "get-notification--list-all",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The list of notifications",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationListItem"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List list all",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notification/list/read": {
+      "get": {
+        "operationId": "get-notification--list-read",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The list of notifications",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationListItem"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List list read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notification/list/unread": {
+      "get": {
+        "operationId": "get-notification--list-unread",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The list of notifications",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationListItem"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List list unread",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
     "/api/notification/mark-as-read": {
       "put": {
         "operationId": "put-notification--mark-as-read",
@@ -866,15 +962,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "description": "The IDs of the notifications to mark as read",
-                "items": {
-                  "format": "int64",
-                  "type": "integer"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
+                "$ref": "#/components/schemas/MarkNotificationAsReadRequestBody"
               }
             }
           },
@@ -903,68 +991,6 @@
           }
         },
         "summary": "Put mark as read",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
-    "/api/notification/read": {
-      "get": {
-        "operationId": "get-notification--read",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BooleanResponseBody"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "default": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorModel"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "Get read",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
-    "/api/notification/unread": {
-      "get": {
-        "operationId": "get-notification--unread",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BooleanResponseBody"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "default": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorModel"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "Get unread",
         "tags": [
           "Notifications"
         ]

@@ -1,7 +1,9 @@
 package models
 
 type MarkNotificationAsReadRequest struct {
-	Body []int `json:"body" required:"true" doc:"The IDs of the notifications to mark as read"`
+	Body struct {
+		NotificationIDs []int `json:"notification_ids" required:"true" doc:"The IDs of the notifications to mark as read"`
+	}
 }
 
 type NotificationListItem struct {

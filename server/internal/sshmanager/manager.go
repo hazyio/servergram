@@ -4,8 +4,6 @@ import (
 	"errors"
 	"sync"
 
-	"log/slog"
-
 	"hazyio.com/servergram/db"
 )
 
@@ -80,7 +78,6 @@ func (m *SSHManager) ConnectNewUnEncrypted(server *db.Server) error {
 	defer m.mu.Unlock()
 	connection, err := newUnEncryptedConnection(server)
 	if err != nil {
-		slog.Error("failed to parse private key", "error", err)
 		return err
 	}
 	m.connected[server.ID] = connection

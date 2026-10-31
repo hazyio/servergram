@@ -1,13 +1,13 @@
 <script lang="ts">
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import Input from "#lib/components/ui/input/input.svelte";
-  import type { PassPhraseRequiredWSData } from "#lib/types/websockets/index.js";
+  import type { WSServicePassPhraseRequiredData } from "#lib/types/websockets/index.js";
   import { Eye, EyeOff } from "@lucide/svelte";
   import { Button } from "../../ui/button";
   let {
     data = $bindable([]),
   }: {
-    data: PassPhraseRequiredWSData[];
+    data: WSServicePassPhraseRequiredData[];
   } = $props();
   let submitting = false;
   let showPassword = $state(false);

@@ -36,3 +36,10 @@ type ListServersResponse struct {
 		Items []ServerItem `json:"items" doc:"The list of servers"`
 	}
 }
+
+type UpdateServerFingerPrintRequest struct {
+	ID   uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	Body struct {
+		Fingerprint string `json:"fingerprint" required:"true" minLength:"1" maxLength:"100" doc:"The new host fingerprint for the server"`
+	}
+}

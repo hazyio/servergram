@@ -6,7 +6,7 @@
   import AppSidebar from "./AppSideBar.svelte";
   import type { Snippet } from "svelte";
   import type { SideBarItem } from "./AppSideBar.svelte";
-  import ConnectedServices from "../services/ConnectedServices.svelte";
+  import ConnectedServices from "../services/ServiceManager.svelte";
   import Notifications from "./Notifications.svelte";
 
   let {

@@ -563,6 +563,21 @@
         ],
         "type": "object"
       },
+      "UpdateServerFingerPrintRequestBody": {
+        "additionalProperties": false,
+        "properties": {
+          "fingerprint": {
+            "description": "The new host fingerprint for the server",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fingerprint"
+        ],
+        "type": "object"
+      },
       "ViewSSHKeyResponseBody": {
         "additionalProperties": false,
         "properties": {
@@ -1190,6 +1205,54 @@
           }
         },
         "summary": "Get list",
+        "tags": [
+          "Servers"
+        ]
+      }
+    },
+    "/api/server/update-finger-print/{id}": {
+      "put": {
+        "operationId": "put-server--update-finger-print-id",
+        "parameters": [
+          {
+            "description": "The ID of the server",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID of the server",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServerFingerPrintRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Put update finger print by ID",
         "tags": [
           "Servers"
         ]

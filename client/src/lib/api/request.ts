@@ -39,7 +39,7 @@ export function unWrapErrorMessage(
     title?: string | undefined;
     type: string;
   },
-  or: string,
+  or: string = "An error occurred",
 ) {
   return error.detail ?? error.title ?? or;
 }

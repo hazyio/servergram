@@ -16,6 +16,8 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB) {
 	server.Post("/add", http.StatusCreated, addServer)
 	server.Get("/list", http.StatusOK, listServers)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer)
+	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint)
+
 }
 
 func addServer(data internal.NormalRouteData[models.AddServerRequest]) (*models.AddServerResponse, error) {
@@ -96,5 +98,27 @@ func deleteServer(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error
 		return nil, internal.InternalServerError
 	}
 	db.AddLog(db.Delete, "Deleted server "+server.Name+"", database)
+	return &EmptyRR{}, nil
+}
+
+func updateServerFingerPrint(data internal.NormalRouteData[models.UpdateServerFingerPrintRequest]) (*EmptyRR, error) {
+	database := data.Database
+	id := data.Input.ID
+	var server db.Server
+	if err := database.First(&server, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, internal.NewHumaError(http.StatusNotFound, "Server not found")
+		}
+		return nil, internal.InternalServerError
+	}
+
+	newFingerPrint := data.Input.Body.Fingerprint
+	server.HostKeyFingerprint = newFingerPrint
+	server.Trusted = true
+
+	if err := database.Save(&server).Error; err != nil {
+		return nil, internal.InternalServerError
+	}
+	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }

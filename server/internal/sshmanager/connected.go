@@ -23,10 +23,11 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 		slog.Error("failed to parse private key", "error", err)
 		return nil, err
 	}
+	var hostErr error
 	cfg := &ssh.ClientConfig{
 		User:            server.Username,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
-		HostKeyCallback: dbHostKeyCallback(server),
+		HostKeyCallback: dbHostKeyCallback(server, &hostErr),
 		Timeout:         10 * time.Second,
 	}
 	slog.Info("attempting to connect to SSH server", "host", server.Host, "port", server.Port)
@@ -34,6 +35,10 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 
 	client, err := ssh.Dial("tcp", addr, cfg)
 	if err != nil {
+		// ssh.Dial flattens the callback error to a string, so return the original typed error.
+		if hostErr != nil {
+			return nil, hostErr
+		}
 		slog.Error("failed to dial SSH", "error", err)
 		return nil, err
 	}
@@ -59,15 +64,17 @@ func (e *HostKeyMismatchError) Error() string {
 	return fmt.Sprintf("host key mismatch for %s: expected %s, got %s", e.Host, e.Expected, e.Got)
 }
 
-func dbHostKeyCallback(server *db.Server) ssh.HostKeyCallback {
+func dbHostKeyCallback(server *db.Server, captured *error) ssh.HostKeyCallback {
 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		got := ssh.FingerprintSHA256(key)
 
 		if !server.Trusted || server.HostKeyFingerprint == "" {
-			return &UnknownHostError{Host: hostname, Fingerprint: got, KeyType: key.Type()}
+			*captured = &UnknownHostError{Host: hostname, Fingerprint: got, KeyType: key.Type()}
+			return *captured
 		}
 		if server.HostKeyFingerprint != got {
-			return &HostKeyMismatchError{Host: hostname, Expected: server.HostKeyFingerprint, Got: got}
+			*captured = &HostKeyMismatchError{Host: hostname, Expected: server.HostKeyFingerprint, Got: got}
+			return *captured
 		}
 		return nil
 	}

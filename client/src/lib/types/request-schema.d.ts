@@ -276,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/server/update-finger-print/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put update finger print by ID */
+        put: operations["put-server--update-finger-print-id"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ssh-key/add": {
         parameters: {
             query?: never;
@@ -546,6 +563,10 @@ export interface components {
             name: string;
             /** @description Whether the server is trusted */
             trusted: boolean;
+        };
+        UpdateServerFingerPrintRequestBody: {
+            /** @description The new host fingerprint for the server */
+            fingerprint: string;
         };
         ViewSSHKeyResponseBody: {
             private: string;
@@ -1035,6 +1056,40 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ListServersResponseBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-server--update-finger-print-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateServerFingerPrintRequestBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

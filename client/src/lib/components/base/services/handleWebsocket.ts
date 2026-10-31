@@ -1,21 +1,23 @@
 import {
   type WSError,
   type WSServiceConnectedList,
+  type WSServiceHostFingerPrintMismatchData,
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
   type WSServiceTrustHostFingerPrintData,
 } from "#lib/types/websockets/index.ts";
 import { castType } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
-import { servicesState } from "./services.svelte.ts";
+import { ConnectedServices, servicesState } from "./services.svelte.ts";
 export default function handleWebSocketMessage(message: WSServiceMessage) {
   switch (message.action) {
     case "pass_phrase_required":
       castType<WSServicePassPhraseRequiredData>(message.data, (value) => {
-        let findIndex = servicesState.pendingPassPhraseCollection.findIndex(
-          (item) => item.id === value.id,
+        let findIndex = ConnectedServices.findByIdInData(
+          servicesState.pendingPassPhraseCollection,
+          value.id,
         );
-        if (findIndex === -1) {
+        if (!findIndex) {
           servicesState.pendingPassPhraseCollection.push(value);
         }
       });
@@ -23,10 +25,11 @@ export default function handleWebSocketMessage(message: WSServiceMessage) {
       break;
     case "trust_host_finger_print":
       castType<WSServiceTrustHostFingerPrintData>(message.data, (value) => {
-        let findIndexHost = servicesState.pendingHostTrustCollection.findIndex(
-          (item) => item.id === value.id,
+        let findIndex = ConnectedServices.findByIdInData(
+          servicesState.pendingHostTrustCollection,
+          value.id,
         );
-        if (findIndexHost === -1) {
+        if (!findIndex) {
           servicesState.pendingHostTrustCollection.push(value);
         }
       });
@@ -43,8 +46,15 @@ export default function handleWebSocketMessage(message: WSServiceMessage) {
       });
       break;
     case "host_finger_print_mismatch":
-      // Handle host finger print mismatch message
-      toast.error("Host finger print mismatch");
+      castType<WSServiceHostFingerPrintMismatchData>(message.data, (value) => {
+        let findIndex = ConnectedServices.findByIdInData(
+          servicesState.pendingHostTrustMismatchCollection,
+          value.id,
+        );
+        if (!findIndex) {
+          servicesState.pendingHostTrustMismatchCollection.push(value);
+        }
+      });
       break;
     default:
       console.warn("Unhandled WebSocket message:", message);

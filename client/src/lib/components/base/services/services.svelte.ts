@@ -4,6 +4,7 @@ import {
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
   type WSServiceTrustHostFingerPrintData,
+  type WSServiceHostFingerPrintMismatchData,
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
@@ -16,6 +17,8 @@ export const servicesState = $state({
   error: null as string | null,
   pendingHostTrustCollection: [] as WSServiceTrustHostFingerPrintData[],
   pendingPassPhraseCollection: [] as WSServicePassPhraseRequiredData[],
+  pendingHostTrustMismatchCollection:
+    [] as WSServiceHostFingerPrintMismatchData[],
   tries: 0,
 });
 
@@ -65,6 +68,9 @@ export class ConnectedServices {
     return servicesState.services.find(
       (service) => service.id === serviceId && service.type === "server",
     );
+  }
+  static findByIdInData<T extends { id: number }>(collection: T[], id: number) {
+    return collection.find((item) => item.id === id);
   }
 
   static startServerConnection(serviceId: number, serviceName: string) {

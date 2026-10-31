@@ -82,27 +82,31 @@ func handleServerConnect(sshManager *sshmanager.SSHManager, database *gorm.DB, m
 	server.SSHKey.Key = decryptedSSHKey
 	connectErr := sshManager.ConnectNewUnEncrypted(&server)
 	if connectErr != nil {
-		if errors.Is(connectErr, &sshmanager.UnknownHostError{}) {
+		var unknownHost *sshmanager.UnknownHostError
+		var mismatch *sshmanager.HostKeyMismatchError
+		if errors.As(connectErr, &unknownHost) {
+			slog.Error("unknown host error", "error", unknownHost)
 			dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageTrustHostFingerPrint, &models.WSServiceTrustHostFingerPrintData{
 				Id:          msg.Id,
 				Name:        server.Name,
-				FingerPrint: connectErr.(*sshmanager.UnknownHostError).Fingerprint,
+				FingerPrint: unknownHost.Fingerprint,
 			}))
 
 			return
 		}
-		if errors.Is(connectErr, &sshmanager.HostKeyMismatchError{}) {
+		if errors.As(connectErr, &mismatch) {
+			slog.Error("host key mismatch error", "error", mismatch)
 			dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageHostFingerPrintMismatch, &models.WSServiceHostFingerPrintMismatchData{
 				Id:             msg.Id,
 				Name:           server.Name,
-				OldFingerPrint: connectErr.(*sshmanager.HostKeyMismatchError).Expected,
-				NewFingerPrint: connectErr.(*sshmanager.HostKeyMismatchError).Got,
+				OldFingerPrint: mismatch.Expected,
+				NewFingerPrint: mismatch.Got,
 			}))
 
 			return
 		}
 		slog.Error("failed to connect to server", "error", connectErr)
-		dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to connect to server"))
+		dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to connect to server, config might be wrong. check server configuration"))
 		return
 	}
 

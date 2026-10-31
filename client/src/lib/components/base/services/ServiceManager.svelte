@@ -18,6 +18,7 @@
     ConnectedServices,
     toastError,
   } from "./services.svelte.ts";
+  import CompareTrustFingerPrint from "./CompareTrustFingerPrint.svelte";
   let open = $state(false);
 
   function startWebSocketWrapper() {
@@ -36,6 +37,9 @@
 
 <CollectPassPhrase bind:data={servicesState.pendingPassPhraseCollection} />
 <TrustHostFingerPrint bind:data={servicesState.pendingHostTrustCollection} />
+<CompareTrustFingerPrint
+  bind:data={servicesState.pendingHostTrustMismatchCollection}
+/>
 <Popover.Root
   {open}
   onOpenChange={(value) => {

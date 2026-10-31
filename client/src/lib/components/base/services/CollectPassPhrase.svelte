@@ -54,12 +54,13 @@
       </div>
       <Dialog.Footer>
         <Button
+          disabled={submitting}
           onclick={() => {
             password = "";
             data = data.slice(1);
           }}>Cancel</Button
         >
-        <Button>Submit</Button>
+        <Button disabled={submitting}>Submit</Button>
       </Dialog.Footer>
     </Dialog.Content>
   </Dialog.Root>

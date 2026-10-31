@@ -2,7 +2,7 @@
 import {
   type ConnectServerWSMessage,
   type ServiceWSMessage,
-  ConnectToSSH
+  ConnectToSSH,
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
@@ -42,21 +42,25 @@ export function stopWebSocket() {
   ws?.close(1000, "bye");
   ws = undefined;
 }
+
+export function removeServiceFunction(serviceId: number) {
+  servicesState.services = servicesState.services.filter(
+    (service) => service.id !== serviceId,
+  );
+}
+
 export function checkWs(): boolean {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     servicesState.error = "WebSocket is not connected";
-    toast(
+    toast.error(
       `WebSocket is not connected, click red floating circle to reconnect.`,
-      {
-        position: "top-right",
-      },
     );
     return false;
   }
   return true;
 }
 
-export function startServerConnection(serviceId: number) {
+export function startServerConnection(serviceId: number, name: string) {
   if (!checkWs()) return;
   let data: ServiceWSMessage = {
     action: ConnectToSSH,
@@ -64,5 +68,11 @@ export function startServerConnection(serviceId: number) {
       id: serviceId,
     } as ConnectServerWSMessage,
   };
+  let findService = servicesState.services.find((s) => s.id === serviceId);
+  if (findService) {
+    toast.error(`Service with id ${serviceId} already connected or pending`);
+    return;
+  }
+  servicesState.services.push({ id: serviceId, status: "pending", name: name });
   ws?.send(JSON.stringify(data));
 }

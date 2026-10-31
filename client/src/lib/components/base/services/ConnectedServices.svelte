@@ -27,7 +27,6 @@
 
   let open = $state(false);
   let collectPassPhraseFor = $state<PassPhraseRequiredWSData[]>([]);
-  let services: ServiceItemProps[] = $state([]);
   function handleWebSocketMessage(message: ServiceWSMessage) {
     switch (message.action) {
       case ConnectToSSH:
@@ -75,7 +74,7 @@
       ><Button
         title={servicesState.error ? servicesState.error : "connected services"}
         variant={servicesState.error ? "destructive" : "outline"}
-        class="h-10 w-10 rounded-md"
+        class="h-9 w-9 rounded-md"
         onclick={() => {
           checkWs();
         }}
@@ -83,12 +82,12 @@
         {#if servicesState.connecting}
           <Loading loading={true} />
         {:else}
-          {services.length}
+          {servicesState.services.length}
         {/if}
       </Button></Popover.Trigger
     >
 
-    <Popover.Content align="end" class="max-h-120 min-h-50">
+    <Popover.Content align="end" class="max-h-120 min-h-90">
       <Popover.Header>
         <h3 class="text-lg font-medium">Connected Services</h3>
       </Popover.Header>

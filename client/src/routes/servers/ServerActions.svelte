@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex items-center justify-end gap-2">
-  <Button variant="secondary" onclick={() => startServerConnection(id)}
+  <Button variant="secondary" onclick={() => startServerConnection(id, name)}
     >Connect</Button
   >
   <DeleteRequestDialog {id} {name} {onDeleted} type="server" useIcon />

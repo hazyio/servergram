@@ -777,7 +777,8 @@
             "schema": {
               "description": "The maximum number of logs to return",
               "format": "int64",
-              "minimum": 0,
+              "maximum": 200,
+              "minimum": 3,
               "type": "integer"
             }
           }

@@ -15,8 +15,9 @@
     servicesState,
     startWebSocket,
     stopWebSocket,
+    ConnectedServices,
+    toastError,
   } from "./services.svelte.ts";
-  import { WSServiceStatusConnected,WSServiceStatusConnecting } from "#lib/types/websockets/index.ts";
   let open = $state(false);
 
   function startWebSocketWrapper() {
@@ -47,7 +48,14 @@
       variant={servicesState.error ? "destructive" : "outline"}
       class="h-9 w-9 rounded-md"
       onclick={() => {
-        checkWs();
+        if (!checkWs()) {
+          if (servicesState.tries >= 5) {
+            toastError("Maximum connection attempts reached");
+          } else {
+            startWebSocketWrapper();
+          }
+          return;
+        }
       }}
     >
       {#if servicesState.connecting}
@@ -79,20 +87,20 @@
         <Tabs.List class="w-full">
           <Tabs.Trigger value="all">All</Tabs.Trigger>
           <Tabs.Trigger value="connected">Connected</Tabs.Trigger>
-          <Tabs.Trigger value="pending">Pending</Tabs.Trigger>
+          <Tabs.Trigger value="connecting">Connecting</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="all">
           {#each servicesState.services as service (service.id)}
             <ServiceItem {...service} />
           {/each}
         </Tabs.Content>
-        <Tabs.Content value="pending">
-          {#each servicesState.services.filter((s) => s.status === WSServiceStatusConnecting) as service (service.id)}
+        <Tabs.Content value="connecting">
+          {#each servicesState.services.filter((s) => s.status === "connecting") as service (service.id)}
             <ServiceItem {...service} />
           {/each}
         </Tabs.Content>
         <Tabs.Content value="connected">
-          {#each servicesState.services.filter((s) => s.status === WSServiceStatusConnected) as service (service.id)}
+          {#each servicesState.services.filter((s) => s.status === "connected") as service (service.id)}
             <ServiceItem {...service} />
           {/each}
         </Tabs.Content>

@@ -1,11 +1,9 @@
 import {
-  WSServiceMessageConnectServer,
-  WSServiceServerServiceType,
   type WSServiceConnectedListItem,
   type WSServiceConnectServerData,
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
-  type WSServiceTrustHostFingerPrintData
+  type WSServiceTrustHostFingerPrintData,
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
@@ -18,6 +16,7 @@ export const servicesState = $state({
   error: null as string | null,
   pendingHostTrustCollection: [] as WSServiceTrustHostFingerPrintData[],
   pendingPassPhraseCollection: [] as WSServicePassPhraseRequiredData[],
+  tries: 0,
 });
 
 export function startWebSocket(onOpen: () => void) {
@@ -30,10 +29,13 @@ export function startWebSocket(onOpen: () => void) {
     onOpen();
     servicesState.connecting = false;
     servicesState.error = null;
+    servicesState.tries = 0;
   };
   ws.onerror = (e) => {
     console.log(e);
     servicesState.error = "Could not connect, webSocket error";
+    servicesState.connecting = false;
+    servicesState.tries += 1;
   };
   ws.onmessage = (e) => {
     handleWebSocketMessage(JSON.parse(e.data));
@@ -47,33 +49,38 @@ export type ServiceState = "connected";
 export function checkWs(): boolean {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     servicesState.error = "WebSocket is not connected";
-    toast.error(
-      `WebSocket is not connected, click red floating circle to reconnect.`,
-    );
+    toastError(`WebSocket is not connected, click red button to reconnect.`);
     return false;
   }
   return true;
+}
+export function toastError(message: string) {
+  toast.error(message, {
+    duration: 15000,
+  });
 }
 
 export class ConnectedServices {
   static findServer(serviceId: number) {
     return servicesState.services.find(
-      (service) =>
-        service.id === serviceId && service.type === WSServiceServerServiceType,
+      (service) => service.id === serviceId && service.type === "server",
     );
   }
 
-  static startServerConnection(serviceId: number, name: string) {
-    if (!checkWs()) return;
+  static startServerConnection(serviceId: number, serviceName: string) {
+    if (!checkWs()) {
+      return;
+    }
     let data: WSServiceMessage = {
-      action: WSServiceMessageConnectServer,
+      action: "connect_server",
       data: {
         id: serviceId,
+        name: serviceName,
       } as WSServiceConnectServerData,
     };
     let findService = ConnectedServices.findServer(serviceId);
     if (findService) {
-      toast.error(`Service with id ${serviceId} already connected or pending`);
+      toastError(`Service with id ${serviceId} already connected or pending`);
       return;
     }
     ws?.send(JSON.stringify(data));

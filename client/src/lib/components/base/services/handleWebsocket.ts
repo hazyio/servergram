@@ -1,10 +1,6 @@
 import {
-  WSServiceMessageError as ServerWSError,
-  WSServiceMessageConnectedServices,
-  WSServiceMessagePassPhraseRequired,
-  WSServiceMessageTrustHostFingerPrint,
-  type WSServiceConnectedList,
   type WSError,
+  type WSServiceConnectedList,
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
   type WSServiceTrustHostFingerPrintData,
@@ -14,7 +10,7 @@ import { toast } from "svelte-sonner";
 import { servicesState } from "./services.svelte.ts";
 export default function handleWebSocketMessage(message: WSServiceMessage) {
   switch (message.action) {
-    case WSServiceMessagePassPhraseRequired:
+    case "pass_phrase_required":
       castType<WSServicePassPhraseRequiredData>(message.data, (value) => {
         let findIndex = servicesState.pendingPassPhraseCollection.findIndex(
           (item) => item.id === value.id,
@@ -25,7 +21,7 @@ export default function handleWebSocketMessage(message: WSServiceMessage) {
       });
 
       break;
-    case WSServiceMessageTrustHostFingerPrint:
+    case "trust_host_finger_print":
       castType<WSServiceTrustHostFingerPrintData>(message.data, (value) => {
         let findIndexHost = servicesState.pendingHostTrustCollection.findIndex(
           (item) => item.id === value.id,
@@ -36,15 +32,19 @@ export default function handleWebSocketMessage(message: WSServiceMessage) {
       });
 
       break;
-    case ServerWSError:
+    case "error":
       // Handle server error message
       toast.error((message.data as WSError).message);
       break;
-    case WSServiceMessageConnectedServices:
+    case "connected_services":
       // Handle connected services message
       castType<WSServiceConnectedList>(message.data, (value) => {
         servicesState.services = value.items;
       });
+      break;
+    case "host_finger_print_mismatch":
+      // Handle host finger print mismatch message
+      toast.error("Host finger print mismatch");
       break;
     default:
       console.warn("Unhandled WebSocket message:", message);

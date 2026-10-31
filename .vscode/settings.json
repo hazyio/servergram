@@ -8,7 +8,8 @@
     "cSpell.words": [
         "Dialector",
         "huma",
-        "servergram"
+        "servergram",
+        "sshmanager"
     ],
     "js/ts.experimental.useTsgo": false
 }

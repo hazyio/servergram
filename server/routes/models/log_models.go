@@ -1,11 +1,8 @@
 package models
 
-
-
-
 type ListLogRequest struct {
-	StartIndex uint      `query:"start-index" required:"true" min:"1" doc:"The start index for collecting logs"`
-	Limit      uint      `query:"limit" min:"3" required:"true" max:"200" doc:"The maximum number of logs to return"`
+	StartIndex uint `query:"start-index" required:"true" minimum:"0" doc:"The start index for collecting logs"`
+	Limit      uint `query:"limit" required:"true" minimum:"3" maximum:"200" doc:"The maximum number of logs to return"`
 }
 type LogListItem struct {
 	Id        uint   `json:"id"`

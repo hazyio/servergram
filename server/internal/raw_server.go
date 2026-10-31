@@ -22,15 +22,17 @@ type RawServer struct {
 	Polls          *Polls
 }
 type RawServerRouteData[I any] struct {
-	Database  *gorm.DB
-	Input     I
-	DataQueue *DataQueue
-	Polls     *Polls
+	Database   *gorm.DB
+	Input      I
+	DataQueue  *DataQueue
+	Polls      *Polls
+	SSHManager *sshmanager.SSHManager
 }
 type OnStartedRawServerRouteData struct {
 	Database  *gorm.DB
 	DataQueue *DataQueue
 	Polls     *Polls
+	SSHManager *sshmanager.SSHManager
 }
 
 func NewRawServer(database *gorm.DB, mux *http.ServeMux, allowedOrigins []string, sshManager *sshmanager.SSHManager, polls *Polls) *RawServer {
@@ -86,6 +88,7 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				Database:  s.database,
 				DataQueue: s.DataQueue,
 				Polls:     s.Polls,
+				SSHManager: s.SSHManager,
 			})
 		}()
 		for {
@@ -108,10 +111,11 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				return
 			}
 			handle(RawServerRouteData[I]{
-				Database:  s.database,
-				Input:     input,
-				DataQueue: s.DataQueue,
-				Polls:     s.Polls,
+				Database:   s.database,
+				Input:      input,
+				DataQueue:  s.DataQueue,
+				Polls:      s.Polls,
+				SSHManager: s.SSHManager,
 			})
 		}
 

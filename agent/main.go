@@ -25,7 +25,7 @@ AYbx9aSbk4WJOihnnzdOAAAAG2RhbmllbEBkYW5pZWwtVGhpbmtQYWQtWDI2MAEC
 
 func connectWithSSh(keyBytes []byte) {
 	home, _ := os.UserHomeDir()
-
+ 
 	signer, err := ssh.ParsePrivateKey(keyBytes)
 	if err != nil {
 		log.Fatal(err) // for encrypted keys use ssh.ParsePrivateKeyWithPassphrase

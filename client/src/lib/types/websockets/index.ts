@@ -7,17 +7,18 @@ export type WebSocketServiceMessage = string;
 export const WSServiceMessageConnectServer: WebSocketServiceMessage = "connect_server";
 export const WSServiceMessagePassPhraseRequired: WebSocketServiceMessage = "pass_phrase_required";
 export const WSServiceMessageTrustHostFingerPrint: WebSocketServiceMessage = "trust_host_finger_print";
+export const WSServiceMessageHostFingerPrintMismatch: WebSocketServiceMessage = "host_finger_print_mismatch";
 export const WSServiceMessageError: WebSocketServiceMessage = "error";
 export const WSServiceMessageConnectedServices: WebSocketServiceMessage = "connected_services";
 export type WebsocketServiceType = string;
 export const WSServiceServerServiceType: WebsocketServiceType = "server";
 export type WebsocketServiceStatus = string;
 export const WSServiceStatusConnected: WebsocketServiceStatus = "connected";
-export const WSServiceStatusPending: WebsocketServiceStatus = "pending";
 export const WSServiceStatusConnecting: WebsocketServiceStatus = "connecting";
 export const WSServiceStatusDisconnected: WebsocketServiceStatus = "disconnected";
 export interface WSServiceConnectServerData {
   id: number /* uint */;
+  name: string;
 }
 export interface WSServicePassPhraseRequiredData {
   id: number /* uint */;
@@ -28,11 +29,20 @@ export interface WSServiceTrustHostFingerPrintData {
   name: any;
   finger_print: string;
 }
-export type WSServiceMessage = WebSocketMessage<WebSocketServiceMessage>;
+export interface WSServiceHostFingerPrintMismatchData {
+  id: number /* uint */;
+  name: any;
+  old_finger_print: string;
+  new_finger_print: string;
+}
+export interface WSServiceMessage {
+  action: 'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services';
+  data: any;
+}
 export interface WSServiceConnectedListItem {
   id: number /* uint */;
   name: string;
-  type: WebsocketServiceType;
+  type: 'server';
   status: 'connected' | 'pending' | 'connecting' | 'disconnected';
 }
 export interface WSServiceConnectedList {
@@ -48,8 +58,4 @@ export interface WebSocketMessage<A extends any> {
 }
 export interface WSError {
   message: string;
-}
-export interface WebSocketIdNameData {
-  id: number /* uint */;
-  name: any;
 }

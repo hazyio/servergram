@@ -2,6 +2,7 @@
   import DeleteRequestDialog from "#lib/components/base/DeleteRequestDialog.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import { ConnectedServices } from "#lib/components/base/services/services.svelte.ts";
+  import Loading from "#lib/components/base/loading.svelte";
 
   let {
     id,
@@ -15,14 +16,19 @@
   let serverConnected = $derived(ConnectedServices.findServer(id));
 </script>
 
-<div class="flex items-center justify-end gap-2">
+<div class="flex items-center justify-end gap-3">
   {#if serverConnected}
-    <span>Connected</span>
+    {#if serverConnected.status === "connecting"}
+      <Loading loading class="w-4 h-4" containerClass="w-12" />
+    {:else}
+      <span>Connected</span>
+    {/if}
+  {:else}
+    <Button
+      variant="secondary"
+      onclick={() => ConnectedServices.startServerConnection(id, name)}
+      >Connect</Button
+    >
+    <DeleteRequestDialog {id} {name} {onDeleted} type="server" useIcon />
   {/if}
-  <Button
-    variant="secondary"
-    onclick={() => ConnectedServices.startServerConnection(id, name)}
-    >Connect</Button
-  >
-  <DeleteRequestDialog {id} {name} {onDeleted} type="server" useIcon />
 </div>

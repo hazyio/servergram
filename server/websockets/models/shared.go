@@ -12,10 +12,6 @@ type WebSocketMessage[A any] struct {
 type WSError struct {
 	Message string `json:"message"`
 }
-type WebSocketIdNameData struct {
-	Id   uint `json:"id" min:"1"`
-	Name any  `json:"name"`
-}
 
 func NewUnknownError(err string) WSError {
 	return WSError{

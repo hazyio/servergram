@@ -19,7 +19,7 @@
     "all",
   );
   let loadError = $state(false);
-  let startIndex = $state(1);
+  let startIndex = $state(0);
   let previousIndex = $state(0);
   let loadLimit = $state(10);
   async function loadLogs() {

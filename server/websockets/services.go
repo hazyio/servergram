@@ -6,10 +6,10 @@ import (
 	"log/slog"
 
 	"gorm.io/gorm"
-	"hazyio.com/servergram/db"
-	"hazyio.com/servergram/internal"
-	"hazyio.com/servergram/internal/sshmanager"
-	"hazyio.com/servergram/websockets/models"
+	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal"
+	"hazyio.com/servergram/server/internal/sshmanager"
+	"hazyio.com/servergram/server/websockets/models"
 )
 
 func onServiceSocketStated(input internal.OnStartedRawServerRouteData) {
@@ -43,22 +43,22 @@ func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketM
 		SendQueueAndConnected(dataQueue, manageSSHConnection)
 		// Handle the server connection asynchronously.
 		go handleServerConnect(manageSSHConnection, input.Database, msg, dataQueue)
-		break
+
 	case models.WSServiceMessageDisconnectServer:
 		msg := models.WSServiceDisconnectServerData{}
 		if err := models.ReUnmarshal(data, &msg); err != nil {
 			dataQueue.Enqueue(models.NewErrorServiceWSMessage("could not understand message: " + string(message)))
 			return
 		}
-		go handleServerDisconnect(manageSSHConnection, input.Database, msg, dataQueue)
-		break
+		go handleServerDisconnect(manageSSHConnection, msg, dataQueue)
+
 	default:
 		slog.Error("unknown message action", "action", message)
 		dataQueue.Enqueue(models.NewErrorServiceWSMessage("unknown message action: " + string(message)))
 
 	}
 }
-func handleServerDisconnect(sshManager *sshmanager.SSHManager, database *gorm.DB, msg models.WSServiceDisconnectServerData, dataQueue *internal.DataQueue) {
+func handleServerDisconnect(sshManager *sshmanager.SSHManager, msg models.WSServiceDisconnectServerData, dataQueue *internal.DataQueue) {
 	defer SendQueueAndConnected(dataQueue, sshManager)
 
 	if sshManager.IsConnected(msg.Id) {
@@ -101,34 +101,44 @@ func handleServerConnect(sshManager *sshmanager.SSHManager, database *gorm.DB, m
 	}
 	server.SSHKey.Key = decryptedSSHKey
 	connectErr := sshManager.ConnectNewUnEncrypted(&server)
-	if connectErr != nil {
-		var unknownHost *sshmanager.UnknownHostError
-		var mismatch *sshmanager.HostKeyMismatchError
-		if errors.As(connectErr, &unknownHost) {
-			slog.Error("unknown host error", "error", unknownHost)
-			dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageTrustHostFingerPrint, &models.WSServiceTrustHostFingerPrintData{
-				Id:          msg.Id,
-				Name:        server.Name,
-				FingerPrint: unknownHost.Fingerprint,
-			}))
-
-			return
+	if connectErr == nil {
+		// get and update os and arch information
+		client := sshManager.GetConnected(msg.Id)
+		if client != nil {
+			os := client.OS
+			arch := client.Arch
+			if err := db.UpdateServerOsAndArch(msg.Id, os, arch, database); err != nil {
+				slog.Error("failed to update server OS and Arch", "error", err)
+			}
 		}
-		if errors.As(connectErr, &mismatch) {
-			slog.Error("host key mismatch error", "error", mismatch)
-			dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageHostFingerPrintMismatch, &models.WSServiceHostFingerPrintMismatchData{
-				Id:             msg.Id,
-				Name:           server.Name,
-				OldFingerPrint: mismatch.Expected,
-				NewFingerPrint: mismatch.Got,
-			}))
 
-			return
-		}
-		slog.Error("failed to connect to server", "error", connectErr)
-		dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to connect to server, config might be wrong. check server configuration"))
 		return
 	}
+	var unknownHost *sshmanager.UnknownHostError
+	var mismatch *sshmanager.HostKeyMismatchError
+	if errors.As(connectErr, &unknownHost) {
+		slog.Error("unknown host error", "error", unknownHost)
+		dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageTrustHostFingerPrint, &models.WSServiceTrustHostFingerPrintData{
+			Id:          msg.Id,
+			Name:        server.Name,
+			FingerPrint: unknownHost.Fingerprint,
+		}))
+
+		return
+	}
+	if errors.As(connectErr, &mismatch) {
+		slog.Error("host key mismatch error", "error", mismatch)
+		dataQueue.Enqueue(models.NewServiceWSMessage(models.WSServiceMessageHostFingerPrintMismatch, &models.WSServiceHostFingerPrintMismatchData{
+			Id:             msg.Id,
+			Name:           server.Name,
+			OldFingerPrint: mismatch.Expected,
+			NewFingerPrint: mismatch.Got,
+		}))
+
+		return
+	}
+	slog.Error("failed to connect to server", "error", connectErr)
+	dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to connect to server, config might be wrong. check server configuration"))
 
 }
 

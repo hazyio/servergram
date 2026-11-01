@@ -9,19 +9,31 @@
   import Loading from "../loading.svelte";
   import NoItemsFound from "../noItemsFound.svelte";
   import CollectPassPhrase from "./CollectPassPhrase.svelte";
+  import CompareTrustFingerPrint from "./CompareTrustFingerPrint.svelte";
   import ServiceItem from "./ServiceItem.svelte";
   import {
     checkWs,
     servicesState,
     startWebSocket,
     stopWebSocket,
-    ConnectedServices,
     toastError,
   } from "./services.svelte.ts";
-  import CompareTrustFingerPrint from "./CompareTrustFingerPrint.svelte";
   let open = $state(false);
-
+  let intervalId = $state<ReturnType<typeof setInterval> | null>(null);
+  function retryWebSocketConnection() {
+    if (servicesState.tries >= 5) {
+      toastError("Maximum connection attempts reached");
+    } else {
+      startWebSocketWrapper();
+    }
+  }
   function startWebSocketWrapper() {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+    }
+    intervalId = setInterval(() => {
+      retryWebSocketConnection();
+    }, 10000);
     startWebSocket(() => {
       if (servicesState.error || servicesState.services.length > 0) {
         open = true;
@@ -31,7 +43,12 @@
   }
   onMount(() => {
     startWebSocketWrapper();
-    return stopWebSocket;
+    return () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+      }
+      stopWebSocket();
+    };
   });
 </script>
 
@@ -51,16 +68,7 @@
       title={servicesState.error ? servicesState.error : "connected services"}
       variant={servicesState.error ? "destructive" : "outline"}
       class="h-9 w-9 rounded-md"
-      onclick={() => {
-        if (!checkWs(false)) {
-          if (servicesState.tries >= 5) {
-            toastError("Maximum connection attempts reached");
-          } else {
-            startWebSocketWrapper();
-          }
-          return;
-        }
-      }}
+      onclick={retryWebSocketConnection}
     >
       {#if servicesState.connecting}
         <Loading loading={true} />

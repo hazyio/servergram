@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-	"hazyio.com/servergram/db"
+	"hazyio.com/servergram/server/db"
 
 	"gorm.io/gorm"
 )

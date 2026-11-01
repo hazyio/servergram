@@ -16,8 +16,7 @@ const (
 	OSDarwin  OS = "darwin"
 
 	UnknownArch Arch = "unknown"
-	ArchAMD64   Arch = "amd64"
-	ArchARM64   Arch = "arm64"
+	ArchX86_64  Arch = "x86_64"
 )
 
 type Server struct {
@@ -27,8 +26,8 @@ type Server struct {
 	Port     uint16 `gorm:"not null;default:22;uniqueIndex:idx_server_target,priority:3"`
 	Username string `gorm:"size:64;not null;uniqueIndex:idx_server_target,priority:4"`
 
-	OS   OS   `gorm:"not null;size:20;check:chk_servers_os,os IN ('unknown','linux','windows','darwin')"`
-	Arch Arch `gorm:"not null;size:20;check:chk_servers_arch,arch IN ('unknown','amd64','arm64')"`
+	OS   OS   `gorm:"not null;size:20;default:'unknown';check:chk_servers_os,os IN ('unknown','linux','windows','darwin')"`
+	Arch Arch `gorm:"not null;size:20;default:'unknown';check:chk_servers_arch,arch IN ('unknown','x86_64')"`
 
 	GroupID            uint   `gorm:"not null;index"`
 	SSHKeyID           uint   `gorm:"not null;index"`
@@ -54,4 +53,17 @@ func FindServerByID(id uint, db *gorm.DB) (*Server, error) {
 		return nil, err
 	}
 	return &server, nil
+}
+
+func UpdateServerOsAndArch(id uint, os OS, arch Arch, db *gorm.DB) error {
+	var server Server
+	if err := db.Where("id = ?", id).First(&server).Error; err != nil {
+		return err
+	}
+	server.OS = os
+	server.Arch = arch
+	if err := db.Save(&server).Error; err != nil {
+		return err
+	}
+	return nil
 }

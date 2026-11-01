@@ -9,8 +9,8 @@ import (
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
 	"gorm.io/gorm"
-	"hazyio.com/servergram/db"
-	"hazyio.com/servergram/internal/sshmanager"
+	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal/sshmanager"
 )
 
 type RawServer struct {

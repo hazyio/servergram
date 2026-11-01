@@ -24,11 +24,11 @@ import (
 
 	"gorm.io/gorm"
 
-	"hazyio.com/servergram/db"
-	"hazyio.com/servergram/internal"
-	"hazyio.com/servergram/internal/sshmanager"
-	"hazyio.com/servergram/routes"
-	"hazyio.com/servergram/websockets"
+	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal"
+	"hazyio.com/servergram/server/internal/sshmanager"
+	"hazyio.com/servergram/server/routes"
+	"hazyio.com/servergram/server/websockets"
 )
 
 //go:embed all:dist

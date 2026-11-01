@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: proto/files.proto
 
-package shared
+package proto
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Files_ListFiles_FullMethodName = "/shared.Files/ListFiles"
+	Files_ListFiles_FullMethodName = "/proto.Files/ListFiles"
 )
 
 // FilesClient is the client API for Files service.
@@ -108,7 +108,7 @@ func _Files_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(int
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Files_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "shared.Files",
+	ServiceName: "proto.Files",
 	HandlerType: (*FilesServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

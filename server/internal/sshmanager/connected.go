@@ -1,20 +1,30 @@
 package sshmanager
 
 import (
-	"fmt"
+	"bytes"
+	"context"
+	"errors"
 	"log/slog"
 	"net"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/crypto/ssh"
-	"hazyio.com/servergram/db"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/shared"
 )
 
 type SSHConnectedData struct {
 	Id     uint
 	Name   string
 	client *ssh.Client
+	// Agent  *grpc.ClientConn
+	OS   db.OS
+	Arch db.Arch
 }
 
 func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
@@ -42,8 +52,11 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 		slog.Error("failed to dial SSH", "error", err)
 		return nil, err
 	}
-
-	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client}, nil
+	os, arch, err := getOSAndArch(client)
+	if err != nil {
+		return nil, err
+	}
+	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client, OS: os, Arch: arch}, nil
 }
 func (c *SSHConnectedData) IsAlive() bool {
 	if c.client == nil {
@@ -63,18 +76,6 @@ func (c *SSHConnectedData) Disconnect() error {
 	return nil
 }
 
-type UnknownHostError struct{ Host, Fingerprint, KeyType string }
-
-func (e *UnknownHostError) Error() string {
-	return fmt.Sprintf("unknown host key for %s:%s", e.Host, e.Fingerprint)
-}
-
-type HostKeyMismatchError struct{ Host, Expected, Got string }
-
-func (e *HostKeyMismatchError) Error() string {
-	return fmt.Sprintf("host key mismatch for %s: expected %s, got %s", e.Host, e.Expected, e.Got)
-}
-
 func dbHostKeyCallback(server *db.Server, captured *error) ssh.HostKeyCallback {
 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		got := ssh.FingerprintSHA256(key)
@@ -89,4 +90,62 @@ func dbHostKeyCallback(server *db.Server, captured *error) ssh.HostKeyCallback {
 		}
 		return nil
 	}
+}
+
+func getOSAndArch(c *ssh.Client) (db.OS, db.Arch, error) {
+	sess, err := c.NewSession()
+	if err != nil {
+		return "", "", err
+	}
+	defer sess.Close()
+
+	var b bytes.Buffer
+	sess.Stdout = &b
+	if err := sess.Run("uname -s && uname -m"); err != nil {
+		return "", "", err
+	}
+	output := strings.Split(strings.TrimSpace(b.String()), "\n")
+	if len(output) != 2 {
+		return "", "", errors.New("unexpected uname output")
+	}
+	return db.OS(strings.ToLower(output[0])), db.Arch(output[1]), nil
+}
+
+// func uploadAgent(c *ssh.Client) (string, error) {
+// 	sess, err := c.NewSession()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return "sjsj", nil
+// }
+
+func dialAgent(c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
+	sess, err := c.NewSession()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin, _ := sess.StdinPipe()
+	stdout, _ := sess.StdoutPipe()
+	// sess.Stderr =slog.Default().Handler()
+
+	if err := sess.Start(remotePath); err != nil {
+		return nil, err
+	}
+
+	conn := shared.NewStdioConn(stdout, stdin, func() error {
+		stdin.Close()
+		return sess.Close()
+	})
+
+	var used atomic.Bool
+	return grpc.NewClient("passthrough:///agent",
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // SSH already encrypts and authenticates
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
+			if used.Swap(true) {
+				return nil, errors.New("agent connection is gone")
+			}
+			return conn, nil
+		}),
+	)
 }

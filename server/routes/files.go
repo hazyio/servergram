@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gorm.io/gorm"
-	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/server/internal"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-playground/validator/v10"

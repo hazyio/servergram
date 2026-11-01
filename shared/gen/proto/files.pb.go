@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: proto/files.proto
 
-package shared
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -113,13 +113,13 @@ var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
 	"\n" +
-	"\x11proto/files.proto\x12\x06shared\"%\n" +
+	"\x11proto/files.proto\x12\x05proto\"%\n" +
 	"\x11ListFilesResponse\x12\x10\n" +
 	"\x03dir\x18\x01 \x01(\tR\x03dir\"=\n" +
 	"\x10ListFilesRequest\x12)\n" +
-	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion2I\n" +
-	"\x05Files\x12@\n" +
-	"\tListFiles\x12\x18.shared.ListFilesRequest\x1a\x19.shared.ListFilesResponseB+Z)hazyio.com/servergram-shared/proto;sharedb\x06proto3"
+	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion2G\n" +
+	"\x05Files\x12>\n" +
+	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x18.proto.ListFilesResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -135,12 +135,12 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 
 var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proto_files_proto_goTypes = []any{
-	(*ListFilesResponse)(nil), // 0: shared.ListFilesResponse
-	(*ListFilesRequest)(nil),  // 1: shared.ListFilesRequest
+	(*ListFilesResponse)(nil), // 0: proto.ListFilesResponse
+	(*ListFilesRequest)(nil),  // 1: proto.ListFilesRequest
 }
 var file_proto_files_proto_depIdxs = []int32{
-	1, // 0: shared.Files.ListFiles:input_type -> shared.ListFilesRequest
-	0, // 1: shared.Files.ListFiles:output_type -> shared.ListFilesResponse
+	1, // 0: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	0, // 1: proto.Files.ListFiles:output_type -> proto.ListFilesResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

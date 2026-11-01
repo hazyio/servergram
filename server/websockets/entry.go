@@ -1,7 +1,7 @@
 package websockets
 
 import (
-	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/server/internal"
 )
 
 func RegisterWebSockets(server *internal.RawServer) {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"hazyio.com/servergram/db"
+	"hazyio.com/servergram/server/db"
 )
 
 var (
@@ -73,7 +73,11 @@ func (m *SSHManager) IsConnected(id uint) bool {
 	_, ok := m.connected[id]
 	return ok
 }
-
+func (m *SSHManager) GetConnected(id uint) *SSHConnectedData {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.connected[id]
+}
 func (m *SSHManager) GetAllConnected() []SSHConnectedListData {
 	m.mu.Lock()
 	defer m.mu.Unlock()

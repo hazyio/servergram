@@ -6,9 +6,9 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
-	"hazyio.com/servergram/db"
-	"hazyio.com/servergram/internal"
-	"hazyio.com/servergram/routes/models"
+	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal"
+	"hazyio.com/servergram/server/routes/models"
 )
 
 func registerSSHRoutes(api *huma.Group, database *gorm.DB) {

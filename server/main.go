@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"hazyio.com/servergram/internal"
+	"hazyio.com/servergram/server/internal"
 )
 
 func main() {

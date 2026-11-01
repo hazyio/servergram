@@ -9,6 +9,7 @@ const (
 	WSServiceMessageHostFingerPrintMismatch WebSocketServiceMessage = "host_finger_print_mismatch"
 	WSServiceMessageError                   WebSocketServiceMessage = "error"
 	WSServiceMessageConnectedServices       WebSocketServiceMessage = "connected_services"
+	WSServiceMessageDisconnectServer        WebSocketServiceMessage = "disconnect_server"
 )
 
 type WebsocketServiceType string
@@ -29,6 +30,9 @@ type WSServiceConnectServerData struct {
 	Id   uint   `json:"id" min:"1"`
 	Name string `json:"name"`
 }
+type WSServiceDisconnectServerData struct {
+	Id uint `json:"id" min:"1"`
+}
 type WSServicePassPhraseRequiredData struct {
 	Id   uint `json:"id" min:"1"`
 	Name any  `json:"name"`
@@ -45,7 +49,7 @@ type WSServiceHostFingerPrintMismatchData struct {
 	NewFingerPrint string `json:"new_finger_print"`
 }
 type WSServiceMessage struct {
-	Action WebSocketServiceMessage `json:"action" tstype:"'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services'"`
+	Action WebSocketServiceMessage `json:"action" tstype:"'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services' | 'disconnect_server'"`
 	Data   any                     `json:"data"`
 }
 type WSServiceConnectedListItem struct {

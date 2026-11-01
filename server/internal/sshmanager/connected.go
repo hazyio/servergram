@@ -45,7 +45,7 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 
 	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client}, nil
 }
-func (c *SSHConnectedData) Close() error {
+func (c *SSHConnectedData) Disconnect() error {
 	if c.client != nil {
 		return c.client.Close()
 	}

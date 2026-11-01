@@ -43,10 +43,29 @@ func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketM
 		// Handle the server connection asynchronously.
 		go handleServerConnect(manageSSHConnection, input.Database, msg, dataQueue)
 		break
+	case models.WSServiceMessageDisconnectServer:
+		msg := models.WSServiceDisconnectServerData{}
+		if err := models.ReUnmarshal(data, &msg); err != nil {
+			dataQueue.Enqueue(models.NewErrorServiceWSMessage("could not understand message: " + string(message)))
+			return
+		}
+		go handleServerDisconnect(manageSSHConnection, input.Database, msg, dataQueue)
+		break
 	default:
 		slog.Error("unknown message action", "action", message)
 		dataQueue.Enqueue(models.NewErrorServiceWSMessage("unknown message action: " + string(message)))
 
+	}
+}
+func handleServerDisconnect(sshManager *sshmanager.SSHManager, database *gorm.DB, msg models.WSServiceDisconnectServerData, dataQueue *internal.DataQueue) {
+	defer SendQueueAndConnected(dataQueue, sshManager)
+
+	if sshManager.IsConnected(msg.Id) {
+		if err := sshManager.Disconnect(msg.Id); err != nil {
+			slog.Error("failed to disconnect server", "error", err)
+			dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to disconnect server"))
+			return
+		}
 	}
 }
 func handleServerConnect(sshManager *sshmanager.SSHManager, database *gorm.DB, msg models.WSServiceConnectServerData, dataQueue *internal.DataQueue) {

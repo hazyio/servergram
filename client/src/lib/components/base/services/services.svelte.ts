@@ -5,6 +5,7 @@ import {
   type WSServicePassPhraseRequiredData,
   type WSServiceTrustHostFingerPrintData,
   type WSServiceHostFingerPrintMismatchData,
+  type WSServiceDisconnectServerData,
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
@@ -49,10 +50,12 @@ export function stopWebSocket() {
   ws = undefined;
 }
 export type ServiceState = "connected";
-export function checkWs(): boolean {
+export function checkWs(showError: boolean = false): boolean {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     servicesState.error = "WebSocket is not connected";
-    toastError(`WebSocket is not connected, click red button to reconnect.`);
+    if (showError) {
+      toastError(`WebSocket is not connected, click red button to reconnect.`);
+    }
     return false;
   }
   return true;
@@ -90,5 +93,28 @@ export class ConnectedServices {
       return;
     }
     ws?.send(JSON.stringify(data));
+  }
+  static disconnectServer(serviceId: number) {
+    if (!checkWs()) {
+      return;
+    }
+    let findService = ConnectedServices.findServer(serviceId);
+    if (!findService) {
+      toastError(`Server with id ${serviceId} is not connected`);
+      return;
+    }
+    let data: WSServiceMessage = {
+      action: "disconnect_server",
+      data: {
+        id: serviceId,
+      } as WSServiceDisconnectServerData,
+    };
+    ws?.send(JSON.stringify(data));
+  }
+  static disconnectDatabase(serviceId: number) {
+    if (!checkWs()) {
+      return;
+    }
+    alert("Disconnect database not implemented yet");
   }
 }

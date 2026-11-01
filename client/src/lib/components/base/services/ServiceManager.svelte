@@ -52,7 +52,7 @@
       variant={servicesState.error ? "destructive" : "outline"}
       class="h-9 w-9 rounded-md"
       onclick={() => {
-        if (!checkWs()) {
+        if (!checkWs(false)) {
           if (servicesState.tries >= 5) {
             toastError("Maximum connection attempts reached");
           } else {

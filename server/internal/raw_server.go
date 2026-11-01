@@ -29,9 +29,9 @@ type RawServerRouteData[I any] struct {
 	SSHManager *sshmanager.SSHManager
 }
 type OnStartedRawServerRouteData struct {
-	Database  *gorm.DB
-	DataQueue *DataQueue
-	Polls     *Polls
+	Database   *gorm.DB
+	DataQueue  *DataQueue
+	Polls      *Polls
 	SSHManager *sshmanager.SSHManager
 }
 
@@ -82,15 +82,13 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 
 		poller.Start(ctx)
 		defer poller.Stop()
-		go func() {
-			// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
-			runOnStart(OnStartedRawServerRouteData{
-				Database:  s.database,
-				DataQueue: s.DataQueue,
-				Polls:     s.Polls,
-				SSHManager: s.SSHManager,
-			})
-		}()
+		// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
+		go runOnStart(OnStartedRawServerRouteData{
+			Database:   s.database,
+			DataQueue:  s.DataQueue,
+			Polls:      s.Polls,
+			SSHManager: s.SSHManager,
+		})
 		for {
 			c, err := req.Cookie("session_token")
 			if err != nil {

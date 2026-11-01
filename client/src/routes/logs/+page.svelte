@@ -21,7 +21,7 @@
   let loadError = $state(false);
   let startIndex = $state(0);
   let previousIndex = $state(0);
-  let loadLimit = $state(10);
+  let loadLimit = $state(100);
   async function loadLogs() {
     loading = true;
     const { data, error } = await NewRequestClient().GET("/api/logs/list", {

@@ -3,6 +3,7 @@
   import Button from "#lib/components/ui/button/button.svelte";
   import { ConnectedServices } from "#lib/components/base/services/services.svelte.ts";
   import Loading from "#lib/components/base/loading.svelte";
+  import DisconnectService from "#lib/components/base/services/DisconnectService.svelte";
 
   let {
     id,
@@ -21,7 +22,7 @@
     {#if serverConnected.status === "connecting"}
       <Loading loading class="w-4 h-4" containerClass="w-12" />
     {:else}
-      <span>Connected</span>
+      <DisconnectService {id} {name} type="server" />
     {/if}
   {:else}
     <Button

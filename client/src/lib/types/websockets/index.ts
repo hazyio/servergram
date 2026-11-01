@@ -10,6 +10,7 @@ export const WSServiceMessageTrustHostFingerPrint: WebSocketServiceMessage = "tr
 export const WSServiceMessageHostFingerPrintMismatch: WebSocketServiceMessage = "host_finger_print_mismatch";
 export const WSServiceMessageError: WebSocketServiceMessage = "error";
 export const WSServiceMessageConnectedServices: WebSocketServiceMessage = "connected_services";
+export const WSServiceMessageDisconnectServer: WebSocketServiceMessage = "disconnect_server";
 export type WebsocketServiceType = string;
 export const WSServiceServerServiceType: WebsocketServiceType = "server";
 export type WebsocketServiceStatus = string;
@@ -19,6 +20,9 @@ export const WSServiceStatusDisconnected: WebsocketServiceStatus = "disconnected
 export interface WSServiceConnectServerData {
   id: number /* uint */;
   name: string;
+}
+export interface WSServiceDisconnectServerData {
+  id: number /* uint */;
 }
 export interface WSServicePassPhraseRequiredData {
   id: number /* uint */;
@@ -36,7 +40,7 @@ export interface WSServiceHostFingerPrintMismatchData {
   new_finger_print: string;
 }
 export interface WSServiceMessage {
-  action: 'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services';
+  action: 'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services' | 'disconnect_server';
   data: any;
 }
 export interface WSServiceConnectedListItem {

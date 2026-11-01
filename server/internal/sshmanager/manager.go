@@ -53,6 +53,20 @@ func (m *SSHManager) Dequeue(id uint) {
 	defer m.mu.Unlock()
 	delete(m.queued, id)
 }
+func (m *SSHManager) Disconnect(id uint) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	connection, ok := m.connected[id]
+	if !ok {
+		return nil
+	}
+	if err := connection.Disconnect(); err != nil {
+		return err
+	}
+	delete(m.connected, id)
+	return nil
+}
+
 func (m *SSHManager) IsConnected(id uint) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()

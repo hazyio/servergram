@@ -6,8 +6,10 @@
   import { page } from "$app/state";
   import type { LayoutProps } from "./$types";
   import "./layout.css";
+  import { info } from "#lib/states/severPageInfo.svelte.ts";
 
   let { children }: LayoutProps = $props();
+  let connectedServerInfo = $derived(info);
   const homeBreadcrumbs = [
     {
       title: "Home",
@@ -21,6 +23,13 @@
       url: appPaths.servers.index,
     },
   ];
+  const severPageBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.show(connectedServerInfo.id),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -40,6 +49,14 @@
           url: appPaths.servers.add,
         },
       ],
+      [
+        ...serverBreadcrumbs,
+        {
+          title: "Add New Server",
+          url: appPaths.servers.add,
+        },
+      ],
+      severPageBreadcrumbs,
     ]}
     sideBarItems={[
       {

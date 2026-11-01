@@ -5,12 +5,13 @@
 
   import { onMount } from "svelte";
   import { Button } from "../../ui/button/index.ts";
-  import Error from "../error.svelte";
+  import Error from "../ErrorSection.svelte";
   import Loading from "../loading.svelte";
   import NoItemsFound from "../noItemsFound.svelte";
   import CollectPassPhrase from "./CollectPassPhrase.svelte";
   import CompareTrustFingerPrint from "./CompareTrustFingerPrint.svelte";
   import ServiceItem from "./ServiceItem.svelte";
+
   import {
     checkWs,
     servicesState,
@@ -18,6 +19,8 @@
     stopWebSocket,
     toastError,
   } from "./services.svelte.ts";
+  import { GetConnectedServices } from "./webSocketMessages";
+  import { RefreshCcw } from "@lucide/svelte";
   let open = $state(false);
   let intervalId = $state<ReturnType<typeof setInterval> | null>(null);
   function retryWebSocketConnection() {
@@ -80,7 +83,17 @@
 
   <Popover.Content align="end" class="max-h-120 min-h-90">
     <Popover.Header>
-      <h3 class="text-lg font-medium">Connected Services</h3>
+      <h3 class="text-lg font-medium flex">
+        <span class="grow">Connected Services</span>
+        {#if !servicesState.connecting && servicesState.error === null}
+          <Button
+            size="sm"
+            variant="outline"
+            onclick={GetConnectedServices}
+            title="Reload connected services"><RefreshCcw /></Button
+          >
+        {/if}
+      </h3>
     </Popover.Header>
     {#if servicesState.connecting}
       <Loading loading={true} text="Connecting..." class="mt-5" />

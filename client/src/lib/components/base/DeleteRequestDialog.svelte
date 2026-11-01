@@ -1,6 +1,6 @@
 <script lang="ts">
   import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
-  import Error from "#lib/components/base/error.svelte";
+  import Error from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/index.js";

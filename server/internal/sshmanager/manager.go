@@ -2,6 +2,7 @@ package sshmanager
 
 import (
 	"errors"
+	"log/slog"
 	"sync"
 
 	"hazyio.com/servergram/server/db"
@@ -55,15 +56,18 @@ func (m *SSHManager) Dequeue(id uint) {
 }
 func (m *SSHManager) Disconnect(id uint) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	connection, ok := m.connected[id]
 	if !ok {
+		m.mu.Unlock()
 		return nil
 	}
 	if err := connection.Disconnect(); err != nil {
+		m.mu.Unlock()
 		return err
 	}
 	delete(m.connected, id)
+	m.mu.Unlock()
+	slog.Info("SSH connection closed", "server_id", id)
 	return nil
 }
 
@@ -93,13 +97,15 @@ func (m *SSHManager) GetAllConnected() []SSHConnectedListData {
 
 func (m *SSHManager) ConnectNewUnEncrypted(server *db.Server) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	connection, err := newUnEncryptedConnection(server)
 	if err != nil {
+		m.mu.Unlock()
 		return err
 	}
 	m.connected[server.ID] = connection
 	// remove from queuedIds after connecting
 	delete(m.queued, server.ID)
+	m.mu.Unlock()
+	slog.Info("SSH connection established", "server_id", server.ID, "server_name", server.Name)
 	return nil
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
   import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
-  import Error from "#lib/components/base/error.svelte";
+  import Error from "#lib/components/base/ErrorSection.svelte";
   import CreateGroup from "#lib/components/base/groups/createGroup.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import Button from "#lib/components/ui/button/button.svelte";

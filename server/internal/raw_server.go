@@ -73,10 +73,8 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				conn.Close(websocket.StatusNormalClosure, "no more messages, closing connection")
 				return
 			}
-			if messages != nil {
-				for _, message := range messages {
-					wsjson.Write(ctx, conn, message)
-				}
+			for _, message := range messages {
+				wsjson.Write(ctx, conn, message)
 			}
 		}))
 
@@ -108,7 +106,8 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				}
 				return
 			}
-			handle(RawServerRouteData[I]{
+			// Handle the incoming WebSocket message asynchronously.
+			go handle(RawServerRouteData[I]{
 				Database:   s.database,
 				Input:      input,
 				DataQueue:  s.DataQueue,

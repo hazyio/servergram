@@ -2,7 +2,7 @@ package internal
 
 import "sync"
 
-// DataQueue is a thread-safe queue for storing messages.
+// DataQueue is a thread-safe queue for storing messages, allowing concurrent enqueues and dequeues. set Closed to true to prevent further enqueues. other function can also check the Closed flag to determine if the queue is closed.
 type DataQueue struct {
 	mux      sync.Mutex
 	messages []any

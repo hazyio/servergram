@@ -16,7 +16,8 @@ const (
 	OSDarwin  OS = "darwin"
 
 	UnknownArch Arch = "unknown"
-	ArchX86_64  Arch = "x86_64"
+	ArchAMD64   Arch = "amd64"
+	ArchARM64   Arch = "arm64"
 )
 
 type Server struct {
@@ -27,7 +28,7 @@ type Server struct {
 	Username string `gorm:"size:64;not null;uniqueIndex:idx_server_target,priority:4"`
 
 	OS   OS   `gorm:"not null;size:20;default:'unknown';check:chk_servers_os,os IN ('unknown','linux','windows','darwin')"`
-	Arch Arch `gorm:"not null;size:20;default:'unknown';check:chk_servers_arch,arch IN ('unknown','x86_64')"`
+	Arch Arch `gorm:"not null;size:20;default:'unknown';check:chk_servers_arch,arch IN ('unknown','amd64','arm64')"`
 
 	GroupID            uint   `gorm:"not null;index"`
 	SSHKeyID           uint   `gorm:"not null;index"`

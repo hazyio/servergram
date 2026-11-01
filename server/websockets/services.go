@@ -51,7 +51,8 @@ func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketM
 			return
 		}
 		go handleServerDisconnect(manageSSHConnection, msg, dataQueue)
-
+	case models.WSServiceMessageGetConnectedServices:
+		handleGetConnectedServices(dataQueue, manageSSHConnection)
 	default:
 		slog.Error("unknown message action", "action", message)
 		dataQueue.Enqueue(models.NewErrorServiceWSMessage("unknown message action: " + string(message)))
@@ -141,7 +142,9 @@ func handleServerConnect(sshManager *sshmanager.SSHManager, database *gorm.DB, m
 	dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to connect to server, config might be wrong. check server configuration"))
 
 }
-
+func handleGetConnectedServices(dataQueue *internal.DataQueue, sshManager *sshmanager.SSHManager) {
+	SendQueueAndConnected(dataQueue, sshManager)
+}
 func SendQueueAndConnected(dataQueue *internal.DataQueue, sshManager *sshmanager.SSHManager) {
 	connectedQueue, connectedServices := sshManager.GetQueue(), sshManager.GetAllConnected()
 	data := make([]models.WSServiceConnectedListItem, 0)

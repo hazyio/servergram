@@ -1,5 +1,5 @@
 packages:
-  - path: "hazyio.com/servergram/websockets/models"
+  - path: "hazyio.com/servergram/server/websockets/models"
     output_path: "../client/src/lib/types/websockets"
     include_children: true
     exclude_files:

@@ -14,6 +14,7 @@ const appPaths = {
   servers: {
     index: "/servers",
     add: "/servers/add",
+    show: (id: number) => `/servers/${id}`,
   },
   databases: {
     index: "/databases",

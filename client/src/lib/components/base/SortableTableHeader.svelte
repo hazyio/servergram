@@ -6,13 +6,18 @@
   let {
     variant = "ghost",
     text,
+    children,
     ...restProps
   }: ComponentProps<typeof Button> & {
-    text: string;
+    text?: string;
   } = $props();
 </script>
 
 <Button {variant} {...restProps}>
-  {text}
+  {#if children}
+    {@render children()}
+  {:else}
+    {text}
+  {/if}
   <ArrowUpDownIcon class="ms-2 size-4" />
 </Button>

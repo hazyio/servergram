@@ -10,6 +10,7 @@ const (
 	WSServiceMessageError                   WebSocketServiceMessage = "error"
 	WSServiceMessageConnectedServices       WebSocketServiceMessage = "connected_services"
 	WSServiceMessageDisconnectServer        WebSocketServiceMessage = "disconnect_server"
+	WSServiceMessageGetConnectedServices    WebSocketServiceMessage = "get_connected_services"
 )
 
 type WebsocketServiceType string
@@ -49,7 +50,7 @@ type WSServiceHostFingerPrintMismatchData struct {
 	NewFingerPrint string `json:"new_finger_print"`
 }
 type WSServiceMessage struct {
-	Action WebSocketServiceMessage `json:"action" tstype:"'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services' | 'disconnect_server'"`
+	Action WebSocketServiceMessage `json:"action" tstype:"'connect_server' | 'pass_phrase_required' | 'trust_host_finger_print' | 'host_finger_print_mismatch' | 'error' | 'connected_services' | 'disconnect_server' | 'get_connected_services'"`
 	Data   any                     `json:"data"`
 }
 type WSServiceConnectedListItem struct {

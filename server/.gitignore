@@ -2,4 +2,4 @@
 dist/*
 tmp/*
 # Ignore built agent binaries
-agents/* 
+*bin

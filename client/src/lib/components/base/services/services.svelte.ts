@@ -1,15 +1,14 @@
 import {
   type WSServiceConnectedListItem,
-  type WSServiceConnectServerData,
+  type WSServiceHostFingerPrintMismatchData,
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
-  type WSServiceTrustHostFingerPrintData,
-  type WSServiceHostFingerPrintMismatchData,
-  type WSServiceDisconnectServerData,
+  type WSServiceTrustHostFingerPrintData
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
 import handleWebSocketMessage from "./handleWebsocket";
+import { ConnectServer, DisconnectServer } from "./webSocketMessages";
 let ws: WebSocket | undefined;
 
 export const servicesState = $state({
@@ -22,7 +21,12 @@ export const servicesState = $state({
     [] as WSServiceHostFingerPrintMismatchData[],
   tries: 0,
 });
-
+export function sendMessage(message: WSServiceMessage) {
+  if (!checkWs()) {
+    return;
+  }
+  ws?.send(JSON.stringify(message));
+}
 export function startWebSocket(onOpen: () => void) {
   if (ws?.readyState === WebSocket.OPEN) {
     console.log("WebSocket already open");
@@ -80,19 +84,13 @@ export class ConnectedServices {
     if (!checkWs()) {
       return;
     }
-    let data: WSServiceMessage = {
-      action: "connect_server",
-      data: {
-        id: serviceId,
-        name: serviceName,
-      } as WSServiceConnectServerData,
-    };
+  
     let findService = ConnectedServices.findServer(serviceId);
     if (findService) {
       toastError(`Service with id ${serviceId} already connected or pending`);
       return;
     }
-    ws?.send(JSON.stringify(data));
+    ConnectServer({ id: serviceId, name: serviceName });
   }
   static disconnectServer(serviceId: number) {
     if (!checkWs()) {
@@ -103,13 +101,7 @@ export class ConnectedServices {
       toastError(`Server with id ${serviceId} is not connected`);
       return;
     }
-    let data: WSServiceMessage = {
-      action: "disconnect_server",
-      data: {
-        id: serviceId,
-      } as WSServiceDisconnectServerData,
-    };
-    ws?.send(JSON.stringify(data));
+    DisconnectServer({ id: serviceId });
   }
   static disconnectDatabase(serviceId: number) {
     if (!checkWs()) {

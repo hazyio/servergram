@@ -2,7 +2,7 @@
   import { NewRequestClient } from "#lib/api/request.ts";
   import appPaths from "#lib/appPaths.ts";
   import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
-  import Error from "#lib/components/base/error.svelte";
+  import Error from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";

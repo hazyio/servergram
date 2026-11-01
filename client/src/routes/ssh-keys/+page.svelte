@@ -1,6 +1,6 @@
 <script lang="ts">
   import { NewRequestClient } from "#lib/api/request.ts";
-  import Error from "#lib/components/base/error.svelte";
+  import Error from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import CreateSSHKey from "#lib/components/base/ssh/createSHHKey.svelte";
   import Button from "#lib/components/ui/button/button.svelte";

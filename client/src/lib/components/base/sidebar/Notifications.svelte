@@ -2,7 +2,7 @@
   import * as Popover from "#lib/components/ui/popover/index.js";
   import * as Tabs from "#lib/components/ui/tabs/index.js";
   import { Bell, BellDot } from "@lucide/svelte";
-  import Error from "../error.svelte";
+  import Error from "../ErrorSection.svelte";
   import Loading from "../loading.svelte";
   import NoItemsFound from "../noItemsFound.svelte";
   import NotificationItem from "./NotificationItem.svelte";

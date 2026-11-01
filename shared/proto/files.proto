@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package servergram.v1;
-option go_package = "github.com/hazyio/servergram/proto;servergramv1";
+package shared;
+option go_package = "hazyio.com/servergram-shared/proto;shared";
 
 message ListFilesResponse { string dir = 1; }
 message ListFilesRequest { uint32 protocol_version = 1; }

@@ -10,6 +10,7 @@
         "huma",
         "servergram",
         "servergrampb",
+        "servergramshared",
         "servergramv",
         "sshmanager"
     ],

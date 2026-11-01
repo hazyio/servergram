@@ -23,6 +23,7 @@ func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketM
 	data := input.Input.Data
 	manageSSHConnection := input.SSHManager
 	dataQueue := input.DataQueue
+	slog.Info("handling service websocket message", "action", message)
 	switch message {
 	case models.WSServiceMessageConnectServer:
 		msg := models.WSServiceConnectServerData{}

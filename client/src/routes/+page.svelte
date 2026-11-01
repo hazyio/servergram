@@ -26,17 +26,15 @@
 </svelte:head>
 
 <div class="p-2">
-  <div class="flex gap-2">
+  <div
+    class="flex gap-2 justify-center items-center sticky z-10 top-0 pt-2 bg-background h-15"
+  >
     <Input placeholder="Search..." />
     <Sort
-      value={sortValue}
+      bind:value={sortValue}
       items={["Name", "Date", "Size"]}
-      direction={sortDirection}
-      onSelect={(value, direction) => {
-        console.log(`Selected sort: ${value} ${direction}`);
-        sortValue = value;
-        sortDirection = direction;
-      }}
+      bind:direction={sortDirection}
+      
     />
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>

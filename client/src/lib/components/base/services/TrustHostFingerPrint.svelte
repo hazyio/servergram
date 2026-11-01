@@ -4,6 +4,7 @@
   import type { WSServiceTrustHostFingerPrintData } from "#lib/types/websockets/index.js";
   import { Button } from "../../ui/button";
   import { toast } from "svelte-sonner";
+  import { ConnectedServices } from "./services.svelte";
 
   let {
     data = $bindable([]),
@@ -37,6 +38,8 @@
       toast.success(
         `Successfully trusted host fingerprint for server ${edit.name}`,
       );
+            ConnectedServices.startServerConnection(edit.id, edit.name);
+
       removed();
     }
   }

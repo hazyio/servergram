@@ -56,15 +56,17 @@
 </script>
 
 <svelte:head>
-  <title>Groups | ServerGram</title>
+  <title>Logs | ServerGram</title>
   <meta
     name="description"
-    content="Create and manage groups to organize your ServerGram servers."
+    content="Review and search activity logs from your ServerGram servers."
   />
 </svelte:head>
 
 <div class="p-2">
-  <div class="flex gap-2 justify-center items-center">
+  <div
+    class="flex gap-2 justify-center items-center sticky z-10 top-0 pt-2 bg-background h-15"
+  >
     <Input
       placeholder="Search logs..."
       onchange={(e) => {
@@ -114,7 +116,7 @@
       onRetry={loadLogs}
     />
   {:else if logs && !loading}
-    <div class="mt-7 rounded-md border">
+    <div class="mt-7 rounded-md border mb-20">
       <Table.Root>
         <Table.Header>
           {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}

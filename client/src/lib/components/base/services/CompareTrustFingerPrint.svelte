@@ -2,11 +2,10 @@
   import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import * as Tabs from "#lib/components/ui/tabs/index.js";
-  import type {
-    WSServiceHostFingerPrintMismatchData
-  } from "#lib/types/websockets/index.js";
+  import type { WSServiceHostFingerPrintMismatchData } from "#lib/types/websockets/index.js";
   import { toast } from "svelte-sonner";
   import { Button } from "../../ui/button";
+  import { ConnectedServices } from "./services.svelte";
 
   let {
     data = $bindable([]),
@@ -40,6 +39,7 @@
       toast.success(
         `Successfully trusted host fingerprint for server ${edit.name}`,
       );
+      ConnectedServices.startServerConnection(edit.id, edit.name);
       removed();
     }
   }

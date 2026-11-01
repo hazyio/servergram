@@ -51,7 +51,9 @@
 </svelte:head>
 
 <div class="p-2">
-  <div class="flex gap-2">
+  <div
+    class="flex gap-2 justify-center items-center sticky z-10 top-0 pt-2 bg-background h-15"
+  >
     <Input
       name="filter-servers"
       placeholder="Search..."
@@ -81,7 +83,7 @@
       onRetry={loadServers}
     />
   {:else if servers && !loading}
-    <div class="rounded-md border mt-12">
+    <div class="rounded-md border mt-12 mb-20">
       <Table.Root>
         <Table.Header>
           {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}

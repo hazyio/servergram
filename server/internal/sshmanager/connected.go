@@ -45,8 +45,19 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 
 	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client}, nil
 }
+func (c *SSHConnectedData) IsAlive() bool {
+	if c.client == nil {
+		return false
+	}
+	// TODO: Consider implementing a more robust keepalive mechanism to detect dead connections.
+	_, _, err := c.client.SendRequest("keepalive@openssh.com", true, nil)
+	return err == nil
+}
 func (c *SSHConnectedData) Disconnect() error {
 	if c.client != nil {
+		if !c.IsAlive() {
+			return nil
+		}
 		return c.client.Close()
 	}
 	return nil

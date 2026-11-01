@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package servergram.v1;
+option go_package = "github.com/hazyio/servergram/proto;servergramv1";
+
+message ListFilesResponse { string dir = 1; }
+message ListFilesRequest { uint32 protocol_version = 1; }
+
+service Files {
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+}

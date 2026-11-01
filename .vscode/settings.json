@@ -9,6 +9,8 @@
         "Dialector",
         "huma",
         "servergram",
+        "servergrampb",
+        "servergramv",
         "sshmanager"
     ],
     "js/ts.experimental.useTsgo": false

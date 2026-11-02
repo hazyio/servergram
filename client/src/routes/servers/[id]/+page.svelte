@@ -8,7 +8,7 @@
   import { updatePageServerInfo } from "#lib/states/severPageInfo.svelte.ts";
   import type { PageProps } from "./$types";
   import * as Tabs from "#lib/components/ui/tabs/index.js";
-  import OverView from "./overview/ServerOverView.svelte";
+  import OverView from "./overview/ServerInfo.svelte";
 
   let { params }: PageProps = $props();
   let server = $derived.by(() => {

@@ -63,3 +63,7 @@ type ServerCPUUsageItem struct {
 type WatchServerResourceResponse struct {
 	Body *proto.GetServerResourcesResponse
 }
+
+type ServerInfoResponse struct {
+	Body *proto.GetServerInfoResponse
+}

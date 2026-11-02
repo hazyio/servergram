@@ -259,6 +259,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/server/info/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get info by ID */
+        get: operations["get-server--info-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/server/list": {
         parameters: {
             query?: never;
@@ -286,6 +303,23 @@ export interface paths {
         get?: never;
         /** Put update finger print by ID */
         put: operations["put-server--update-finger-print-id"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/server/watch-resources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch resources by ID */
+        get: operations["get-server--watch-resources-id"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -449,6 +483,23 @@ export interface components {
              */
             type: string;
         };
+        GetServerInfoResponse: {
+            architecture?: string;
+            cpu_model?: string;
+            hostname?: string;
+            kernel_version?: string;
+            os?: string;
+            platform?: string;
+            system_time?: string;
+            /** Format: int64 */
+            uptime?: number;
+        };
+        GetServerResourcesResponse: {
+            cpu?: components["schemas"]["ServerCPUUsage"];
+            disk?: components["schemas"]["ServerUsageItem"];
+            memory?: components["schemas"]["ServerUsageItem"];
+            swap?: components["schemas"]["ServerUsageItem"];
+        };
         GroupListResponseBody: {
             /** @description The list of groups */
             items: components["schemas"]["Item"][] | null;
@@ -546,6 +597,14 @@ export interface components {
              */
             total: number;
         };
+        ServerCPUUsage: {
+            /** Format: int32 */
+            cores?: number;
+            /** Format: int32 */
+            threads?: number;
+            /** Format: double */
+            usage?: number;
+        };
         ServerItem: {
             /**
              * Format: date-time
@@ -563,6 +622,16 @@ export interface components {
             name: string;
             /** @description Whether the server is trusted */
             trusted: boolean;
+        };
+        ServerUsageItem: {
+            /** Format: int64 */
+            available?: number;
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int64 */
+            total?: number;
+            /** Format: int64 */
+            usage?: number;
         };
         UpdateServerFingerPrintRequestBody: {
             /** @description The new host fingerprint for the server */
@@ -998,8 +1067,26 @@ export interface operations {
                     "application/json": components["schemas"]["AddServerResponseBody"];
                 };
             };
-            /** @description Error */
-            default: {
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1028,8 +1115,76 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Error */
-            default: {
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-server--info-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetServerInfoResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1057,8 +1212,8 @@ export interface operations {
                     "application/json": components["schemas"]["ListServersResponseBody"];
                 };
             };
-            /** @description Error */
-            default: {
+            /** @description Internal Server Error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1091,8 +1246,79 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Error */
-            default: {
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-server--watch-resources-id": {
+        parameters: {
+            query: {
+                /** @description The frequency of watching the server resource in seconds */
+                frequency: number;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetServerResourcesResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

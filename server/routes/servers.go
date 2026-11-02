@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes/models"
+	"hazyio.com/servergram/shared/gen/proto"
 )
 
 func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
@@ -20,7 +22,8 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server.Get("/list", http.StatusOK, listServers, http.StatusInternalServerError)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusNotFound)
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
-	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound, http.StatusForbidden)
+	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
+	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
 
 }
 
@@ -130,23 +133,30 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
+func getConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
+	if manager == nil {
+		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
+	}
+	if !manager.IsConnected(id) {
+		return nil, nil, nil, internal.NewHumaError(http.StatusNotFound, "Server is not connected")
+	}
+	agentConnection, err := manager.GetConnected(id)
+	if err != nil {
+		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get connected agent, it is probably not connected")
+	}
+	resource, ctx, cancel := agentConnection.Agent.ServerResourcesClient(ctx)
 
+	return resource, ctx, cancel, nil
+}
 func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
-	// database := data.Database
 	id := data.Input.ID
 	ctx := data.Context
 	sshmanager := data.SSHManager
-	if sshmanager == nil {
-		return nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
-	}
-	if !sshmanager.IsConnected(id) {
-		return nil, internal.NewHumaError(http.StatusNotFound, "Server is not connected")
-	}
-	agentConnection, err := sshmanager.GetConnected(id)
+
+	resource, ctx, cancel, err := getConnected(ctx, sshmanager, id)
 	if err != nil {
-		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get connected agent, it is probably not connected")
+		return nil, err
 	}
-	resource, ctx, cancel := agentConnection.Agent.ServerResourcesClient(ctx)
 	defer cancel()
 	res, err := resource.Get(ctx, &emptypb.Empty{})
 	if err != nil {
@@ -158,4 +168,20 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 	response.Body = res
 
 	return response, nil
+}
+
+func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	res, err := resource.Info(ctx, &emptypb.Empty{})
+	if err != nil {
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server info")
+	}
+	return &models.ServerInfoResponse{
+		Body: res,
+	}, nil
 }

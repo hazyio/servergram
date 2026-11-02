@@ -126,6 +126,7 @@
       },
     ]}
   >
+
     {@render children()}
   </SideBarContainer>
 {/if}

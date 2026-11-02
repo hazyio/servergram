@@ -5,7 +5,7 @@
   let server = $derived(ConnectedServices.findServer(id));
 </script>
 
-{#if server}
+{#if server && server.status === "connected"}
   <a href={appPaths.servers.overview(id)}>
     {name}
   </a>

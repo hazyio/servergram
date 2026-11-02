@@ -7,8 +7,8 @@
   import type { PageProps } from "./$types";
   import InCard from "./InCard.svelte";
   import SeverResources from "./SeverResources.svelte";
+  import ServerInfo from "./ServerInfo.svelte";
   let { params }: PageProps = $props();
-
 </script>
 
 <svelte:head>
@@ -22,19 +22,7 @@
   <div
     class="grid md:grid-cols-2 lg:md:grid-cols-4 gap-2 md:col-start-1 md:col-end-8 lg:col-end-9"
   >
-    <Card>
-      <CardHeader><CardTitle>System Information</CardTitle></CardHeader>
-      <CardContent class="space-y-2">
-        <InCard>OS:</InCard>
-        <InCard>Kernel:</InCard>
-        <InCard>Processor:</InCard>
-        <InCard>HostName:</InCard>
-        <InCard>Uptime:</InCard>
-        <InCard class="mt-5">
-          <Clock />
-        </InCard>
-      </CardContent>
-    </Card>
+    <ServerInfo id={params.id} />
     <SeverResources />
     <Card>
       <CardHeader><CardTitle>Top System Process</CardTitle></CardHeader>

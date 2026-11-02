@@ -9,4 +9,3 @@ tmp/*
 tmp
 # Ignore built agent binaries
 *bin
-*log

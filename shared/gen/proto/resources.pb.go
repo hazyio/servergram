@@ -227,6 +227,7 @@ type GetServerInfoResponse struct {
 	Uptime        int64                  `protobuf:"varint,5,opt,name=uptime,proto3" json:"uptime,omitempty"`
 	Platform      string                 `protobuf:"bytes,6,opt,name=platform,proto3" json:"platform,omitempty"`
 	CpuModel      string                 `protobuf:"bytes,7,opt,name=cpu_model,json=cpuModel,proto3" json:"cpu_model,omitempty"`
+	SystemTime    string                 `protobuf:"bytes,8,opt,name=system_time,json=systemTime,proto3" json:"system_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -310,6 +311,13 @@ func (x *GetServerInfoResponse) GetCpuModel() string {
 	return ""
 }
 
+func (x *GetServerInfoResponse) GetSystemTime() string {
+	if x != nil {
+		return x.SystemTime
+	}
+	return ""
+}
+
 var File_proto_resources_proto protoreflect.FileDescriptor
 
 const file_proto_resources_proto_rawDesc = "" +
@@ -328,7 +336,7 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\x03cpu\x18\x01 \x01(\v2\x15.proto.ServerCPUUsageR\x03cpu\x12.\n" +
 	"\x06memory\x18\x02 \x01(\v2\x16.proto.ServerUsageItemR\x06memory\x12*\n" +
 	"\x04disk\x18\x03 \x01(\v2\x16.proto.ServerUsageItemR\x04disk\x12*\n" +
-	"\x04swap\x18\x04 \x01(\v2\x16.proto.ServerUsageItemR\x04swap\"\xdf\x01\n" +
+	"\x04swap\x18\x04 \x01(\v2\x16.proto.ServerUsageItemR\x04swap\"\x80\x02\n" +
 	"\x15GetServerInfoResponse\x12\x0e\n" +
 	"\x02os\x18\x01 \x01(\tR\x02os\x12\"\n" +
 	"\farchitecture\x18\x02 \x01(\tR\farchitecture\x12%\n" +
@@ -336,7 +344,9 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\bhostname\x18\x04 \x01(\tR\bhostname\x12\x16\n" +
 	"\x06uptime\x18\x05 \x01(\x03R\x06uptime\x12\x1a\n" +
 	"\bplatform\x18\x06 \x01(\tR\bplatform\x12\x1b\n" +
-	"\tcpu_model\x18\a \x01(\tR\bcpuModel2\x91\x01\n" +
+	"\tcpu_model\x18\a \x01(\tR\bcpuModel\x12\x1f\n" +
+	"\vsystem_time\x18\b \x01(\tR\n" +
+	"systemTime2\x91\x01\n" +
 	"\x0fServerResources\x12@\n" +
 	"\x03Get\x12\x16.google.protobuf.Empty\x1a!.proto.GetServerResourcesResponse\x12<\n" +
 	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"

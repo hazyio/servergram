@@ -34,6 +34,7 @@ message GetServerInfoResponse {
   int64 uptime = 5;
   string platform = 6;
   string cpu_model = 7;
+  string system_time = 8;
 }
 service ServerResources {
   rpc Get(google.protobuf.Empty) returns (GetServerResourcesResponse);

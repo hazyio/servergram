@@ -3,13 +3,12 @@ package resources
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
-
-	// "github.com/shirou/gopsutil/v4/host"
 
 	"hazyio.com/servergram/shared/gen/proto"
 )
@@ -17,6 +16,8 @@ import (
 func getInfo(ctx context.Context) (*proto.GetServerInfoResponse, error) {
 	cpuInfo, _ := cpu.InfoWithContext(ctx)
 	h, _ := host.InfoWithContext(ctx)
+	now := time.Now().UTC()
+
 	// h.PlatformVersion
 	// Implement the logic to gather server info here
 	return &proto.GetServerInfoResponse{
@@ -27,6 +28,7 @@ func getInfo(ctx context.Context) (*proto.GetServerInfoResponse, error) {
 		Hostname:      h.Hostname,
 		Uptime:        int64(h.Uptime),
 		Platform:      h.Platform,
+		SystemTime:    now.Format(time.RFC3339),
 	}, nil
 }
 
@@ -66,10 +68,10 @@ func swapUsage(ctx context.Context) (*proto.ServerUsageItem, error) {
 		return nil, nil
 	}
 	return &proto.ServerUsageItem{
-		Usage: usage.Used,
-		Total: usage.Total,
+		Usage:     usage.Used,
+		Total:     usage.Total,
 		Available: usage.Free,
-		Percent: uint32(usage.UsedPercent),
+		Percent:   uint32(usage.UsedPercent),
 	}, nil
 }
 

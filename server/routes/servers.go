@@ -91,6 +91,10 @@ func listServers(data internal.RouteData[EmptyRR]) (*models.ListServersResponse,
 func deleteServer(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 	database := data.Database
 	id := data.Input.ID
+	sshmanager := data.SSHManager
+	if sshmanager.IsConnected(id) {
+		return nil, internal.NewHumaError(http.StatusConflict, "Server is currently connected")
+	}
 	server, err := db.FindServerByID(id, database)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, internal.NewHumaError(http.StatusNotFound, "Server does not exist")

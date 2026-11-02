@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"hazyio.com/servergram/shared/gen/proto"
+)
 
 type AddServerRequest struct {
 	Body struct {
@@ -57,10 +61,5 @@ type ServerCPUUsageItem struct {
 	Cores int     `json:"cores" doc:"The number of CPU cores"`
 }
 type WatchServerResourceResponse struct {
-	Body struct {
-		CPU    ServerCPUUsageItem `json:"cpu" doc:"The CPU usage of the server"`
-		Memory ServerUsageItem    `json:"memory" doc:"The memory usage of the server"`
-		Disk   ServerUsageItem    `json:"disk" doc:"The disk usage of the server"`
-		Swap   *ServerUsageItem   `json:"swap" doc:"The swap usage of the server"`
-	}
+	Body *proto.GetServerResourcesResponse
 }

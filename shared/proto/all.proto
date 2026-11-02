@@ -4,3 +4,4 @@ option go_package = "hazyio.com/servergram/shared/proto;proto";
 
 import "files.proto";
 import "resources.proto";
+

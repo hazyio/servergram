@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/grpc"
 	"hazyio.com/servergram/agent/internal/files"
-	"hazyio.com/servergram/shared"
 	"hazyio.com/servergram/agent/internal/resources"
+	"hazyio.com/servergram/shared"
 	pb "hazyio.com/servergram/shared/gen/proto"
 )
 

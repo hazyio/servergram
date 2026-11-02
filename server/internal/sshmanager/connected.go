@@ -3,6 +3,7 @@ package sshmanager
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -99,6 +100,22 @@ func (c *SSHConnectedData) Disconnect() error {
 }
 
 func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
+	agentPath := home + "/.servergram/agent"
+	checksum := fmt.Sprintf("%x", sha256.Sum256(bin))
+	checkSession, err := c.NewSession()
+	if err != nil {
+		return "", err
+	}
+	remoteChecksum, checkErr := checkSession.Output(`if [ -f "$HOME/.servergram/agent" ]; then sha256sum "$HOME/.servergram/agent"; fi`)
+	_ = checkSession.Close()
+	if checkErr == nil {
+		fields := strings.Fields(string(remoteChecksum))
+		if len(fields) > 0 && fields[0] == checksum {
+			slog.Info("Agent is up to date", "home", home)
+			return agentPath, nil
+		}
+	}
+
 	slog.Info("Uploading agent", "home", home)
 	session, err := c.NewSession()
 	if err != nil {
@@ -134,7 +151,7 @@ func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
 		// *ssh.ExitError on non-zero exit
 		return "", fmt.Errorf("install: %w (remote: %s)", err, stderr.String())
 	}
-	return home + "/.servergram/agent", nil
+	return agentPath, nil
 }
 func startAgentConnection(c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
 	slog.Info("Starting agent connection", "remotePath", remotePath)

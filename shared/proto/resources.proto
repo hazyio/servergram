@@ -2,31 +2,40 @@ syntax = "proto3";
 
 package proto;
 option go_package = "hazyio.com/servergram/shared/proto;proto";
+import "google/protobuf/empty.proto";
 
-message GetServerResourcesRequest {
-  uint32 protocol_version = 1;
-  uint64 server_id = 2;
-}
+
 message ServerUsageItem {
-  double usage = 1;
-  double total = 2;
+  uint64 usage = 1;
+  uint64 total = 2;
+  uint64 available = 3;
+  uint32 percent = 4;
 }
 
 message ServerCPUUsage {
   double usage = 1;
   int32 cores = 2;
+  int32 threads = 3;
 }
 
 message GetServerResourcesResponse {
-  uint32 protocol_version = 1;
-  ServerCPUUsage cpu = 2;
-  ServerUsageItem memory = 3;
-  ServerUsageItem disk = 4;
-  ServerUsageItem swap = 5;
+  ServerCPUUsage cpu = 1;
+  ServerUsageItem memory = 2;
+  ServerUsageItem disk = 3;
+  ServerUsageItem swap = 4;
 }
 
 
+message GetServerInfoResponse {
+  string os = 1;
+  string architecture = 2;
+  string kernel_version = 3;
+  string hostname = 4;
+  int64 uptime = 5;
+  string platform = 6;
+  string cpu_model = 7;
+}
 service ServerResources {
-  rpc Get(GetServerResourcesRequest) returns (GetServerResourcesResponse);
-  rpc Gexh(GetServerResourcesRequest) returns (GetServerResourcesResponse);
+  rpc Get(google.protobuf.Empty) returns (GetServerResourcesResponse);
+  rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
 }

@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes/models"
-	"hazyio.com/servergram/shared/gen/proto"
 )
 
 func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
@@ -135,37 +135,23 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 	if sshmanager == nil {
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
 	}
+	if !sshmanager.IsConnected(id) {
+		return nil, internal.NewHumaError(http.StatusNotFound, "Server is not connected")
+	}
 	agentConnection, err := sshmanager.GetConnected(id)
 	if err != nil {
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get connected agent, it is probably not connected")
 	}
 	resource, ctx, cancel := agentConnection.Agent.ServerResourcesClient(ctx)
 	defer cancel()
-	res, err := resource.Get(ctx, &proto.GetServerResourcesRequest{
-		ServerId: uint64(id),
-	})
+	res, err := resource.Get(ctx, &emptypb.Empty{})
 	if err != nil {
 		slog.Error("Failed to get server resources", "error", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
 	}
 	slog.Info("Got server resources,", "resources", res)
 	response := &models.WatchServerResourceResponse{}
-	response.Body.CPU = models.ServerCPUUsageItem{
-		Usage: 0.0,
-		Cores: 0,
-	}
-	response.Body.Memory = models.ServerUsageItem{
-		Usage: 0.0,
-		Total: 0.0,
-	}
-	response.Body.Disk = models.ServerUsageItem{
-		Usage: 0.0,
-		Total: 0.0,
-	}
-	response.Body.Swap = &models.ServerUsageItem{
-		Usage: 0.0,
-		Total: 0.0,
-	}
+	response.Body = res
 
 	return response, nil
 }

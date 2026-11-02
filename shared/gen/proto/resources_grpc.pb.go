@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             (unknown)
-// source: proto/resourses.proto
+// source: proto/resources.proto
 
 package proto
 
@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,14 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ServerResources_Get_FullMethodName = "/proto.ServerResources/Get"
+	ServerResources_Get_FullMethodName  = "/proto.ServerResources/Get"
+	ServerResources_Info_FullMethodName = "/proto.ServerResources/Info"
 )
 
 // ServerResourcesClient is the client API for ServerResources service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServerResourcesClient interface {
-	Get(ctx context.Context, in *GetServerResourcesRequest, opts ...grpc.CallOption) (*GetServerResourcesResponse, error)
+	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error)
+	Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error)
 }
 
 type serverResourcesClient struct {
@@ -37,10 +40,20 @@ func NewServerResourcesClient(cc grpc.ClientConnInterface) ServerResourcesClient
 	return &serverResourcesClient{cc}
 }
 
-func (c *serverResourcesClient) Get(ctx context.Context, in *GetServerResourcesRequest, opts ...grpc.CallOption) (*GetServerResourcesResponse, error) {
+func (c *serverResourcesClient) Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetServerResourcesResponse)
 	err := c.cc.Invoke(ctx, ServerResources_Get_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serverResourcesClient) Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetServerInfoResponse)
+	err := c.cc.Invoke(ctx, ServerResources_Info_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +64,8 @@ func (c *serverResourcesClient) Get(ctx context.Context, in *GetServerResourcesR
 // All implementations must embed UnimplementedServerResourcesServer
 // for forward compatibility.
 type ServerResourcesServer interface {
-	Get(context.Context, *GetServerResourcesRequest) (*GetServerResourcesResponse, error)
+	Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error)
+	Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error)
 	mustEmbedUnimplementedServerResourcesServer()
 }
 
@@ -62,8 +76,11 @@ type ServerResourcesServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServerResourcesServer struct{}
 
-func (UnimplementedServerResourcesServer) Get(context.Context, *GetServerResourcesRequest) (*GetServerResourcesResponse, error) {
+func (UnimplementedServerResourcesServer) Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedServerResourcesServer) Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
 }
 func (UnimplementedServerResourcesServer) mustEmbedUnimplementedServerResourcesServer() {}
 func (UnimplementedServerResourcesServer) testEmbeddedByValue()                         {}
@@ -87,7 +104,7 @@ func RegisterServerResourcesServer(s grpc.ServiceRegistrar, srv ServerResourcesS
 }
 
 func _ServerResources_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetServerResourcesRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +116,25 @@ func _ServerResources_Get_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: ServerResources_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerResourcesServer).Get(ctx, req.(*GetServerResourcesRequest))
+		return srv.(ServerResourcesServer).Get(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServerResources_Info_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerResourcesServer).Info(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerResources_Info_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerResourcesServer).Info(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -115,7 +150,11 @@ var ServerResources_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Get",
 			Handler:    _ServerResources_Get_Handler,
 		},
+		{
+			MethodName: "Info",
+			Handler:    _ServerResources_Info_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/resourses.proto",
+	Metadata: "proto/resources.proto",
 }

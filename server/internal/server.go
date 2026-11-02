@@ -31,7 +31,6 @@ type Server struct {
 	prefix   string
 }
 
-
 // NewGroup wraps mux with a Server whose queries use pool.
 func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string) *Server {
 	group := huma.NewGroup(api, prefix)
@@ -52,13 +51,15 @@ func opSlug(parts ...string) string {
 	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
 	return strings.Trim(s, "-")
 }
-func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error), errs ...int) {
+	
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "get-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodGet, pattern, new(O)),
 		Method:        http.MethodGet,
 		Path:          pattern,
 		DefaultStatus: status,
+		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
 		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {

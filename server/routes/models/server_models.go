@@ -43,3 +43,23 @@ type UpdateServerFingerPrintRequest struct {
 		Fingerprint string `json:"fingerprint" required:"true" minLength:"1" maxLength:"100" doc:"The new host fingerprint for the server"`
 	}
 }
+
+type WatchServerResourceRequest struct {
+	ID        uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	Frequency uint `query:"frequency" required:"true" minimum:"1" doc:"The frequency of watching the server resource in seconds"`
+}
+type ServerUsageItem struct {
+	Usage float64 `json:"usage" doc:"The usage statistics of the server"`
+	Total float64 `json:"total" doc:"The total resources of the server"`
+}
+type WatchServerResourceResponse struct {
+	Body struct {
+		CPU struct {
+			Usage float64 `json:"usage" doc:"The CPU usage of the server"`
+			Cores int     `json:"cores" doc:"The number of CPU cores"`
+		} `json:"cpu" doc:"The CPU usage of the server"`
+		Memory ServerUsageItem  `json:"memory" doc:"The memory usage of the server"`
+		Disk   ServerUsageItem  `json:"disk" doc:"The disk usage of the server"`
+		Swap   *ServerUsageItem `json:"swap" doc:"The swap usage of the server"`
+	}
+}

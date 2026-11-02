@@ -13,10 +13,12 @@ import (
 
 func registerServerRoutes(api *huma.Group, database *gorm.DB) {
 	server := internal.NewGroup("/server", api, database, []string{"Servers"})
+	basis_errors := []int{http.StatusNotFound, http.StatusConflict, http.StatusInternalServerError}
 	server.Post("/add", http.StatusCreated, addServer)
-	server.Get("/list", http.StatusOK, listServers)
+	server.Get("/list", http.StatusOK, listServers, basis_errors...)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer)
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint)
+	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource)
 
 }
 
@@ -121,4 +123,32 @@ func updateServerFingerPrint(data internal.NormalRouteData[models.UpdateServerFi
 	}
 	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
+}
+
+func watchServerResource(data internal.NormalRouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
+	database := data.Database
+	id := data.Input.ID
+	_, err := db.FindServerByID(id, database)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, internal.NewHumaError(http.StatusNotFound, "Server does not exist")
+	}
+	if err != nil {
+		return nil, internal.InternalServerError
+	}
+
+	// Here you would implement the logic to watch the server resource.
+	// For now, we'll return a dummy response.
+	response := &models.WatchServerResourceResponse{}
+	response.Body.CPU.Usage = 0.0
+	response.Body.CPU.Cores = 0
+	response.Body.Memory.Usage = 0.0
+	response.Body.Memory.Total = 0.0
+	response.Body.Disk.Usage = 0.0
+	response.Body.Disk.Total = 0.0
+	response.Body.Swap = &models.ServerUsageItem{
+		Usage: 0.0,
+		Total: 0.0,
+	}
+
+	return response, nil
 }

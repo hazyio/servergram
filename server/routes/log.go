@@ -13,7 +13,7 @@ import (
 )
 
 func registerLogRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/logs", api, database, []string{"Logs"})
+	server := internal.NewGroup("/logs", api, database, []string{"Logs"}, nil)
 	server.Get("/list", http.StatusOK, listLogs)
 
 }

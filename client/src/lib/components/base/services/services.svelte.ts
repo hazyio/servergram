@@ -33,6 +33,7 @@ export function startWebSocket(onOpen: () => void) {
     console.log("WebSocket already open");
     return;
   }
+  servicesState.connecting = true;
   ws = new WebSocket(getWebSocketUrl("/ws/services"));
   ws.onopen = () => {
     onOpen();

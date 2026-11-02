@@ -74,13 +74,24 @@ func (m *SSHManager) Disconnect(id uint) error {
 func (m *SSHManager) IsConnected(id uint) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	_, ok := m.connected[id]
+	data, ok := m.connected[id]
+	if ok && !data.IsAlive() {
+		ok = false
+	}
 	return ok
 }
-func (m *SSHManager) GetConnected(id uint) *SSHConnectedData {
+func (m *SSHManager) GetConnected(id uint) (*SSHConnectedData, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.connected[id]
+	connection, ok := m.connected[id]
+	if !ok {
+		return nil, errors.New("connection not found")
+	}
+	if !connection.IsAlive() {
+		delete(m.connected, id)
+		return nil, errors.New("connection not alive")
+	}
+	return connection, nil
 }
 func (m *SSHManager) GetAllConnected() []SSHConnectedListData {
 	m.mu.Lock()
@@ -103,6 +114,7 @@ func (m *SSHManager) ConnectNewUnEncrypted(server *db.Server) error {
 		return err
 	}
 	m.connected[server.ID] = connection
+	
 	// remove from queuedIds after connecting
 	delete(m.queued, server.ID)
 	slog.Info("SSH connection established", "server_id", server.ID, "server_name", server.Name)

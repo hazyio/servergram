@@ -15,8 +15,9 @@ import (
 
 type RouteData[I any] struct {
 	Database *gorm.DB
-	Context  *context.Context
+	Context  context.Context
 	Input    I
+	SSHManager *sshmanager.SSHManager
 }
 
 // Middleware wraps an http.Handler with additional behaviour.
@@ -62,7 +63,7 @@ func (s *Server) Get[I, O any](pattern string, status int, next func(RouteData[I
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
@@ -79,7 +80,7 @@ func (s *Server) Delete[I, O any](pattern string, status int, next func(RouteDat
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
@@ -95,7 +96,7 @@ func (s *Server) Post[I, O any](pattern string, status int, next func(RouteData[
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
@@ -111,7 +112,7 @@ func (s *Server) Put[I, O any](pattern string, status int, next func(RouteData[I
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}

@@ -12,7 +12,7 @@ import (
 )
 
 func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/ssh-key", api, database, []string{"SSH"})
+	server := internal.NewGroup("/ssh-key", api, database, []string{"SSH"}, nil)
 	server.Post("/add", http.StatusCreated, addSSHKey)
 	server.Get("/list", http.StatusOK, listSSHKeys)
 	server.Get("/view-key/{id}", http.StatusOK, viewSSHKey)

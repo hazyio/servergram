@@ -2,6 +2,7 @@ package routes
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -10,6 +11,7 @@ import (
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes/models"
+	"hazyio.com/servergram/shared/gen/proto"
 )
 
 func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
@@ -126,25 +128,40 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 }
 
 func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
-	database := data.Database
+	// database := data.Database
 	id := data.Input.ID
-	_, err := db.FindServerByID(id, database)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, internal.NewHumaError(http.StatusNotFound, "Server does not exist")
+	ctx := data.Context
+	sshmanager := data.SSHManager
+	if sshmanager == nil {
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
 	}
+	agentConnection, err := sshmanager.GetConnected(id)
 	if err != nil {
-		return nil, internal.InternalServerError
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get connected agent, it is probably not connected")
 	}
-
-	// Here you would implement the logic to watch the server resource.
-	// For now, we'll return a dummy response.
+	resource, ctx, cancel := agentConnection.Agent.ServerResourcesClient(ctx)
+	defer cancel()
+	res, err := resource.Get(ctx, &proto.GetServerResourcesRequest{
+		ServerId: uint64(id),
+	})
+	if err != nil {
+		slog.Error("Failed to get server resources", "error", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
+	}
+	slog.Info("Got server resources,", "resources", res)
 	response := &models.WatchServerResourceResponse{}
-	response.Body.CPU.Usage = 0.0
-	response.Body.CPU.Cores = 0
-	response.Body.Memory.Usage = 0.0
-	response.Body.Memory.Total = 0.0
-	response.Body.Disk.Usage = 0.0
-	response.Body.Disk.Total = 0.0
+	response.Body.CPU = models.ServerCPUUsageItem{
+		Usage: 0.0,
+		Cores: 0,
+	}
+	response.Body.Memory = models.ServerUsageItem{
+		Usage: 0.0,
+		Total: 0.0,
+	}
+	response.Body.Disk = models.ServerUsageItem{
+		Usage: 0.0,
+		Total: 0.0,
+	}
 	response.Body.Swap = &models.ServerUsageItem{
 		Usage: 0.0,
 		Total: 0.0,

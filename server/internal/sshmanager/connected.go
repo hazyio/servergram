@@ -25,7 +25,7 @@ type SSHConnectedData struct {
 	Id     uint
 	Name   string
 	client *ssh.Client
-	Agent  *grpc.ClientConn
+	Agent  *Agent
 	OS     db.OS
 	Arch   db.Arch
 	Home   string
@@ -78,7 +78,7 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 		return nil, err
 	}
 
-	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client, OS: os, Arch: arch, Home: home, Agent: agentConn}, nil
+	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client, OS: os, Arch: arch, Home: home, Agent: NewAgent(agentConn)}, nil
 }
 func (c *SSHConnectedData) IsAlive() bool {
 	if c.client == nil {
@@ -99,6 +99,7 @@ func (c *SSHConnectedData) Disconnect() error {
 }
 
 func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
+	slog.Info("Uploading agent", "home", home)
 	session, err := c.NewSession()
 	if err != nil {
 		return "", err
@@ -136,6 +137,7 @@ func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
 	return home + "/.servergram/agent", nil
 }
 func startAgentConnection(c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
+	slog.Info("Starting agent connection", "remotePath", remotePath)
 	session, err := c.NewSession()
 	if err != nil {
 		return nil, err
@@ -154,6 +156,7 @@ func startAgentConnection(c *ssh.Client, remotePath string) (*grpc.ClientConn, e
 		return session.Close()
 	})
 
+	slog.Info("Agent connection established")
 	var used atomic.Bool
 	return grpc.NewClient("passthrough:///agent",
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // SSH already encrypts and authenticates

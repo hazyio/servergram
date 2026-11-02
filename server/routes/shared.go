@@ -19,6 +19,9 @@ func RegisterRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.S
 
 type EmptyRR struct {
 }
+type BodyResponse struct {
+	Body any
+}
 
 type PathIdRequest struct {
 	ID uint `path:"id" minimum:"1" doc:"The ID of the current resource"`

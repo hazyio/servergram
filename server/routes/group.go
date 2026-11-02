@@ -13,7 +13,7 @@ import (
 )
 
 func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/group", api, database, []string{"Groups"})
+	server := internal.NewGroup("/group", api, database, []string{"Groups"}, nil)
 	server.Post("/create", http.StatusCreated, createNewGroup)
 	server.Get("/list", http.StatusOK, listGroups)
 	server.Delete("/delete/{id}", http.StatusOK, deleteGroup)

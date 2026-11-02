@@ -12,7 +12,7 @@ import (
 )
 
 func registerSearchRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/search", api, database, []string{"Search"})
+	server := internal.NewGroup("/search", api, database, []string{"Search"}, nil)
 	server.Get("/ssh", http.StatusOK, searchSSHKeys)
 	server.Get("/group", http.StatusOK, searchGroups)
 }

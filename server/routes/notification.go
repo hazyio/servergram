@@ -11,7 +11,7 @@ import (
 )
 
 func registerNotificationRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/notification", api, database, []string{"Notifications"})
+	server := internal.NewGroup("/notification", api, database, []string{"Notifications"}, nil)
 	server.Get("/available", http.StatusOK, notificationAvailable)
 	server.Get("/list/unread", http.StatusOK, unreadNotifications)
 	server.Get("/list/read", http.StatusOK, readNotifications)

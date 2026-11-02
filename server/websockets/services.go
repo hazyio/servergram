@@ -105,7 +105,12 @@ func handleServerConnect(sshManager *sshmanager.SSHManager, database *gorm.DB, m
 	connectErr := sshManager.ConnectNewUnEncrypted(&server)
 	if connectErr == nil {
 		// get and update os and arch information
-		client := sshManager.GetConnected(msg.Id)
+		client, err := sshManager.GetConnected(msg.Id)
+		if err != nil {
+			slog.Error("failed to get connected client", "error", err)
+			dataQueue.Enqueue(models.NewErrorServiceWSMessage("failed to get connected client"))
+			return
+		}
 		if client != nil {
 			os := client.OS
 			arch := client.Arch

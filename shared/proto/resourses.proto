@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "hazyio.com/servergram/shared/proto;proto";
+
+message GetServerResourcesRequest {
+  uint32 protocol_version = 1;
+  uint64 server_id = 2;
+}
+message ServerUsageItem {
+  double usage = 1;
+  double total = 2;
+}
+
+message ServerCPUUsage {
+  double usage = 1;
+  int32 cores = 2;
+}
+
+message GetServerResourcesResponse {
+  uint32 protocol_version = 1;
+  ServerCPUUsage cpu = 2;
+  ServerUsageItem memory = 3;
+  ServerUsageItem disk = 4;
+  ServerUsageItem swap = 5;
+}
+
+
+service ServerResources {
+  rpc Get(GetServerResourcesRequest) returns (GetServerResourcesResponse);
+  rpc Gexh(GetServerResourcesRequest) returns (GetServerResourcesResponse);
+}

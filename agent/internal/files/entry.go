@@ -2,14 +2,13 @@ package files
 
 import (
 	"context"
-	pb "hazyio.com/servergram/shared/gen/proto"
+	"hazyio.com/servergram/shared/gen/proto"
 )
 
 type FilesServer struct {
-	pb.UnimplementedFilesServer
+	proto.UnimplementedFilesServer
 }
 
-func (s *FilesServer) ListFiles(ctx context.Context, req *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
-	// real implementation here
-	return &pb.ListFilesResponse{}, nil
+func (s *FilesServer) ListFiles(ctx context.Context, req *proto.ListFilesRequest) (*proto.ListFilesResponse, error) {
+	return &proto.ListFilesResponse{}, nil
 }

@@ -89,13 +89,12 @@ func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
 				}
 			})
 			sessionMW(ctx, next)
-			return
 
 		})
 
 	})
 	// Register application routes and websockets
-	routes.RegisterRoutes(apiUmbrella, database)
+	routes.RegisterRoutes(apiUmbrella, database, ssh_manager)
 	websockets.RegisterWebSockets(raw_server)
 
 	// handle root and frontend route

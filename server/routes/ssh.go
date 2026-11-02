@@ -19,7 +19,7 @@ func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
 	server.Delete("/delete/{id}", http.StatusNoContent, deleteSSHKey)
 }
 
-func addSSHKey(data internal.NormalRouteData[models.AddSSHKeyRequest]) (*EmptyRR, error) {
+func addSSHKey(data internal.RouteData[models.AddSSHKeyRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -54,7 +54,7 @@ func addSSHKey(data internal.NormalRouteData[models.AddSSHKeyRequest]) (*EmptyRR
 	return &EmptyRR{}, nil
 }
 
-func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResponse, error) {
+func listSSHKeys(data internal.RouteData[EmptyRR]) (*models.SSHKeyListResponse, error) {
 	database := data.Database
 	var total int64
 	if err := database.Model(&db.SSHKey{}).Count(&total).Error; err != nil {
@@ -69,11 +69,10 @@ func listSSHKeys(data internal.NormalRouteData[EmptyRR]) (*models.SSHKeyListResp
 		Group("ssh_keys.id").
 		Scan(&response.Body.Items)
 
-
 	return response, nil
 }
 
-func viewSSHKey(data internal.NormalRouteData[PathIdRequest]) (*models.ViewSSHKeyResponse, error) {
+func viewSSHKey(data internal.RouteData[PathIdRequest]) (*models.ViewSSHKeyResponse, error) {
 	env := internal.LoadEnv()
 
 	database := data.Database
@@ -97,7 +96,7 @@ func viewSSHKey(data internal.NormalRouteData[PathIdRequest]) (*models.ViewSSHKe
 	return response, nil
 }
 
-func deleteSSHKey(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error) {
+func deleteSSHKey(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 	database := data.Database
 	id := data.Input.ID
 	var key db.SSHKey

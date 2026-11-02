@@ -20,7 +20,7 @@ func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*EmptyRR, error) {
+func createNewGroup(data internal.RouteData[models.CreateGroupRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
 	database := data.Database
@@ -45,7 +45,7 @@ func createNewGroup(data internal.NormalRouteData[models.CreateGroupRequest]) (*
 	return &EmptyRR{}, nil
 }
 
-func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListResponse, error) {
+func listGroups(data internal.RouteData[EmptyRR]) (*models.GroupListResponse, error) {
 	database := data.Database
 
 	response := &models.GroupListResponse{}
@@ -65,7 +65,7 @@ func listGroups(data internal.NormalRouteData[EmptyRR]) (*models.GroupListRespon
 	return response, nil
 }
 
-func deleteGroup(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error) {
+func deleteGroup(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 	database := data.Database
 	id := data.Input.ID
 

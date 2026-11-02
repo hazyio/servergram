@@ -16,13 +16,13 @@ import (
 )
 
 func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/account", api, database, []string{"Accounts"})
+	server := internal.NewGroup("/account", api, database, []string{"Accounts"}, nil)
 	server.Post("/login", http.StatusCreated, login)
 	// server.Delete("/logout", http.StatusOK, logout)
 
 }
 
-func login(data internal.NormalRouteData[models.LoginRequest]) (*models.LoginSuccessfulRedirectResponse, error) {
+func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfulRedirectResponse, error) {
 	input := data.Input
 	password := input.Body.Password
 	env := internal.LoadEnv()

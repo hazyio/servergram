@@ -17,7 +17,7 @@ func registerSearchRoutes(api *huma.Group, database *gorm.DB) {
 	server.Get("/group", http.StatusOK, searchGroups)
 }
 
-func searchSSHKeys(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.SSHKeySearchData], error) {
+func searchSSHKeys(data internal.RouteData[models.SearchRequest]) (*models.SearchResponse[models.SSHKeySearchData], error) {
 	input := data.Input
 	query := input.Query
 	database := data.Database
@@ -44,7 +44,7 @@ func searchSSHKeys(data internal.NormalRouteData[models.SearchRequest]) (*models
 	}{Items: searchData, Total: len(searchData)}}, nil
 }
 
-func searchGroups(data internal.NormalRouteData[models.SearchRequest]) (*models.SearchResponse[models.GroupSearchData], error) {
+func searchGroups(data internal.RouteData[models.SearchRequest]) (*models.SearchResponse[models.GroupSearchData], error) {
 	input := data.Input
 	query := input.Query
 	database := data.Database

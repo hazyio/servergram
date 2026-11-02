@@ -19,7 +19,7 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func serverHealth(data internal.NormalRouteData[struct{}]) (*EmptyRR, error) {
+func serverHealth(data internal.RouteData[struct{}]) (*EmptyRR, error) {
 
 	return &EmptyRR{}, nil
 }

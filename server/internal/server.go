@@ -8,13 +8,12 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal/sshmanager"
 
 	"gorm.io/gorm"
 )
 
-type ctxKey struct{}
-
-type NormalRouteData[I any] struct {
+type RouteData[I any] struct {
 	Database *gorm.DB
 	Context  *context.Context
 	Input    I
@@ -25,23 +24,25 @@ type Middleware func(http.Handler) http.Handler
 
 // Server registers routes on a ServeMux and exposes the database queries to them.
 type Server struct {
-	database *gorm.DB
-	group    *huma.Group
-	mux      *http.ServeMux
-	prefix   string
+	database   *gorm.DB
+	group      *huma.Group
+	mux        *http.ServeMux
+	prefix     string
+	sshManager *sshmanager.SSHManager
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
-func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string) *Server {
+func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, sshManager *sshmanager.SSHManager) *Server {
 	group := huma.NewGroup(api, prefix)
 	group.UseSimpleModifier(func(op *huma.Operation) {
 		op.Tags = tags
 	})
 
 	return &Server{
-		database: database,
-		group:    group,
-		prefix:   prefix,
+		database:   database,
+		group:      group,
+		prefix:     prefix,
+		sshManager: sshManager,
 	}
 
 }
@@ -51,8 +52,8 @@ func opSlug(parts ...string) string {
 	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
 	return strings.Trim(s, "-")
 }
-func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error), errs ...int) {
-	
+func (s *Server) Get[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
+
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "get-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodGet, pattern, new(O)),
@@ -61,7 +62,7 @@ func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRoute
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
@@ -69,45 +70,48 @@ func (s *Server) Get[I, O any](pattern string, status int, next func(NormalRoute
 	})
 }
 
-func (s *Server) Delete[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+func (s *Server) Delete[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "delete-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodDelete, pattern, new(O)),
 		Method:        http.MethodDelete,
 		Path:          pattern,
 		DefaultStatus: status,
+		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
 		return resp, nil
 	})
 }
-func (s *Server) Post[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+func (s *Server) Post[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "post-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodPost, pattern, new(O)),
 		Method:        http.MethodPost,
 		Path:          pattern,
 		DefaultStatus: status,
+		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}
 		return resp, nil
 	})
 }
-func (s *Server) Put[I, O any](pattern string, status int, next func(NormalRouteData[I]) (*O, error)) {
+func (s *Server) Put[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "put-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodPut, pattern, new(O)),
 		Method:        http.MethodPut,
 		Path:          pattern,
 		DefaultStatus: status,
+		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
-		resp, err := next(NormalRouteData[I]{Input: *input, Database: s.database, Context: &ctx})
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: &ctx})
 		if err != nil {
 			return nil, ToHumaError(err)
 		}

@@ -18,7 +18,7 @@ func registerLogRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func listLogs(data internal.NormalRouteData[models.ListLogRequest]) (*models.LogListResponse, error) {
+func listLogs(data internal.RouteData[models.ListLogRequest]) (*models.LogListResponse, error) {
 	database := data.Database
 	input := data.Input
 	response := &models.LogListResponse{}

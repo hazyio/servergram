@@ -8,21 +8,21 @@ import (
 	"gorm.io/gorm"
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal"
+	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerServerRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/server", api, database, []string{"Servers"})
-	basis_errors := []int{http.StatusNotFound, http.StatusConflict, http.StatusInternalServerError}
-	server.Post("/add", http.StatusCreated, addServer)
-	server.Get("/list", http.StatusOK, listServers, basis_errors...)
-	server.Delete("/delete/{id}", http.StatusOK, deleteServer)
-	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint)
-	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource)
+func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
+	server := internal.NewGroup("/server", api, database, []string{"Servers"}, sshManager)
+	server.Post("/add", http.StatusCreated, addServer, http.StatusConflict, http.StatusInternalServerError)
+	server.Get("/list", http.StatusOK, listServers, http.StatusInternalServerError)
+	server.Delete("/delete/{id}", http.StatusOK, deleteServer, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusNotFound)
+	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
+	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound, http.StatusForbidden)
 
 }
 
-func addServer(data internal.NormalRouteData[models.AddServerRequest]) (*models.AddServerResponse, error) {
+func addServer(data internal.RouteData[models.AddServerRequest]) (*models.AddServerResponse, error) {
 	input := data.Input.Body
 	database := data.Database
 	_, err := db.FindSSHKeyByID(input.SSHKeyID, database)
@@ -73,7 +73,7 @@ func addServer(data internal.NormalRouteData[models.AddServerRequest]) (*models.
 	}, nil
 }
 
-func listServers(data internal.NormalRouteData[EmptyRR]) (*models.ListServersResponse, error) {
+func listServers(data internal.RouteData[EmptyRR]) (*models.ListServersResponse, error) {
 	database := data.Database
 
 	response := &models.ListServersResponse{}
@@ -86,7 +86,7 @@ func listServers(data internal.NormalRouteData[EmptyRR]) (*models.ListServersRes
 	return response, nil
 }
 
-func deleteServer(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error) {
+func deleteServer(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 	database := data.Database
 	id := data.Input.ID
 	server, err := db.FindServerByID(id, database)
@@ -103,7 +103,7 @@ func deleteServer(data internal.NormalRouteData[PathIdRequest]) (*EmptyRR, error
 	return &EmptyRR{}, nil
 }
 
-func updateServerFingerPrint(data internal.NormalRouteData[models.UpdateServerFingerPrintRequest]) (*EmptyRR, error) {
+func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPrintRequest]) (*EmptyRR, error) {
 	database := data.Database
 	id := data.Input.ID
 	var server db.Server
@@ -125,7 +125,7 @@ func updateServerFingerPrint(data internal.NormalRouteData[models.UpdateServerFi
 	return &EmptyRR{}, nil
 }
 
-func watchServerResource(data internal.NormalRouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
+func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
 	database := data.Database
 	id := data.Input.ID
 	_, err := db.FindServerByID(id, database)

@@ -20,7 +20,7 @@ func registerNotificationRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-func notificationAvailable(data internal.NormalRouteData[EmptyRR]) (*BooleanResponse, error) {
+func notificationAvailable(data internal.RouteData[EmptyRR]) (*BooleanResponse, error) {
 	database := data.Database
 	available, err := db.NewNotificationAvailable(database)
 	if err != nil {
@@ -31,7 +31,7 @@ func notificationAvailable(data internal.NormalRouteData[EmptyRR]) (*BooleanResp
 	return response, nil
 }
 
-func unreadNotifications(data internal.NormalRouteData[EmptyRR]) (*models.NotificationListResponse, error) {
+func unreadNotifications(data internal.RouteData[EmptyRR]) (*models.NotificationListResponse, error) {
 	database := data.Database
 	response := &models.NotificationListResponse{}
 	response.Body = make([]models.NotificationListItem, 0)
@@ -42,7 +42,7 @@ func unreadNotifications(data internal.NormalRouteData[EmptyRR]) (*models.Notifi
 	return response, nil
 }
 
-func readNotifications(data internal.NormalRouteData[EmptyRR]) (*models.NotificationListResponse, error) {
+func readNotifications(data internal.RouteData[EmptyRR]) (*models.NotificationListResponse, error) {
 	database := data.Database
 	response := &models.NotificationListResponse{}
 	response.Body = make([]models.NotificationListItem, 0)
@@ -53,7 +53,7 @@ func readNotifications(data internal.NormalRouteData[EmptyRR]) (*models.Notifica
 	return response, nil
 }
 
-func allNotifications(data internal.NormalRouteData[EmptyRR]) (*models.NotificationListResponse, error) {
+func allNotifications(data internal.RouteData[EmptyRR]) (*models.NotificationListResponse, error) {
 	database := data.Database
 	response := &models.NotificationListResponse{}
 	response.Body = make([]models.NotificationListItem, 0)
@@ -63,7 +63,7 @@ func allNotifications(data internal.NormalRouteData[EmptyRR]) (*models.Notificat
 	return response, nil
 }
 
-func markAsRead(data internal.NormalRouteData[models.MarkNotificationAsReadRequest]) (*BooleanResponse, error) {
+func markAsRead(data internal.RouteData[models.MarkNotificationAsReadRequest]) (*BooleanResponse, error) {
 	database := data.Database
 	ids := data.Input.Body.NotificationIDs
 	err := db.MarkNotificationsAsRead(database, ids)

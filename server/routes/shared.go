@@ -3,15 +3,16 @@ package routes
 import (
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
+	"hazyio.com/servergram/server/internal/sshmanager"
 )
 
-func RegisterRoutes(api *huma.Group, database *gorm.DB) {
+func RegisterRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
 	registerFilesRoutes(api, database)
 	registerAccountRoutes(api, database)
 	registerSSHRoutes(api, database)
 	registerSearchRoutes(api, database)
 	registerGroupRoutes(api, database)
-	registerServerRoutes(api, database)
+	registerServerRoutes(api, database, sshManager)
 	registerLogRoutes(api, database)
 	registerNotificationRoutes(api, database)
 }

@@ -9,12 +9,15 @@
     class: className = "",
     title = "Something went wrong",
     message = "An unexpected error occurred. Please try again.",
+    retryText = "Try again",
     onRetry,
     ...restProps
   }: HTMLAttributes<HTMLDivElement> & {
     title?: string;
     message?: string;
+
     onRetry?: () => void;
+    retryText?: string;
   } = $props();
 </script>
 
@@ -39,7 +42,7 @@
     {#if onRetry}
       <Button variant="outline" size="sm" class="mt-3" onclick={onRetry}>
         <RotateCcw />
-        Try again
+        {retryText}
       </Button>
     {/if}
   </div>

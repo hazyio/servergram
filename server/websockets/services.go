@@ -15,6 +15,7 @@ import (
 func onServiceSocketStated(input internal.OnStartedRawServerRouteData) {
 	manageSSHConnection := input.SSHManager
 	dataQueue := input.DataQueue
+	slog.Info("service socket started")
 	SendQueueAndConnected(dataQueue, manageSSHConnection)
 
 }

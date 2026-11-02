@@ -43,6 +43,7 @@ export default function handleWebSocketMessage(message: WSServiceMessage) {
       // Handle connected services message
       castType<WSServiceConnectedList>(message.data, (value) => {
         servicesState.services = value.items;
+        servicesState.gettingConnected = false;
       });
       break;
     case "host_finger_print_mismatch":

@@ -3,6 +3,7 @@
   import { Database, Server } from "@lucide/svelte";
   import Loading from "../loading.svelte";
   import DisconnectService from "./DisconnectService.svelte";
+  import appPaths from "#lib/appPaths.ts";
 
   let { id, name, status, type }: WSServiceConnectedListItem = $props();
 </script>
@@ -12,10 +13,11 @@
 >
   {#if type === "server"}
     <Server class="h-4 w-4" />
+    <a class="grow truncate" href={appPaths.servers.overview(id)}>{name}</a>
   {:else}
     <Database class="h-4 w-4" />
+    <a class="grow truncate" href={appPaths.databases.add}>{name}</a>
   {/if}
-  <span class="grow truncate" title={name}> {name} </span>
   {#if status === "connected"}
     <DisconnectService {id} {name} {type} />
   {:else if status === "connecting"}

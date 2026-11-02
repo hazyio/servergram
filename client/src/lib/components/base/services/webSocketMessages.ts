@@ -2,9 +2,10 @@ import type {
   WSServiceConnectServerData,
   WSServiceDisconnectServerData,
 } from "#lib/types/websockets/index.ts";
-import { sendMessage } from "./services.svelte";
+import { sendMessage, servicesState } from "./services.svelte";
 
 export function GetConnectedServices() {
+  servicesState.gettingConnected = true;
   sendMessage({
     action: "get_connected_services",
     data: {},

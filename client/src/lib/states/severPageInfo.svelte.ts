@@ -2,12 +2,12 @@ interface SeverInfo {
   id: number;
   name: string;
 }
-export const info = $state<SeverInfo>({
+export const severPageInfo = $state<SeverInfo>({
   id: 0,
-  name: "",
+  name: "Loading server",
 });
 
-export function updateServerInfo(id: number, name: string) {
-  info.id = id;
-  info.name = name;
+export function updatePageServerInfo(id: number, name: string) {
+  severPageInfo.id = id;
+  severPageInfo.name = name;
 }

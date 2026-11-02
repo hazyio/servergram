@@ -12,6 +12,7 @@
   import CompareTrustFingerPrint from "./CompareTrustFingerPrint.svelte";
   import ServiceItem from "./ServiceItem.svelte";
 
+  import { RefreshCcw } from "@lucide/svelte";
   import {
     checkWs,
     servicesState,
@@ -20,7 +21,6 @@
     toastError,
   } from "./services.svelte.ts";
   import { GetConnectedServices } from "./webSocketMessages";
-  import { RefreshCcw } from "@lucide/svelte";
   let open = $state(false);
   let intervalId = $state<ReturnType<typeof setInterval> | null>(null);
   function retryWebSocketConnection() {
@@ -35,10 +35,13 @@
       clearInterval(intervalId);
     }
     intervalId = setInterval(() => {
-      retryWebSocketConnection();
+      if (!checkWs()) {
+        retryWebSocketConnection();
+        return;
+      }
     }, 10000);
     startWebSocket(() => {
-      if (servicesState.error || servicesState.services.length > 0) {
+      if (servicesState.error) {
         open = true;
         return;
       }
@@ -89,8 +92,12 @@
           <Button
             size="sm"
             variant="outline"
+            disabled={servicesState.gettingConnected}
             onclick={GetConnectedServices}
-            title="Reload connected services"><RefreshCcw /></Button
+            title="Reload connected services"
+            ><RefreshCcw
+              class={servicesState.gettingConnected ? "animate-spin" : ""}
+            /></Button
           >
         {/if}
       </h3>

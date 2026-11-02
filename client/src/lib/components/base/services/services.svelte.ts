@@ -3,7 +3,7 @@ import {
   type WSServiceHostFingerPrintMismatchData,
   type WSServiceMessage,
   type WSServicePassPhraseRequiredData,
-  type WSServiceTrustHostFingerPrintData
+  type WSServiceTrustHostFingerPrintData,
 } from "#lib/types/websockets/index.ts";
 import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
@@ -20,6 +20,7 @@ export const servicesState = $state({
   pendingHostTrustMismatchCollection:
     [] as WSServiceHostFingerPrintMismatchData[],
   tries: 0,
+  gettingConnected: true,
 });
 export function sendMessage(message: WSServiceMessage) {
   if (!checkWs()) {
@@ -71,6 +72,9 @@ export function toastError(message: string) {
 }
 
 export class ConnectedServices {
+  /**
+   * Find a server by its service ID.
+   */
   static findServer(serviceId: number) {
     return servicesState.services.find(
       (service) => service.id === serviceId && service.type === "server",
@@ -84,7 +88,7 @@ export class ConnectedServices {
     if (!checkWs()) {
       return;
     }
-  
+
     let findService = ConnectedServices.findServer(serviceId);
     if (findService) {
       toastError(`Service with id ${serviceId} already connected or pending`);

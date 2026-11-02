@@ -97,15 +97,14 @@ func (m *SSHManager) GetAllConnected() []SSHConnectedListData {
 
 func (m *SSHManager) ConnectNewUnEncrypted(server *db.Server) error {
 	m.mu.Lock()
+	defer m.mu.Unlock()
 	connection, err := newUnEncryptedConnection(server)
 	if err != nil {
-		m.mu.Unlock()
 		return err
 	}
 	m.connected[server.ID] = connection
 	// remove from queuedIds after connecting
 	delete(m.queued, server.ID)
-	m.mu.Unlock()
 	slog.Info("SSH connection established", "server_id", server.ID, "server_name", server.Name)
 	return nil
 }

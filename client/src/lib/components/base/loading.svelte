@@ -21,7 +21,7 @@
     class={cn("flex flex-col justify-center items-center", containerClass)}
     {...restProps}
   >
-    <Loader class={cn("h-3/10 w-3/10 animate-spin", className)} />
+    <Loader class={cn("h-2/10 w-2/10 animate-spin", className)} />
     {#if text}
       <span class="mt-5">{text}</span>
     {/if}

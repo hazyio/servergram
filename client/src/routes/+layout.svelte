@@ -6,10 +6,10 @@
   import { page } from "$app/state";
   import type { LayoutProps } from "./$types";
   import "./layout.css";
-  import { info } from "#lib/states/severPageInfo.svelte.ts";
+  import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
 
   let { children }: LayoutProps = $props();
-  let connectedServerInfo = $derived(info);
+  let connectedServerInfo = $derived(severPageInfo);
   const homeBreadcrumbs = [
     {
       title: "Home",
@@ -27,7 +27,7 @@
     ...serverBreadcrumbs,
     {
       title: connectedServerInfo.name,
-      url: appPaths.servers.show(connectedServerInfo.id),
+      url: appPaths.servers.overview(connectedServerInfo.id),
     },
   ]);
 </script>

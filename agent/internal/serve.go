@@ -15,11 +15,12 @@ import (
 func Serve() {
 	log.SetOutput(os.Stderr) // stdout belongs to the protocol
 	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
-
+	log.Println("starting agent")
 	srv := grpc.NewServer()
 	pb.RegisterFilesServer(srv, &files.FilesServer{})
-	lis := &oneConnListener{ch: make(chan net.Conn, 1), done: make(chan struct{})}
 	log.Println("agent ready")
+
+	lis := &oneConnListener{ch: make(chan net.Conn, 1), done: make(chan struct{})}
 
 	lis.ch <- conn // hand the single connection to Accept
 

@@ -1,5 +1,2 @@
 *.env
 dist/*
-tmp/*
-# Ignore built agent binaries
-*bin

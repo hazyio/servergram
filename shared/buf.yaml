@@ -3,5 +3,9 @@ modules:
   - path: .
 lint:
   use: [STANDARD]
+  ignore:
+    - proto/all.proto
 breaking:
   use: [FILE]
+  ignore:
+    - proto/all.proto

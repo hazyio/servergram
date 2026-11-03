@@ -94,7 +94,7 @@
   });
 </script>
 
-<Card class="flex min-w-0 xl:col-span-4">
+<Card class="flex min-w-0">
   <CardHeader>
     <CardTitle class="flex items-center gap-2"
       ><span class="grow">Top System Process</span>

@@ -27,11 +27,7 @@ function formatBytes(bytes: number) {
 export const getColumns = () =>
   columnHelper.columns([
     columnHelper.accessor("pid", {
-      header: ({ column }) =>
-        renderComponent(SortableTableHeader, {
-          text: "Pid",
-          onClick: column.getToggleSortingHandler(),
-        }),
+      header: "Pid",
     }),
     columnHelper.accessor("name", {
       header: "Name",

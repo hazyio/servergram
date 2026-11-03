@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"hazyio.com/servergram/server/agents"
 	"hazyio.com/servergram/server/db"
+	"hazyio.com/servergram/server/internal/common"
 	"hazyio.com/servergram/shared"
 )
 
@@ -33,6 +34,7 @@ type SSHConnectedData struct {
 }
 
 func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
+	ctx := context.Background()
 	signer, err := ssh.ParsePrivateKey([]byte(server.SSHKey.Key))
 	if err != nil {
 		slog.Error("failed to parse private key", "error", err)
@@ -57,7 +59,7 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 		slog.Error("failed to dial SSH", "error", err)
 		return nil, err
 	}
-	os, arch, err := getOSAndArch(client)
+	os, arch, err := getOSAndArch(ctx, client)
 	if err != nil {
 		return nil, err
 	}
@@ -65,16 +67,22 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 	if err != nil {
 		return nil, err
 	}
-	home, err := getRemoteHome(client)
+	home, err := getRemoteHome(ctx, client)
 	if err != nil {
 		return nil, err
 	}
-	remotePath, err := uploadAgent(home, client, agentBin)
+	uploadCtx, uploadCancel := context.WithTimeout(ctx, 200*time.Second)
+	defer uploadCancel()
+
+	remotePath, err := common.RunWithContext(uploadCtx, func() (string, error) {
+		return uploadAgent(home, client, agentBin)
+	}, nil)
 	if err != nil {
 		slog.Error("Failed to upload agent", "error", err)
 		return nil, err
 	}
-	agentConn, err := startAgentConnection(client, remotePath)
+
+	agentConn, err := startAgentConnection(ctx, client, remotePath)
 	if err != nil {
 		return nil, err
 	}
@@ -82,11 +90,17 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 	return &SSHConnectedData{Id: server.ID, Name: server.Name, client: client, OS: os, Arch: arch, Home: home, Agent: NewAgent(agentConn)}, nil
 }
 func (c *SSHConnectedData) IsAlive() bool {
-	if c.client == nil {
+	client := c.client // read once; avoids racing with a reconnect swapping the field
+	if client == nil {
 		return false
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 	// TODO: Consider implementing a more robust keepalive mechanism to detect dead connections.
-	_, _, err := c.client.SendRequest("keepalive@openssh.com", true, nil)
+	_, err := common.RunWithContext(ctx, func() (any, error) {
+		_, _, err := client.SendRequest("keepalive@openssh.com", true, nil)
+		return nil, err
+	}, func(any) { client.Close() })
 	return err == nil
 }
 func (c *SSHConnectedData) Disconnect() error {
@@ -153,37 +167,47 @@ func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
 	}
 	return agentPath, nil
 }
-func startAgentConnection(c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
+func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
 	slog.Info("Starting agent connection", "remotePath", remotePath)
-	session, err := c.NewSession()
-	if err != nil {
-		return nil, err
+	session, sessionErr := c.NewSession()
+	if sessionErr != nil {
+		return nil, sessionErr
 	}
+	return common.RunWithContext(ctx, func() (*grpc.ClientConn, error) {
 
-	stdin, _ := session.StdinPipe()
-	stdout, _ := session.StdoutPipe()
-	// sess.Stderr =slog.Default().Handler()
+		stdin, _ := session.StdinPipe()
+		stdout, _ := session.StdoutPipe()
+		// sess.Stderr =slog.Default().Handler()
 
-	if err := session.Start(remotePath); err != nil {
-		return nil, err
-	}
+		if err := session.Start(remotePath); err != nil {
+			session.Close()
+			return nil, err
+		}
 
-	conn := shared.NewStdioConn(stdout, stdin, func() error {
-		stdin.Close()
-		return session.Close()
+		conn := shared.NewStdioConn(stdout, stdin, func() error {
+			stdin.Close()
+			return session.Close()
+		})
+
+		slog.Info("Agent connection established")
+		var used atomic.Bool
+		return grpc.NewClient("passthrough:///agent",
+			grpc.WithTransportCredentials(insecure.NewCredentials()), // SSH already encrypts and authenticates
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
+				if used.Swap(true) {
+					session.Close()
+					return nil, errors.New("agent connection is gone")
+				}
+				return conn, nil
+			}),
+		)
+	}, func(conn *grpc.ClientConn) {
+		conn.Close()
+		session.Close() // kills the remote process's stdin/channel
 	})
 
-	slog.Info("Agent connection established")
-	var used atomic.Bool
-	return grpc.NewClient("passthrough:///agent",
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // SSH already encrypts and authenticates
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			if used.Swap(true) {
-				return nil, errors.New("agent connection is gone")
-			}
-			return conn, nil
-		}),
-	)
 }
 func dbHostKeyCallback(server *db.Server, captured *error) ssh.HostKeyCallback {
 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
@@ -210,39 +234,62 @@ func archFromUname(s string) (db.Arch, error) {
 		return "", fmt.Errorf("unsupported architecture %q", s)
 	}
 }
-func getOSAndArch(c *ssh.Client) (db.OS, db.Arch, error) {
+func getOSAndArch(ctx context.Context, c *ssh.Client) (db.OS, db.Arch, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
 	sess, err := c.NewSession()
 	if err != nil {
 		return "", "", err
 	}
 	defer sess.Close()
-	var b bytes.Buffer
-	sess.Stdout = &b
-	if err := sess.Run("uname -s && uname -m"); err != nil {
-		return "", "", err
+	type osInfo struct {
+		OS   db.OS
+		Arch db.Arch
 	}
-	output := strings.Split(strings.TrimSpace(b.String()), "\n")
-	if len(output) != 2 {
-		return "", "", errors.New("unexpected uname output")
-	}
-	os := strings.ToLower(output[0])
-	arch, err := archFromUname(output[1])
+
+	info, err := common.RunWithContext(ctx, func() (osInfo, error) {
+		var b bytes.Buffer
+		sess.Stdout = &b
+		if err := sess.Run("uname -s && uname -m"); err != nil {
+			return osInfo{}, err
+		}
+		lines := strings.Split(strings.TrimSpace(b.String()), "\n")
+		if len(lines) != 2 {
+			return osInfo{}, errors.New("unexpected uname output")
+		}
+		arch, err := archFromUname(lines[1])
+		if err != nil {
+			return osInfo{}, err
+		}
+		return osInfo{db.OS(strings.ToLower(lines[0])), arch}, nil
+	}, func(_ osInfo) { sess.Close() })
 	if err != nil {
 		return "", "", err
 	}
-	return db.OS(os), arch, nil
+	return info.OS, info.Arch, nil
+
 }
 
-func getRemoteHome(c *ssh.Client) (string, error) {
-	sess, err := c.NewSession()
+func getRemoteHome(ctx context.Context, c *ssh.Client) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+	session, err := c.NewSession()
 	if err != nil {
 		return "", err
 	}
-	defer sess.Close()
-	var b bytes.Buffer
-	sess.Stdout = &b
-	if err := sess.Run("echo $HOME"); err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(b.String()), nil
+	defer session.Close()
+	return common.RunWithContext(ctx, func() (string, error) {
+
+		defer session.Close()
+		var b bytes.Buffer
+		session.Stdout = &b
+		if err := session.Run("echo $HOME"); err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(b.String()), nil
+	}, func(home string) {
+		// Cleanup function for RunWithContext: close the SSH session if it is still open
+		session.Close()
+	})
+
 }

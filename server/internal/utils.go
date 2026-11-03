@@ -123,3 +123,4 @@ func FileExists(filename string) bool {
 	// (e.g., permission denied issues)
 	return false
 }
+

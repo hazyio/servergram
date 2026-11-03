@@ -73,7 +73,7 @@
   });
 </script>
 
-<Card class="min-w-0 xl:col-span-4">
+<Card class="min-w-0">
   <CardHeader>
     <CardTitle class="flex items-center gap-1"
       ><span class="grow">Resources Usage</span>

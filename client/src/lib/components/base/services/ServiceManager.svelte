@@ -76,7 +76,7 @@
       class="h-9 w-9 rounded-md"
       onclick={retryWebSocketConnection}
     >
-      {#if servicesState.connecting}
+      {#if servicesState.connecting || servicesState.gettingConnected}
         <Loading loading={true} />
       {:else}
         {servicesState.services.length}

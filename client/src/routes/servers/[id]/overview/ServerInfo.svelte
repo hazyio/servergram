@@ -57,7 +57,7 @@
   onMount(getServerInfo);
 </script>
 
-<Card class="min-w-0 md:col-span-2 xl:col-span-12">
+<Card class="min-w-0 md:col-span-2 xl:col-span-3">
   <CardHeader class="pb-3">
     <div class="flex items-center gap-3">
       <span
@@ -81,44 +81,44 @@
         class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
       >
         <div
-          class="flex min-w-0 flex-col gap-1 border-t py-2 border-border/70 pt-2 sm:col-span-2 md:col-span-4 lg:col-span-6"
+          class="flex min-w-0 flex-col gap-1 border-t py-3 border-border/70 pt-2 sm:col-span-2 md:col-span-4 lg:col-span-6"
         >
           <dt class="text-xs text-muted-foreground">Host name</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.hostname || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">Architecture</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.architecture || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">Kernel version</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.kernel_version || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">OS</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.os || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">Platform</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.platform || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">Processor</dt>
           <dd class="wrap-break-word text-sm font-medium">
             {information.cpu_model || "-"}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">System time</dt>
           <dd class="flex flex-wrap items-center gap-2 text-sm font-medium">
             {formattedSystemTime ?? "-"}
@@ -127,7 +127,7 @@
             {/if}
           </dd>
         </div>
-        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+        <div class="flex min-w-0 flex-col py-2 gap-1 border-t border-border/70 pt-2">
           <dt class="text-xs text-muted-foreground">Uptime</dt>
           <dd class="text-sm font-medium">
             {#if uptimeStartedAt}

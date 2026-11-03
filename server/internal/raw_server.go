@@ -91,10 +91,12 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 			c, err := req.Cookie("session_token")
 			if err != nil {
 				conn.Close(websocket.StatusPolicyViolation, "missing session token")
+				poller.Stop()
 				return
 			}
 			if !db.TokenIsValid(HashString(c.Value), s.database) {
 				conn.Close(websocket.StatusPolicyViolation, "invalid session token")
+				poller.Stop()
 				return
 			}
 			var input I
@@ -104,6 +106,7 @@ func (s *RawServer) WebSocket[I any](pattern string, handle func(in RawServerRou
 				default:
 					slog.Error("ws read error", "error", err)
 				}
+				poller.Stop()
 				return
 			}
 			// Handle the incoming WebSocket message asynchronously.

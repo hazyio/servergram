@@ -30,6 +30,17 @@
       url: appPaths.servers.overview(connectedServerInfo.id),
     },
   ]);
+  const severFilesBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+    {
+      title: "Files",
+      url: appPaths.servers.files(connectedServerInfo.id),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -57,6 +68,7 @@
         },
       ],
       severPageBreadcrumbs,
+      severFilesBreadcrumbs,
     ]}
     sideBarItems={[
       {
@@ -126,7 +138,6 @@
       },
     ]}
   >
-
     {@render children()}
   </SideBarContainer>
 {/if}

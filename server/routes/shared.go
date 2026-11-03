@@ -7,7 +7,7 @@ import (
 )
 
 func RegisterRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
-	registerFilesRoutes(api, database)
+	registerFilesRoutes(api, database, sshManager)
 	registerAccountRoutes(api, database)
 	registerSSHRoutes(api, database)
 	registerSearchRoutes(api, database)

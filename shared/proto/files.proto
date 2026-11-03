@@ -3,10 +3,37 @@ syntax = "proto3";
 package proto;
 option go_package = "hazyio.com/servergram/shared/proto;proto";
 
-message ListFilesResponse { string dir = 1; }
-message ListFilesRequest { uint32 protocol_version = 1; }
+enum FileEntryKind {
+  FILE = 0;
+  DIR = 1;
+  SYMLINK = 2;
+  OTHER = 3;
+}
+message FileEntry {
+  string name = 1;
+  FileEntryKind kind = 2;
+  int64 size = 3;
+  int64 modified_unix_ns = 4;
+  uint32 mode = 5;
+  uint32 uid = 6;
+  uint32 gid = 7;
+  string symlink_target = 8;
+  bool link_broken = 9;
+  bool is_hidden = 10;
+}
+message ListFilesChunkResponse {
+  repeated FileEntry entries = 1; // batches of ~500
+  string resolved_path = 2; // first chunk only
+  bool done = 3;
+
+}
+
+message ListFilesRequest {
+  string dir = 1;
+  bool include_hidden = 2;
+}
 
 service Files {
-  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
 }
- 
+

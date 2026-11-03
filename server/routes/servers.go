@@ -135,7 +135,24 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
-func getConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
+
+func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*proto.GetServerResourcesResponse, error) {
+	id := data.Input.ID
+	ctx := data.Context
+	sshmanager := data.SSHManager
+	resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	res, err := resource.Get(ctx, &emptypb.Empty{})
+	if err != nil {
+		slog.Error("Failed to get server resources", "error", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
+	}
+	return res, nil
+}
+func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
 		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
 	}
@@ -150,27 +167,12 @@ func getConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) 
 
 	return resource, ctx, cancel, nil
 }
-func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*proto.GetServerResourcesResponse, error) {
-	id := data.Input.ID
-	ctx := data.Context
-	sshmanager := data.SSHManager
-	resource, ctx, cancel, err := getConnected(ctx, sshmanager, id)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-	res, err := resource.Get(ctx, &emptypb.Empty{})
-	if err != nil {
-		slog.Error("Failed to get server resources", "error", err)
-		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
-	}
-	return res, nil
-}
+
 func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest]) (*proto.TopProcessResponse, error) {
 	id := data.Input.ID
 	ctx := data.Context
 	sshmanager := data.SSHManager
-	resource, ctx, cancel, err := getConnected(ctx, sshmanager, id)
+	resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +190,7 @@ func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest])
 
 func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {
 	id := data.Input.ID
-	resource, ctx, cancel, err := getConnected(data.Context, data.SSHManager, id)
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
 	if err != nil {
 		return nil, err
 	}

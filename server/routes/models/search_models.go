@@ -1,7 +1,7 @@
 package models
 
 type SearchRequest struct {
-	Query string `query:"query"  maxLength:"200" doc:"The search query"`
+	Query string `query:"query" required:"true" maxLength:"200" doc:"The search query"`
 }
 type SearchResponse[T any] struct {
 	Body struct {

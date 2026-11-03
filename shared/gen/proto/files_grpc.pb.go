@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FilesClient interface {
-	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
+	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error)
 }
 
 type filesClient struct {
@@ -37,21 +37,30 @@ func NewFilesClient(cc grpc.ClientConnInterface) FilesClient {
 	return &filesClient{cc}
 }
 
-func (c *filesClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
+func (c *filesClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListFilesResponse)
-	err := c.cc.Invoke(ctx, Files_ListFiles_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[0], Files_ListFiles_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[ListFilesRequest, ListFilesChunkResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_ListFilesClient = grpc.ServerStreamingClient[ListFilesChunkResponse]
 
 // FilesServer is the server API for Files service.
 // All implementations must embed UnimplementedFilesServer
 // for forward compatibility.
 type FilesServer interface {
-	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
+	ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error
 	mustEmbedUnimplementedFilesServer()
 }
 
@@ -62,8 +71,8 @@ type FilesServer interface {
 // pointer dereference when methods are called.
 type UnimplementedFilesServer struct{}
 
-func (UnimplementedFilesServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListFiles not implemented")
+func (UnimplementedFilesServer) ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error {
+	return status.Error(codes.Unimplemented, "method ListFiles not implemented")
 }
 func (UnimplementedFilesServer) mustEmbedUnimplementedFilesServer() {}
 func (UnimplementedFilesServer) testEmbeddedByValue()               {}
@@ -86,23 +95,16 @@ func RegisterFilesServer(s grpc.ServiceRegistrar, srv FilesServer) {
 	s.RegisterService(&Files_ServiceDesc, srv)
 }
 
-func _Files_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListFilesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Files_ListFiles_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListFilesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(FilesServer).ListFiles(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Files_ListFiles_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).ListFiles(ctx, req.(*ListFilesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(FilesServer).ListFiles(m, &grpc.GenericServerStream[ListFilesRequest, ListFilesChunkResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_ListFilesServer = grpc.ServerStreamingServer[ListFilesChunkResponse]
 
 // Files_ServiceDesc is the grpc.ServiceDesc for Files service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -110,12 +112,13 @@ func _Files_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(int
 var Files_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Files",
 	HandlerType: (*FilesServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "ListFiles",
-			Handler:    _Files_ListFiles_Handler,
+			StreamName:    "ListFiles",
+			Handler:       _Files_ListFiles_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/files.proto",
 }

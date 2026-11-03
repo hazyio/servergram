@@ -21,27 +21,88 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ListFilesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dir           string                 `protobuf:"bytes,1,opt,name=dir,proto3" json:"dir,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type FileEntryKind int32
+
+const (
+	FileEntryKind_FILE    FileEntryKind = 0
+	FileEntryKind_DIR     FileEntryKind = 1
+	FileEntryKind_SYMLINK FileEntryKind = 2
+	FileEntryKind_OTHER   FileEntryKind = 3
+)
+
+// Enum value maps for FileEntryKind.
+var (
+	FileEntryKind_name = map[int32]string{
+		0: "FILE",
+		1: "DIR",
+		2: "SYMLINK",
+		3: "OTHER",
+	}
+	FileEntryKind_value = map[string]int32{
+		"FILE":    0,
+		"DIR":     1,
+		"SYMLINK": 2,
+		"OTHER":   3,
+	}
+)
+
+func (x FileEntryKind) Enum() *FileEntryKind {
+	p := new(FileEntryKind)
+	*p = x
+	return p
 }
 
-func (x *ListFilesResponse) Reset() {
-	*x = ListFilesResponse{}
+func (x FileEntryKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FileEntryKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_files_proto_enumTypes[0].Descriptor()
+}
+
+func (FileEntryKind) Type() protoreflect.EnumType {
+	return &file_proto_files_proto_enumTypes[0]
+}
+
+func (x FileEntryKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FileEntryKind.Descriptor instead.
+func (FileEntryKind) EnumDescriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{0}
+}
+
+type FileEntry struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Kind           FileEntryKind          `protobuf:"varint,2,opt,name=kind,proto3,enum=proto.FileEntryKind" json:"kind,omitempty"`
+	Size           int64                  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+	ModifiedUnixNs int64                  `protobuf:"varint,4,opt,name=modified_unix_ns,json=modifiedUnixNs,proto3" json:"modified_unix_ns,omitempty"`
+	Mode           uint32                 `protobuf:"varint,5,opt,name=mode,proto3" json:"mode,omitempty"`
+	Uid            uint32                 `protobuf:"varint,6,opt,name=uid,proto3" json:"uid,omitempty"`
+	Gid            uint32                 `protobuf:"varint,7,opt,name=gid,proto3" json:"gid,omitempty"`
+	SymlinkTarget  string                 `protobuf:"bytes,8,opt,name=symlink_target,json=symlinkTarget,proto3" json:"symlink_target,omitempty"`
+	LinkBroken     bool                   `protobuf:"varint,9,opt,name=link_broken,json=linkBroken,proto3" json:"link_broken,omitempty"`
+	IsHidden       bool                   `protobuf:"varint,10,opt,name=is_hidden,json=isHidden,proto3" json:"is_hidden,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *FileEntry) Reset() {
+	*x = FileEntry{}
 	mi := &file_proto_files_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFilesResponse) String() string {
+func (x *FileEntry) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFilesResponse) ProtoMessage() {}
+func (*FileEntry) ProtoMessage() {}
 
-func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
+func (x *FileEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_files_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,28 +114,152 @@ func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListFilesResponse.ProtoReflect.Descriptor instead.
-func (*ListFilesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use FileEntry.ProtoReflect.Descriptor instead.
+func (*FileEntry) Descriptor() ([]byte, []int) {
 	return file_proto_files_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ListFilesResponse) GetDir() string {
+func (x *FileEntry) GetName() string {
 	if x != nil {
-		return x.Dir
+		return x.Name
 	}
 	return ""
 }
 
+func (x *FileEntry) GetKind() FileEntryKind {
+	if x != nil {
+		return x.Kind
+	}
+	return FileEntryKind_FILE
+}
+
+func (x *FileEntry) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *FileEntry) GetModifiedUnixNs() int64 {
+	if x != nil {
+		return x.ModifiedUnixNs
+	}
+	return 0
+}
+
+func (x *FileEntry) GetMode() uint32 {
+	if x != nil {
+		return x.Mode
+	}
+	return 0
+}
+
+func (x *FileEntry) GetUid() uint32 {
+	if x != nil {
+		return x.Uid
+	}
+	return 0
+}
+
+func (x *FileEntry) GetGid() uint32 {
+	if x != nil {
+		return x.Gid
+	}
+	return 0
+}
+
+func (x *FileEntry) GetSymlinkTarget() string {
+	if x != nil {
+		return x.SymlinkTarget
+	}
+	return ""
+}
+
+func (x *FileEntry) GetLinkBroken() bool {
+	if x != nil {
+		return x.LinkBroken
+	}
+	return false
+}
+
+func (x *FileEntry) GetIsHidden() bool {
+	if x != nil {
+		return x.IsHidden
+	}
+	return false
+}
+
+type ListFilesChunkResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entries       []*FileEntry           `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`                               // batches of ~500
+	ResolvedPath  string                 `protobuf:"bytes,2,opt,name=resolved_path,json=resolvedPath,proto3" json:"resolved_path,omitempty"` // first chunk only
+	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFilesChunkResponse) Reset() {
+	*x = ListFilesChunkResponse{}
+	mi := &file_proto_files_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFilesChunkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFilesChunkResponse) ProtoMessage() {}
+
+func (x *ListFilesChunkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFilesChunkResponse.ProtoReflect.Descriptor instead.
+func (*ListFilesChunkResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListFilesChunkResponse) GetEntries() []*FileEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *ListFilesChunkResponse) GetResolvedPath() string {
+	if x != nil {
+		return x.ResolvedPath
+	}
+	return ""
+}
+
+func (x *ListFilesChunkResponse) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
 type ListFilesRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	ProtocolVersion uint32                 `protobuf:"varint,1,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Dir           string                 `protobuf:"bytes,1,opt,name=dir,proto3" json:"dir,omitempty"`
+	IncludeHidden bool                   `protobuf:"varint,2,opt,name=include_hidden,json=includeHidden,proto3" json:"include_hidden,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListFilesRequest) Reset() {
 	*x = ListFilesRequest{}
-	mi := &file_proto_files_proto_msgTypes[1]
+	mi := &file_proto_files_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -86,7 +271,7 @@ func (x *ListFilesRequest) String() string {
 func (*ListFilesRequest) ProtoMessage() {}
 
 func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_files_proto_msgTypes[1]
+	mi := &file_proto_files_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -99,27 +284,55 @@ func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListFilesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_files_proto_rawDescGZIP(), []int{1}
+	return file_proto_files_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListFilesRequest) GetProtocolVersion() uint32 {
+func (x *ListFilesRequest) GetDir() string {
 	if x != nil {
-		return x.ProtocolVersion
+		return x.Dir
 	}
-	return 0
+	return ""
+}
+
+func (x *ListFilesRequest) GetIncludeHidden() bool {
+	if x != nil {
+		return x.IncludeHidden
+	}
+	return false
 }
 
 var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
 	"\n" +
-	"\x11proto/files.proto\x12\x05proto\"%\n" +
-	"\x11ListFilesResponse\x12\x10\n" +
-	"\x03dir\x18\x01 \x01(\tR\x03dir\"=\n" +
-	"\x10ListFilesRequest\x12)\n" +
-	"\x10protocol_version\x18\x01 \x01(\rR\x0fprotocolVersion2G\n" +
-	"\x05Files\x12>\n" +
-	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x18.proto.ListFilesResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\x11proto/files.proto\x12\x05proto\"\xa4\x02\n" +
+	"\tFileEntry\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12(\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x14.proto.FileEntryKindR\x04kind\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\x12(\n" +
+	"\x10modified_unix_ns\x18\x04 \x01(\x03R\x0emodifiedUnixNs\x12\x12\n" +
+	"\x04mode\x18\x05 \x01(\rR\x04mode\x12\x10\n" +
+	"\x03uid\x18\x06 \x01(\rR\x03uid\x12\x10\n" +
+	"\x03gid\x18\a \x01(\rR\x03gid\x12%\n" +
+	"\x0esymlink_target\x18\b \x01(\tR\rsymlinkTarget\x12\x1f\n" +
+	"\vlink_broken\x18\t \x01(\bR\n" +
+	"linkBroken\x12\x1b\n" +
+	"\tis_hidden\x18\n" +
+	" \x01(\bR\bisHidden\"}\n" +
+	"\x16ListFilesChunkResponse\x12*\n" +
+	"\aentries\x18\x01 \x03(\v2\x10.proto.FileEntryR\aentries\x12#\n" +
+	"\rresolved_path\x18\x02 \x01(\tR\fresolvedPath\x12\x12\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\"K\n" +
+	"\x10ListFilesRequest\x12\x10\n" +
+	"\x03dir\x18\x01 \x01(\tR\x03dir\x12%\n" +
+	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden*:\n" +
+	"\rFileEntryKind\x12\b\n" +
+	"\x04FILE\x10\x00\x12\a\n" +
+	"\x03DIR\x10\x01\x12\v\n" +
+	"\aSYMLINK\x10\x02\x12\t\n" +
+	"\x05OTHER\x10\x032N\n" +
+	"\x05Files\x12E\n" +
+	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -133,19 +346,24 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 	return file_proto_files_proto_rawDescData
 }
 
-var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_proto_files_proto_goTypes = []any{
-	(*ListFilesResponse)(nil), // 0: proto.ListFilesResponse
-	(*ListFilesRequest)(nil),  // 1: proto.ListFilesRequest
+	(FileEntryKind)(0),             // 0: proto.FileEntryKind
+	(*FileEntry)(nil),              // 1: proto.FileEntry
+	(*ListFilesChunkResponse)(nil), // 2: proto.ListFilesChunkResponse
+	(*ListFilesRequest)(nil),       // 3: proto.ListFilesRequest
 }
 var file_proto_files_proto_depIdxs = []int32{
-	1, // 0: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	0, // 1: proto.Files.ListFiles:output_type -> proto.ListFilesResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
+	1, // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
+	3, // 2: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	2, // 3: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }
@@ -158,13 +376,14 @@ func file_proto_files_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_files_proto_rawDesc), len(file_proto_files_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proto_files_proto_goTypes,
 		DependencyIndexes: file_proto_files_proto_depIdxs,
+		EnumInfos:         file_proto_files_proto_enumTypes,
 		MessageInfos:      file_proto_files_proto_msgTypes,
 	}.Build()
 	File_proto_files_proto = out.File

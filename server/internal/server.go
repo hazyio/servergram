@@ -33,9 +33,19 @@ type Server struct {
 	prefix     string
 	sshManager *sshmanager.SSHManager
 }
+
 type SSEError struct {
+	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
+
+func NewSSEError(status int, message string) SSEError {
+	return SSEError{Status: status, Message: message}
+}
+func NewSSEInternalError(message string) SSEError {
+	return SSEError{Status: http.StatusInternalServerError, Message: message}
+}
+
 type SSEQuery struct {
 	IntervalMs int `query:"interval" default:"1000" minimum:"250" maximum:"60000" doc:"Update interval in ms"`
 }
@@ -134,6 +144,20 @@ func (s *Server) Put[I, O any](pattern string, status int, next func(RouteData[I
 			return nil, ToHumaError(err)
 		}
 		return resp, nil
+	})
+}
+func (s *Server) SSE[I, O any](pattern string, status int, next func(routeData RouteData[I], send sse.Sender) *O, errs ...int) {
+	sse.Register(s.group, huma.Operation{
+		OperationID: "sse-" + opSlug(s.prefix, pattern),
+		Summary:     huma.GenerateSummary(http.MethodGet, pattern, new(O)),
+		Method:      http.MethodGet,
+		Path:        pattern,
+		Errors:      errs,
+	}, map[string]any{
+		"data":  *new(O),
+		"error": SSEError{},
+	}, func(ctx context.Context, input *I, send sse.Sender) {
+		next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}, send)
 	})
 }
 

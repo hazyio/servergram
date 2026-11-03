@@ -20,6 +20,7 @@ func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
+
 func createNewGroup(data internal.RouteData[models.CreateGroupRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name

@@ -19,7 +19,7 @@ type Agent struct {
 
 // }
 func NewAgent(conn *grpc.ClientConn) *Agent {
-	return &Agent{Conn: conn, Timeout: time.Duration(10) * time.Second}
+	return &Agent{Conn: conn, Timeout: 30 * time.Second}
 }
 
 func (c *Agent) UpdateTimeout(seconds uint8) {
@@ -27,6 +27,12 @@ func (c *Agent) UpdateTimeout(seconds uint8) {
 }
 func (c *Agent) ServerResourcesClient(ctx context.Context) (proto.ServerResourcesClient, context.Context, context.CancelFunc) {
 	slog.Debug("Creating server resources client")
-	ctx, cancel := context.WithTimeout(ctx, c.Timeout)
+	ctx, cancel := context.WithCancel(ctx)
 	return proto.NewServerResourcesClient(c.Conn), ctx, cancel
+}
+
+func (c *Agent) FilesClient(ctx context.Context) (proto.FilesClient, context.Context, context.CancelFunc) {
+	slog.Debug("Creating files client")
+	ctx, cancel := context.WithCancel(ctx)
+	return proto.NewFilesClient(c.Conn), ctx, cancel
 }

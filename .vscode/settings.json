@@ -9,6 +9,7 @@
         "Dialector",
         "emptypb",
         "huma",
+        "Intervaler",
         "servergram",
         "servergrampb",
         "servergramshared",

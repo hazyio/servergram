@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
@@ -49,8 +50,8 @@ type UpdateServerFingerPrintRequest struct {
 }
 
 type WatchServerResourceRequest struct {
-	ID        uint `path:"id" minimum:"1" doc:"The ID of the server"`
-	Frequency uint `query:"frequency" required:"true" minimum:"1" doc:"The frequency of watching the server resource in seconds"`
+	internal.SSEQuery
+	ID uint `path:"id" minimum:"1" doc:"The ID of the server"`
 }
 type ServerUsageItem struct {
 	Usage float64 `json:"usage" doc:"The usage statistics of the server"`

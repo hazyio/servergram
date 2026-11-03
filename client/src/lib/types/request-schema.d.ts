@@ -318,7 +318,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get watch resources by ID */
-        get: operations["get-server--watch-resources-id"];
+        get: operations["sse-interval-server--watch-resources-id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -558,6 +558,9 @@ export interface components {
             title: string;
             /** @description The URL associated with the notification */
             url: string | null;
+        };
+        SSEError: {
+            message: string;
         };
         SSHKeyListItem: {
             /** Format: date-time */
@@ -1275,11 +1278,11 @@ export interface operations {
             };
         };
     };
-    "get-server--watch-resources-id": {
+    "sse-interval-server--watch-resources-id": {
         parameters: {
-            query: {
-                /** @description The frequency of watching the server resource in seconds */
-                frequency: number;
+            query?: {
+                /** @description Update interval in ms */
+                interval?: number;
             };
             header?: never;
             path: {
@@ -1296,7 +1299,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetServerResourcesResponse"];
+                    "text/event-stream": ({
+                        data: components["schemas"]["GetServerResourcesResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
                 };
             };
             /** @description Not Found */

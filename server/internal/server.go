@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/sse"
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal/sshmanager"
 
@@ -14,9 +16,9 @@ import (
 )
 
 type RouteData[I any] struct {
-	Database *gorm.DB
-	Context  context.Context
-	Input    I
+	Database   *gorm.DB
+	Context    context.Context
+	Input      I
 	SSHManager *sshmanager.SSHManager
 }
 
@@ -30,6 +32,20 @@ type Server struct {
 	mux        *http.ServeMux
 	prefix     string
 	sshManager *sshmanager.SSHManager
+}
+type SSEError struct {
+	Message string `json:"message"`
+}
+type SSEQuery struct {
+	IntervalMs int `query:"interval" default:"1000" minimum:"250" maximum:"60000" doc:"Update interval in ms"`
+}
+
+func (q SSEQuery) Interval() time.Duration {
+	return time.Duration(q.IntervalMs) * time.Millisecond
+}
+
+type Intervaler interface {
+	Interval() time.Duration
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
@@ -112,6 +128,7 @@ func (s *Server) Put[I, O any](pattern string, status int, next func(RouteData[I
 		DefaultStatus: status,
 		Errors:        errs,
 	}, func(ctx context.Context, input *I) (*O, error) {
+
 		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
 		if err != nil {
 			return nil, ToHumaError(err)
@@ -119,6 +136,54 @@ func (s *Server) Put[I, O any](pattern string, status int, next func(RouteData[I
 		return resp, nil
 	})
 }
+
+func (s *Server) SSEInterval[I Intervaler, O any](
+	pattern string, runOnInterval func(RouteData[I]) (*O, error),
+	errs ...int,
+) {
+	sse.Register(s.group, huma.Operation{
+		OperationID: "sse-interval-" + opSlug(s.prefix, pattern),
+		Summary:     huma.GenerateSummary(http.MethodGet, pattern, new(O)),
+		Method:      http.MethodGet,
+		Path:        pattern,
+		Errors:      errs,
+	}, map[string]any{
+		"data":  *new(O),
+		"error": SSEError{},
+	}, func(ctx context.Context, input *I, send sse.Sender) {
+		t := time.NewTicker((*input).Interval())
+		intervalFunc := func() {
+			resp, err := runOnInterval(RouteData[I]{
+				Input:      *input,
+				Database:   s.database,
+				Context:    ctx,
+				SSHManager: s.sshManager,
+			})
+			if err != nil {
+				err = send.Data(SSEError{Message: err.Error()})
+				if err != nil {
+					slog.Error("Failed to send SSE error", "error", err)
+				}
+
+			}
+			if err := send.Data(*resp); err != nil {
+				slog.Error("Failed to send SSE data", "error", err)
+			}
+		}
+		defer t.Stop()
+		// send initial data immediately before entering the loop
+		intervalFunc()
+		for {
+			select {
+			case <-ctx.Done():
+				return // client left; nobody to send to
+			case <-t.C:
+				intervalFunc()
+			}
+		}
+	})
+}
+
 func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 

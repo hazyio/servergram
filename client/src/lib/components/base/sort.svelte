@@ -11,6 +11,7 @@
     capitalize?: boolean;
     caption?: string;
     onChange?: (value: T, direction?: SortDirection) => void;
+    prepend?: string;
   }
   let {
     value = $bindable(),
@@ -19,6 +20,7 @@
     capitalize = true,
     caption = "Sort",
     onChange,
+    prepend,
   }: SortOption<any> = $props();
 </script>
 
@@ -28,7 +30,7 @@
       ><SlidersHorizontal />
       {capitalize
         ? value.charAt(0).toUpperCase() + value.slice(1)
-        : value}</Button
+        : value}{prepend ? prepend : ""}</Button
     >
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
@@ -41,9 +43,8 @@
             onChange?.(value, direction);
           }}
           ><span
-            >{capitalize
-              ? item.charAt(0).toUpperCase() + item.slice(1)
-              : item}</span
+            >{capitalize ? item.charAt(0).toUpperCase() + item.slice(1) : item}
+            {prepend ? prepend : ""}</span
           >{#if item === value}
             <Check />
           {/if}</DropdownMenu.Item

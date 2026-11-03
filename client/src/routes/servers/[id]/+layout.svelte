@@ -10,7 +10,7 @@
   import { updatePageServerInfo } from "#lib/states/severPageInfo.svelte.ts";
   import type { LayoutProps } from "./$types";
 
-  let { params,children }: LayoutProps = $props();
+  let { params, children }: LayoutProps = $props();
   let server = $derived.by(() => {
     return ConnectedServices.findServer(Number(params.id));
   });
@@ -31,10 +31,10 @@
   ]}
 />
 <div class="p-2">
-  {#if servicesState.connecting || servicesState.gettingConnected}
+  {#if servicesState.connecting || servicesState.gettingConnected || (server && server.status === "connecting")}
     <Loading loading containerClass="mt-20" />
   {:else if !server}
-     <ErrorSection
+    <ErrorSection
       title="Server not connected"
       message="This server is not connected, you can connect it by clicking the button below."
       class="mt-20"
@@ -47,7 +47,6 @@
       }}
     />
   {:else}
-  {@render children()}
-
+    {@render children()}
   {/if}
 </div>

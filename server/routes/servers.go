@@ -22,8 +22,9 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server.Get("/list", http.StatusOK, listServers, http.StatusInternalServerError)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusNotFound)
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
-	server.Get("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
+
 	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
+	server.SSEInterval("/watch-resources/{id}", watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
 
 }
 
@@ -148,11 +149,10 @@ func getConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) 
 
 	return resource, ctx, cancel, nil
 }
-func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*models.WatchServerResourceResponse, error) {
+func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*proto.GetServerResourcesResponse, error) {
 	id := data.Input.ID
 	ctx := data.Context
 	sshmanager := data.SSHManager
-
 	resource, ctx, cancel, err := getConnected(ctx, sshmanager, id)
 	if err != nil {
 		return nil, err
@@ -164,10 +164,7 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
 	}
 	slog.Info("Got server resources,", "resources", res)
-	response := &models.WatchServerResourceResponse{}
-	response.Body = res
-
-	return response, nil
+	return res, nil
 }
 
 func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {

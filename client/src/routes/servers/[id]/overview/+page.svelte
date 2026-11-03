@@ -1,13 +1,12 @@
 <script lang="ts">
   import CardTitle from "#lib/components/ui/card/card-title.svelte";
   import Card from "#lib/components/ui/card/card.svelte";
-  import { CardContent, CardHeader } from "#lib/components/ui/card/index.ts";
+  import { CardHeader } from "#lib/components/ui/card/index.ts";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import { Clock } from "@lucide/svelte";
   import type { PageProps } from "./$types";
-  import InCard from "./InCard.svelte";
-  import SeverResources from "./SeverResources.svelte";
   import ServerInfo from "./ServerInfo.svelte";
+  import SeverResources from "./SeverResources.svelte";
+  import TopSystemProcess from "./TopSystemProcess.svelte";
   let { params }: PageProps = $props();
 </script>
 
@@ -20,22 +19,17 @@
 </svelte:head>
 <div class="grid gap-2">
   <div
-    class="grid md:grid-cols-2 lg:md:grid-cols-4 gap-2 md:col-start-1 md:col-end-8 lg:col-end-9"
+    class="grid grid-cols-1 md:grid-cols-2 lg:md:grid-cols-4 gap-2 md:col-start-1 md:col-end-9 lg:col-end-10"
   >
-    <ServerInfo id={params.id} />
-    <SeverResources />
-    <Card>
-      <CardHeader><CardTitle>Top System Process</CardTitle></CardHeader>
-    </Card>
-    <Card>
-      <CardHeader><CardTitle>Systemd Units</CardTitle></CardHeader>
-    </Card>
+    <SeverResources id={params.id} />
+    <TopSystemProcess id={params.id} />
   </div>
-
-  <Card class="md:col-start-8 md:col-end-13 lg:col-start-9 ">
+  <Card class="col-end-13 md:col-start-9  lg:col-start-10 ">
     <CardHeader><CardTitle>Cron & Scheduled Tasks</CardTitle></CardHeader>
   </Card>
   <Card class="md:col-start-1 md:col-end-13">
     <CardHeader><CardTitle>Logs</CardTitle></CardHeader>
   </Card>
+    <ServerInfo id={params.id} />
+
 </div>

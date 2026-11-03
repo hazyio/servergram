@@ -1,112 +1,93 @@
 <script lang="ts">
-  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
-  import { Progress } from "#lib/components/ui/progress/index.js";
+  import Sort from "#lib/components/base/sort.svelte";
   import type { components } from "#lib/types/request-schema.d.ts";
+  import { scaleUtc } from "d3-scale";
+  import { curveNatural } from "d3-shape";
+  import { AreaChart } from "layerchart";
 
   let {
     information,
   }: {
-    information: components["schemas"]["GetServerResourcesResponse"][];
+    information: {
+      timestamp: Date;
+      resources: components["schemas"]["GetServerResourcesResponse"];
+    }[];
   } = $props();
 
-  function formatPercent(percent?: number) {
-    if (typeof percent !== "number" || !Number.isFinite(percent)) return "-";
-    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(percent)}%`;
-  }
+  type Range = "1m" | "5m" | "15m";
+  let timeRange: Range = $state("5m");
+  const rangeMilliseconds: Record<Range, number> = {
+    "1m": 60_000,
+    "5m": 300_000,
+    "15m": 900_000,
+  };
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const series = [
+    { key: "cpu", label: "CPU", color: "var(--chart-1)" },
+    { key: "memory", label: "Memory", color: "var(--chart-2)" },
+    { key: "disk", label: "Disk", color: "var(--chart-3)" },
+    { key: "swap", label: "Swap", color: "var(--chart-4)" },
+  ];
 
-  function progressValue(percent?: number) {
-    if (typeof percent !== "number" || !Number.isFinite(percent)) return 0;
-    return Math.max(0, Math.min(100, percent));
-  }
-
-  function formatBytes(bytes?: number) {
-    if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes < 0) {
-      return "-";
-    }
-    if (bytes === 0) return "0 B";
-
-    const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-    const unitIndex = Math.min(
-      Math.floor(Math.log(bytes) / Math.log(1024)),
-      units.length - 1,
-    );
-    const value = bytes / 1024 ** unitIndex;
-    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value)} ${units[unitIndex]}`;
-  }
-
-  function formatUsedTotal(usage?: number, total?: number) {
-    if (typeof usage !== "number" || typeof total !== "number") return "-";
-    return `${formatBytes(usage)} / ${formatBytes(total)}`;
-  }
+  let chartData = $derived.by(() => {
+    const cutoff = Date.now() - rangeMilliseconds[timeRange];
+    return information
+      .filter((sample) => sample.timestamp.getTime() >= cutoff)
+      .map(({ timestamp, resources }) => ({
+        timestamp,
+        cpu: resources.cpu?.usage,
+        memory: resources.memory?.percent,
+        disk: resources.disk?.percent,
+        swap:
+          resources.swap && (resources.swap.total ?? 0) > 0
+            ? resources.swap.percent
+            : undefined,
+      }));
+  });
 </script>
 
-{#if information === undefined}
-  <ErrorSection message={"Failed to load server information"} />
-{:else}
-  <div class="space-y-2">
-    <div class="flex">
-      <span class="grow">CPU</span>
-      <span class="text-[12px] text-muted-foreground">
-        {formatPercent(information.cpu?.usage)}
-        {#if information.cpu?.cores !== undefined}
-          / {information.cpu.cores} cores
-        {/if}
-        {#if information.cpu?.threads !== undefined}
-          / {information.cpu.threads} threads
-        {/if}
-      </span>
+<div class="space-y-3">
+  <div class="flex items-center justify-between gap-2">
+    <span class="grow"></span>
+    <Sort
+      items={["1m", "5m", "15m"]}
+      bind:value={timeRange}
+      capitalize={false}
+      caption="Chart time range"
+      
+    />
+  </div>
+  {#if chartData.length < 2}
+    <div
+      class="flex h-60 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground"
+    >
+      Collecting resource history...
     </div>
-    <Progress value={progressValue(information.cpu?.usage)} />
-  </div>
-  <div class="space-y-2">
-    <div class="flex">
-      <span class="grow">Memory</span>
-      <div class="text-[12px] text-muted-foreground">
-        <span>{formatPercent(information.memory?.percent)}</span>
-        <span
-          >({formatUsedTotal(
-            information.memory?.usage,
-            information.memory?.total,
-          )})</span
-        >
-        {#if information.memory?.available !== undefined}
-          <span>· {formatBytes(information.memory.available)} available</span>
-        {/if}
-      </div>
-    </div>
-    <Progress value={progressValue(information.memory?.percent)} />
-  </div>
-  <div class="space-y-2">
-    <div class="flex">
-      <span class="grow">Disk</span>
-      <span class="text-[12px] text-muted-foreground">
-        {formatPercent(information.disk?.percent)}
-        ({formatUsedTotal(information.disk?.usage, information.disk?.total)})
-        {#if information.disk?.available !== undefined}
-          · {formatBytes(information.disk.available)} available
-        {/if}
-      </span>
-    </div>
-    <Progress value={progressValue(information.disk?.percent)} />
-  </div>
-  <div class="space-y-2">
-    {#if information.swap && (information.swap.total ?? 0) > 0}
-      <div class="flex">
-        <span class="grow">Swap</span>
-        <span class="text-[12px] text-muted-foreground">
-          {formatPercent(information.swap.percent)}
-          ({formatUsedTotal(information.swap.usage, information.swap.total)})
-          {#if information.swap.available !== undefined}
-            · {formatBytes(information.swap.available)} available
-          {/if}
-        </span>
-      </div>
-      <Progress value={progressValue(information.swap.percent)} />
-    {:else}
-      <div class="flex text-muted-foreground">
-        <span class="grow">Swap</span>
-        <span class="text-[12px]">Not available</span>
-      </div>
-    {/if}
-  </div>
-{/if}
+  {:else}
+    <AreaChart
+      data={chartData}
+      x="timestamp"
+      xScale={scaleUtc()}
+      yDomain={[0, 100]}
+      {series}
+      seriesLayout="overlap"
+      height={240}
+      legend
+      props={{
+        area: {
+          curve: curveNatural,
+          fillOpacity: 0.3,
+          line: { class: "stroke-1" },
+        },
+        xAxis: { format: (value: Date) => dateFormatter.format(value) },
+        yAxis: {
+          ticks: [0, 25, 50, 75, 100],
+          format: (value: number) => `${value}%`,
+        },
+      }}
+    />
+  {/if}
+</div>

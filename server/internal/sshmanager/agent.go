@@ -26,7 +26,7 @@ func (c *Agent) UpdateTimeout(seconds uint8) {
 	c.Timeout = time.Duration(seconds) * time.Second
 }
 func (c *Agent) ServerResourcesClient(ctx context.Context) (proto.ServerResourcesClient, context.Context, context.CancelFunc) {
-	slog.Info("Creating server resources client")
+	slog.Debug("Creating server resources client")
 	ctx, cancel := context.WithTimeout(ctx, c.Timeout)
 	return proto.NewServerResourcesClient(c.Conn), ctx, cancel
 }

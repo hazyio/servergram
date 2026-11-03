@@ -20,8 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ServerResources_Get_FullMethodName  = "/proto.ServerResources/Get"
-	ServerResources_Info_FullMethodName = "/proto.ServerResources/Info"
+	ServerResources_Get_FullMethodName          = "/proto.ServerResources/Get"
+	ServerResources_Info_FullMethodName         = "/proto.ServerResources/Info"
+	ServerResources_TopProcesses_FullMethodName = "/proto.ServerResources/TopProcesses"
 )
 
 // ServerResourcesClient is the client API for ServerResources service.
@@ -30,6 +31,7 @@ const (
 type ServerResourcesClient interface {
 	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error)
 	Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error)
+	TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (*TopProcessResponse, error)
 }
 
 type serverResourcesClient struct {
@@ -60,12 +62,23 @@ func (c *serverResourcesClient) Info(ctx context.Context, in *emptypb.Empty, opt
 	return out, nil
 }
 
+func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (*TopProcessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TopProcessResponse)
+	err := c.cc.Invoke(ctx, ServerResources_TopProcesses_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerResourcesServer is the server API for ServerResources service.
 // All implementations must embed UnimplementedServerResourcesServer
 // for forward compatibility.
 type ServerResourcesServer interface {
 	Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error)
 	Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error)
+	TopProcesses(context.Context, *TopProcessRequest) (*TopProcessResponse, error)
 	mustEmbedUnimplementedServerResourcesServer()
 }
 
@@ -81,6 +94,9 @@ func (UnimplementedServerResourcesServer) Get(context.Context, *emptypb.Empty) (
 }
 func (UnimplementedServerResourcesServer) Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
+}
+func (UnimplementedServerResourcesServer) TopProcesses(context.Context, *TopProcessRequest) (*TopProcessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TopProcesses not implemented")
 }
 func (UnimplementedServerResourcesServer) mustEmbedUnimplementedServerResourcesServer() {}
 func (UnimplementedServerResourcesServer) testEmbeddedByValue()                         {}
@@ -139,6 +155,24 @@ func _ServerResources_Info_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerResources_TopProcesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TopProcessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerResourcesServer).TopProcesses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerResources_TopProcesses_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerResourcesServer).TopProcesses(ctx, req.(*TopProcessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerResources_ServiceDesc is the grpc.ServiceDesc for ServerResources service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,6 +187,10 @@ var ServerResources_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Info",
 			Handler:    _ServerResources_Info_Handler,
+		},
+		{
+			MethodName: "TopProcesses",
+			Handler:    _ServerResources_TopProcesses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

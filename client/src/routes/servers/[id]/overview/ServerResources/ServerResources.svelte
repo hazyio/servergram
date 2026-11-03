@@ -13,10 +13,13 @@
   import ServerResourcesChart from "./ServerResourcesChart.svelte";
 
   let { id } = $props();
+  type ResourceSample = {
+    timestamp: Date;
+    resources: components["schemas"]["GetServerResourcesResponse"];
+  };
   let loading = $state(true);
   let loadError = $state<string | null>(null);
-  let information: components["schemas"]["GetServerResourcesResponse"][] =
-    $state([]);
+  let information: ResourceSample[] = $state([]);
   let lastInformation:
     components["schemas"]["GetServerResourcesResponse"] | undefined =
     $state(undefined);
@@ -45,7 +48,10 @@
         const newData = JSON.parse(
           (event as MessageEvent<string>).data,
         ) as components["schemas"]["GetServerResourcesResponse"];
-        information.push(newData);
+        information = [
+          ...information,
+          { timestamp: new Date(), resources: newData },
+        ].slice(-900);
         lastInformation = newData;
         loading = false;
         loadError = null;
@@ -70,7 +76,7 @@
 <Card class="min-w-0 xl:col-span-4">
   <CardHeader>
     <CardTitle class="flex items-center gap-1"
-      ><span class="grow">Top System Process</span>
+      ><span class="grow">Resources Usage</span>
       <Button
         variant="outline"
         onclick={() => (viewMode = viewMode === "chart" ? "bar" : "chart")}
@@ -89,7 +95,6 @@
         prepend="s"
       />
     </CardTitle>
-    <CardTitle>Resources</CardTitle>
   </CardHeader>
   <CardContent class="space-y-6">
     {#if loading}
@@ -102,7 +107,7 @@
     {:else if viewMode === "bar"}
       <ServerResourcesBar information={lastInformation} />
     {:else if viewMode === "chart"}
-      <ServerResourcesChart information={lastInformation} />
+      <ServerResourcesChart {information} />
     {/if}
   </CardContent>
 </Card>

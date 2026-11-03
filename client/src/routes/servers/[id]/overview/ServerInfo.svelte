@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ServerIcon from "@lucide/svelte/icons/server";
   import { onMount } from "svelte";
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
@@ -57,7 +58,16 @@
 </script>
 
 <Card class="min-w-0 md:col-span-2 xl:col-span-12">
-  <CardHeader><CardTitle>System Information</CardTitle></CardHeader>
+  <CardHeader class="pb-3">
+    <div class="flex items-center gap-3">
+      <span
+        class="grid size-9 place-items-center rounded-md bg-primary/10 text-primary"
+      >
+        <ServerIcon class="size-5" />
+      </span>
+      <CardTitle>System Information</CardTitle>
+    </div>
+  </CardHeader>
   <CardContent class="space-y-2">
     {#if loading}
       <Loading loading class="mt-12" />
@@ -68,56 +78,58 @@
       />
     {:else}
       <dl
-        class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
+        class="grid grid-cols-1 gap-x-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
       >
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Architecture</dt>
-          <dd class="grow flex items-center wrap-break-word">
-            {information.architecture || "-"}
-          </dd>
-        </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Host name</dt>
-          <dd class="grow flex items-center wrap-break-word">
+        <div
+          class="flex min-w-0 flex-col gap-1 border-t py-2 border-border/70 pt-2 sm:col-span-2 md:col-span-4 lg:col-span-6"
+        >
+          <dt class="text-xs text-muted-foreground">Host name</dt>
+          <dd class="wrap-break-word text-sm font-medium">
             {information.hostname || "-"}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Kernel version</dt>
-          <dd class="grow flex items-center wrap-break-word">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">Architecture</dt>
+          <dd class="wrap-break-word text-sm font-medium">
+            {information.architecture || "-"}
+          </dd>
+        </div>
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">Kernel version</dt>
+          <dd class="wrap-break-word text-sm font-medium">
             {information.kernel_version || "-"}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">OS</dt>
-          <dd class="grow flex items-center wrap-break-word">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">OS</dt>
+          <dd class="wrap-break-word text-sm font-medium">
             {information.os || "-"}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Platform</dt>
-          <dd class="grow flex items-center wrap-break-word">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">Platform</dt>
+          <dd class="wrap-break-word text-sm font-medium">
             {information.platform || "-"}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Processor</dt>
-          <dd class="grow flex items-center wrap-break-word">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">Processor</dt>
+          <dd class="wrap-break-word text-sm font-medium">
             {information.cpu_model || "-"}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">System time</dt>
-          <dd class="grow flex flex-wrap items-center gap-2">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">System time</dt>
+          <dd class="flex flex-wrap items-center gap-2 text-sm font-medium">
             {formattedSystemTime ?? "-"}
             {#if formattedSystemTime}
               <span class="text-muted-foreground text-xs">UTC</span>
             {/if}
           </dd>
         </div>
-        <div class="bg-muted rounded-md px-2 py-1 flex flex-col gap-1">
-          <dt class="text-muted-foreground">Uptime</dt>
-          <dd class="grow flex items-center">
+        <div class="flex min-w-0 flex-col gap-1 border-t border-border/70 pt-2">
+          <dt class="text-xs text-muted-foreground">Uptime</dt>
+          <dd class="text-sm font-medium">
             {#if uptimeStartedAt}
               <TimeAgo datetime={uptimeStartedAt} />
             {:else}

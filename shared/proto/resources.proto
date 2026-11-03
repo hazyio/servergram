@@ -44,7 +44,18 @@ message TopProcessResponse {
   double disk_usage = 5;
 
 }
+enum TopProcessSortBy {
+  CPU_USAGE = 0;
+  MEMORY_USAGE = 1;
+  DISK_USAGE = 2;
+}
+message TopProcessRequest {
+  TopProcessSortBy sort_by = 1;
+  uint32 limit = 2;
+
+}
 service ServerResources {
   rpc Get(google.protobuf.Empty) returns (GetServerResourcesResponse);
   rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
+  rpc TopProcesses(TopProcessRequest) returns (TopProcessResponse);
 }

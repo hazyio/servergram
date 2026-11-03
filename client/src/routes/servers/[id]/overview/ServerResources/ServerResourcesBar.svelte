@@ -42,7 +42,7 @@
 </script>
 
 {#if information === undefined}
-  <ErrorSection message={ "Failed to load server information"} />
+  <ErrorSection message={"Failed to load server information"} />
 {:else}
   <div class="space-y-2">
     <div class="flex">
@@ -62,7 +62,12 @@
   <div class="space-y-2">
     <div class="flex">
       <span class="grow">Memory</span>
-      <div class="text-[12px] text-muted-foreground">
+      <div
+        class="text-[12px] text-muted-foreground"
+        title={information.memory?.available !== undefined
+          ? `${formatBytes(information.memory.available)} available`
+          : undefined}
+      >
         <span>{formatPercent(information.memory?.percent)}</span>
         <span
           >({formatUsedTotal(
@@ -70,9 +75,6 @@
             information.memory?.total,
           )})</span
         >
-        {#if information.memory?.available !== undefined}
-          <span>· {formatBytes(information.memory.available)} available</span>
-        {/if}
       </div>
     </div>
     <Progress value={progressValue(information.memory?.percent)} />
@@ -80,12 +82,14 @@
   <div class="space-y-2">
     <div class="flex">
       <span class="grow">Disk</span>
-      <span class="text-[12px] text-muted-foreground">
+      <span
+        class="text-[12px] text-muted-foreground"
+        title={information.disk?.available !== undefined
+          ? `${formatBytes(information.disk.available)} available`
+          : undefined}
+      >
         {formatPercent(information.disk?.percent)}
         ({formatUsedTotal(information.disk?.usage, information.disk?.total)})
-        {#if information.disk?.available !== undefined}
-          · {formatBytes(information.disk.available)} available
-        {/if}
       </span>
     </div>
     <Progress value={progressValue(information.disk?.percent)} />
@@ -94,12 +98,14 @@
     {#if information.swap && (information.swap.total ?? 0) > 0}
       <div class="flex">
         <span class="grow">Swap</span>
-        <span class="text-[12px] text-muted-foreground">
+        <span
+          class="text-[12px] text-muted-foreground"
+          title={information.swap.available !== undefined
+            ? `${formatBytes(information.swap.available)} available`
+            : undefined}
+        >
           {formatPercent(information.swap.percent)}
           ({formatUsedTotal(information.swap.usage, information.swap.total)})
-          {#if information.swap.available !== undefined}
-            · {formatBytes(information.swap.available)} available
-          {/if}
         </span>
       </div>
       <Progress value={progressValue(information.swap.percent)} />

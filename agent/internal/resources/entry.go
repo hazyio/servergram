@@ -38,3 +38,6 @@ func (s *ResourcesServer) Get(ctx context.Context, _ *emptypb.Empty) (*proto.Get
 func (s *ResourcesServer) Info(ctx context.Context, _ *emptypb.Empty) (*proto.GetServerInfoResponse, error) {
 	return getInfo(ctx)
 }
+func (s *ResourcesServer) TopProcesses(ctx context.Context, req *proto.TopProcessRequest) (*proto.TopProcessResponse, error) {
+	return topProcesses(ctx, req)
+}

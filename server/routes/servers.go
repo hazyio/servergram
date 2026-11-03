@@ -163,7 +163,6 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 		slog.Error("Failed to get server resources", "error", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
 	}
-	slog.Info("Got server resources,", "resources", res)
 	return res, nil
 }
 

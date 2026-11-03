@@ -87,7 +87,9 @@ const byFolderName: Record<string, string> = {
 export function getFileIcon(name: string, isDir: boolean): string {
   const lower = name.toLowerCase();
   if (isDir) {
-    return iconUrl(byFolderName[lower] ?? "folder-base") ?? iconUrl("folder-base");
+    return (
+      iconUrl(byFolderName[lower] ?? "folder-base") ?? iconUrl("folder-base")
+    );
   }
   const ext = lower.includes(".") ? lower.split(".").pop()! : "";
   return (

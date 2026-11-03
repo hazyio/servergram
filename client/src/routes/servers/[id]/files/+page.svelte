@@ -1,71 +1,176 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
+  import Loading from "#lib/components/base/loading.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
-  import { ChevronLeft, ChevronRight, Settings } from "@lucide/svelte";
+  import type { components } from "#lib/types/request-schema.d.ts";
+  import { ChevronLeft, ChevronRight, Loader } from "@lucide/svelte";
   import type { PageProps } from "./$types";
+  import { isDir, type FileEntry } from "./filesColumns";
+  import FilesTable from "./FilesTable.svelte";
   import SettingOption from "./SettingOption.svelte";
-  import * as Table from "#lib/components/ui/table/index.js";
-  import { FlexRender, createTable } from "@tanstack/svelte-table";
-  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
-  import { getColumns, stubFiles } from "./filesColumns";
 
-  let { data }: PageProps = $props();
-  let settings = $state({ showHidden: false });
+  type Chunk = components["schemas"]["ListFilesChunkResponse"];
 
-  const columns = getColumns();
-  const files = $derived(
-    settings.showHidden
-      ? stubFiles
-      : stubFiles.filter((f) => !f.name.startsWith(".")),
-  );
-  const table = createTable({
-    features: dataTableFeatures,
-    get data() {
-      return files;
-    },
-    columns,
+  let { params }: PageProps = $props();
+  let settings = $state({
+    showHidden: false,
+    dirsFirst: true,
+    columns: { size: true, modified: true, mode: true, owner: true },
+  });
+  let search = $state("");
+  let dir = $state("/");
+  let history = $state(["/"]);
+  let historyIndex = $state(0);
+  let loading = $state(true);
+  let updating = $state(false);
+  let loadError = $state<string | null>(null);
+  let files: FileEntry[] = $state([]);
+  let eventSource: EventSource | undefined;
+
+  function stop() {
+    eventSource?.close();
+    eventSource = undefined;
+    updating = false;
+  }
+
+  function loadFiles() {
+    stop();
+    loading = true;
+    loadError = null;
+    files = [];
+
+    const query = new URLSearchParams({
+      dir,
+      include_hidden: String(settings.showHidden),
+    });
+    const source = new EventSource(
+      `/api/files/list-in-server/${params.id}?${query}`,
+      { withCredentials: true },
+    );
+    eventSource = source;
+
+    source.addEventListener("data", (event) => {
+      if (source !== eventSource) return;
+      try {
+        const chunk = JSON.parse((event as MessageEvent<string>).data) as Chunk;
+        if (chunk.entries?.length) files = [...files, ...chunk.entries];
+        if (chunk.resolved_path) {
+          dir = chunk.resolved_path;
+          history[historyIndex] = dir;
+        }
+        loading = false;
+        if (chunk.done) stop();
+        else updating = true;
+      } catch {
+        stop();
+        loading = false;
+        loadError = "Failed to parse file data";
+      }
+    });
+
+    // Server-sent "error" events carry data; connection errors do not.
+    source.addEventListener("error", (event) => {
+      if (source !== eventSource || !(event instanceof MessageEvent)) return;
+      try {
+        const response = JSON.parse(event.data) as { message?: string };
+        loadError = response.message ?? "Failed to load files";
+      } catch {
+        loadError = "Failed to load files";
+      }
+      stop();
+      loading = false;
+    });
+
+    source.onerror = () => {
+      if (source !== eventSource || source.readyState !== EventSource.CLOSED) {
+        return;
+      }
+      stop();
+      loading = false;
+      loadError ??= "File stream closed";
+    };
+  }
+
+  function navigate(path: string) {
+    history = [...history.slice(0, historyIndex + 1), path];
+    historyIndex = history.length - 1;
+    dir = path;
+    loadFiles();
+  }
+
+  function go(offset: -1 | 1) {
+    historyIndex += offset;
+    dir = history[historyIndex];
+    loadFiles();
+  }
+
+  function openEntry(entry: FileEntry) {
+    if (!isDir(entry) || !entry.name) return;
+    navigate(`${dir.replace(/\/+$/, "")}/${entry.name}`);
+  }
+
+  $effect(() => {
+    void settings.showHidden;
+    untrack(loadFiles);
+    return stop;
   });
 </script>
 
 <div class="flex gap-2">
   <div class="flex gap-2">
-    <Button variant="outline"><ChevronLeft /></Button>
-    <Button variant="outline"><ChevronRight /></Button>
+    <Button
+      variant="outline"
+      disabled={historyIndex <= 0}
+      onclick={() => go(-1)}><ChevronLeft /></Button
+    >
+    <Button
+      variant="outline"
+      disabled={historyIndex >= history.length - 1}
+      onclick={() => go(1)}><ChevronRight /></Button
+    >
   </div>
-  <Input value="/var/www/app" class="grow-2" />
-  <Input value="" placeholder="Search files here..." />
-  <SettingOption bind:showHidden={settings.showHidden} />
+  <div class="grow-2">
+    <Input
+      bind:value={dir}
+      class="grow-2"
+      onkeydown={(e: KeyboardEvent) => e.key === "Enter" && navigate(dir)}
+    />
+  </div>
+
+  <Input
+    name="filter-files"
+    placeholder="Search files here..."
+    autocomplete="off"
+    type="search"
+    oninput={(e) => (search = e.currentTarget.value)}
+  />
+  <SettingOption
+    bind:showHidden={settings.showHidden}
+    bind:dirsFirst={settings.dirsFirst}
+    bind:columns={settings.columns}
+  />
 </div>
 
-<Table.Root class="mt-2">
-  <Table.Header>
-    {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-      <Table.Row>
-        {#each headerGroup.headers as header (header.id)}
-          <Table.Head colspan={header.colSpan}>
-            {#if !header.isPlaceholder}
-              <FlexRender {header} />
-            {/if}
-          </Table.Head>
-        {/each}
-      </Table.Row>
-    {/each}
-  </Table.Header>
-  <Table.Body>
-    {#each table.getRowModel().rows as row (row.id)}
-      <Table.Row>
-        {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell>
-            <FlexRender {cell} />
-          </Table.Cell>
-        {/each}
-      </Table.Row>
-    {:else}
-      <Table.Row>
-        <Table.Cell colspan={columns.length} class="h-24 text-center">
-          No files.
-        </Table.Cell>
-      </Table.Row>
-    {/each}
-  </Table.Body>
-</Table.Root>
+{#if loading}
+  <Loading loading class="my-7" />
+{:else if loadError}
+  <ErrorSection message={loadError} onRetry={loadFiles} />
+{:else}
+  {#if updating}
+    <div class="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+      <Loader class="size-4 animate-spin" />
+      Updating...
+    </div>
+  {/if}
+  <div class="p-4">
+    <FilesTable
+      {files}
+      {search}
+      dirsFirst={settings.dirsFirst}
+      visibleColumns={settings.columns}
+      onOpen={openEntry}
+    />
+  </div>
+{/if}

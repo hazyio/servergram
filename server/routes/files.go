@@ -22,8 +22,7 @@ import (
 func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHManager) {
 	server := internal.NewGroup("/files", api, database, []string{"Files"}, ssh)
 
-	server.SSE("/list-in-server", http.StatusOK, listFilesInServer)
-
+	server.SSE("/list-in-server/{id}", http.StatusOK, listFilesInServer)
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -41,54 +40,51 @@ func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id u
 	return resource, ctx, cancel, nil
 }
 
-func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse.Sender) *EmptyRR {
-	sshManager := data.SSHManager
-	ctx := data.Context
-	if sshManager == nil {
-		send.Data(internal.NewSSEError(http.StatusInternalServerError, "SSH manager not initialized"))
-		return &EmptyRR{}
+func sendFilesError(send sse.Sender, err error) {
+	st, _ := status.FromError(err)
+	switch st.Code() {
+	case codes.NotFound:
+		_ = send.Data(internal.NewSSEError(http.StatusNotFound, st.Message()))
+	case codes.PermissionDenied:
+		_ = send.Data(internal.NewSSEError(http.StatusForbidden, st.Message()))
+	default:
+		slog.Error("Failed to list files", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, "Internal server error"))
 	}
-	resource, ctx, cancel, err := getFilesConnected(ctx, sshManager, data.Input.Body.Id)
+}
+
+func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse.Sender) *proto.ListFilesChunkResponse {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
 		slog.Error("Failed to get files connected", "error", err)
 		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
-		return &EmptyRR{}
+		return nil
 	}
 	defer cancel()
 	stream, err := resource.ListFiles(ctx, &proto.ListFilesRequest{
-		Dir:           data.Input.Body.Dir,
-		IncludeHidden: data.Input.Body.IncludeHidden,
+		Dir:           data.Input.Dir,
+		IncludeHidden: data.Input.IncludeHidden,
 	})
 	if err != nil {
-
-		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, "Internal server error"))
-		return &EmptyRR{}
+		sendFilesError(send, err)
+		return nil
 	}
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			send.Data(internal.NewSSEInternalError(err.Error()))
-
-			break // server finished the stream cleanly
+			// Stream ended without a done chunk; tell the client to stop reconnecting.
+			_ = send.Data(&proto.ListFilesChunkResponse{Done: true})
+			return nil
 		}
 		if err != nil {
-			st, _ := status.FromError(err)
-			switch st.Code() {
-			case codes.NotFound:
-				send.Data(internal.NewSSEError(http.StatusNotFound, err.Error()))
-			case codes.PermissionDenied: // 403
-				send.Data(internal.NewSSEError(http.StatusForbidden, err.Error()))
-
-			default:
-				send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
-
-			}
-			return &EmptyRR{}
+			sendFilesError(send, err)
+			return nil
 		}
-		send.Data(chunk.Entries)
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
 		if chunk.Done {
-			break
+			return nil
 		}
 	}
-	return &EmptyRR{}
 }

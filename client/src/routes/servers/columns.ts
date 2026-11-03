@@ -17,7 +17,7 @@ export const getColumns = (onDeleted: () => void) =>
       header: ({ column }) =>
         renderComponent(SortableTableHeader, {
           text: "Name",
-          onClick: column.getToggleSortingHandler(),
+          onclick: column.getToggleSortingHandler(),
         }),
       cell: ({ row }) => {
         return renderComponent(ServerName, {

@@ -21,15 +21,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/files/health": {
+    "/api/files/list-in-server/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get health */
-        get: operations["get-files--health"];
+        /** Get list in server by ID */
+        get: operations["sse-files--list-in-server-id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -327,6 +327,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/server/watch-top-process/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch top process by ID */
+        get: operations["sse-interval-server--watch-top-process-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ssh-key/add": {
         parameters: {
             query?: never;
@@ -483,6 +500,24 @@ export interface components {
              */
             type: string;
         };
+        FileEntry: {
+            /** Format: int32 */
+            gid?: number;
+            is_hidden?: boolean;
+            /** Format: int32 */
+            kind?: number;
+            link_broken?: boolean;
+            /** Format: int32 */
+            mode?: number;
+            /** Format: int64 */
+            modified_unix_ns?: number;
+            name?: string;
+            /** Format: int64 */
+            size?: number;
+            symlink_target?: string;
+            /** Format: int32 */
+            uid?: number;
+        };
         GetServerInfoResponse: {
             architecture?: string;
             cpu_model?: string;
@@ -517,6 +552,11 @@ export interface components {
             name: string;
             /** Format: int64 */
             resources_attached: number;
+        };
+        ListFilesChunkResponse: {
+            done?: boolean;
+            entries?: components["schemas"]["FileEntry"][] | null;
+            resolved_path?: string;
         };
         ListServersResponseBody: {
             /** @description The list of servers */
@@ -561,6 +601,8 @@ export interface components {
         };
         SSEError: {
             message: string;
+            /** Format: int64 */
+            status: number;
         };
         SSHKeyListItem: {
             /** Format: date-time */
@@ -636,6 +678,18 @@ export interface components {
             /** Format: int64 */
             usage?: number;
         };
+        TopProcessResponse: {
+            items?: components["schemas"]["TopProcessResponse_Item"][] | null;
+        };
+        TopProcessResponse_Item: {
+            /** Format: double */
+            cpu_usage?: number;
+            /** Format: int64 */
+            memory_usage?: number;
+            name?: string;
+            /** Format: int32 */
+            pid?: number;
+        };
         UpdateServerFingerPrintRequestBody: {
             /** @description The new host fingerprint for the server */
             fingerprint: string;
@@ -684,11 +738,19 @@ export interface operations {
             };
         };
     };
-    "get-files--health": {
+    "sse-files--list-in-server-id": {
         parameters: {
-            query?: never;
+            query: {
+                /** @description The directory to list */
+                dir: string;
+                /** @description Include hidden files */
+                include_hidden?: boolean;
+            };
             header?: never;
-            path?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -698,7 +760,31 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["ListFilesChunkResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
             };
             /** @description Error */
             default: {
@@ -986,9 +1072,9 @@ export interface operations {
     };
     "get-search--group": {
         parameters: {
-            query?: {
+            query: {
                 /** @description The search query */
-                query?: string;
+                query: string;
             };
             header?: never;
             path?: never;
@@ -1018,9 +1104,9 @@ export interface operations {
     };
     "get-search--ssh": {
         parameters: {
-            query?: {
+            query: {
                 /** @description The search query */
-                query?: string;
+                query: string;
             };
             header?: never;
             path?: never;
@@ -1301,6 +1387,85 @@ export interface operations {
                 content: {
                     "text/event-stream": ({
                         data: components["schemas"]["GetServerResourcesResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "sse-interval-server--watch-top-process-id": {
+        parameters: {
+            query: {
+                /** @description Update interval in ms */
+                interval?: number;
+                /** @description The field to sort top processes by */
+                sort_by: number;
+                /** @description The maximum number of top processes to return */
+                limit: number;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["TopProcessResponse"];
                         /**
                          * @description The event name.
                          * @constant

@@ -1,9 +1,7 @@
 package models
 
 type FileListRequest struct {
-	Body struct {
-		Id            uint   `json:"id" required:"true" min:"1" doc:"The server ID"`
-		Dir           string `json:"dir" required:"true"`
-		IncludeHidden bool   `json:"include_hidden"`
-	}
+	ID            uint   `path:"id" minimum:"1" doc:"The ID of the server"`
+	Dir           string `query:"dir" required:"true" doc:"The directory to list"`
+	IncludeHidden bool   `query:"include_hidden" doc:"Include hidden files"`
 }

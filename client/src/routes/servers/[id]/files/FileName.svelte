@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getFileIcon } from "#lib/fileIcons";
+  import { getFileIcon } from "#lib/fileIcons.ts";
 
   let { name, isDir }: { name: string; isDir: boolean } = $props();
   const icon = $derived(getFileIcon(name, isDir));

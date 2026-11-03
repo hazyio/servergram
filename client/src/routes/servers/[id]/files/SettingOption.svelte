@@ -6,7 +6,17 @@
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import * as Field from "#lib/components/ui/field/index.js";
   import { Label } from "#lib/components/ui/label/index.js";
-  let { showHidden = $bindable(false) } = $props();
+  const columnOptions = [
+    { id: "size", label: "Size" },
+    { id: "modified", label: "Modified" },
+    { id: "mode", label: "Mode" },
+    { id: "owner", label: "Owner" },
+  ];
+  let {
+    showHidden = $bindable(false),
+    dirsFirst = $bindable(true),
+    columns = $bindable({} as Record<string, boolean>),
+  } = $props();
 </script>
 
 <Popover.Root>
@@ -28,6 +38,25 @@
           />
           <Label for="show-hidden">Show Hidden</Label>
         </Field.Field>
+        <Field.Field orientation="horizontal">
+          <Checkbox
+            id="dirs-first"
+            name="dirs-first"
+            bind:checked={dirsFirst}
+          />
+          <Label for="dirs-first">Show Directories First</Label>
+        </Field.Field>
+        <h4 class="text-sm font-medium">Show as column</h4>
+        {#each columnOptions as option (option.id)}
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id={`column-${option.id}`}
+              name={`column-${option.id}`}
+              bind:checked={columns[option.id]}
+            />
+            <Label for={`column-${option.id}`}>{option.label}</Label>
+          </Field.Field>
+        {/each}
       </Field.Group>
     </div>
   </Popover.Content>

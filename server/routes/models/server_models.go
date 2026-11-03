@@ -53,6 +53,12 @@ type WatchServerResourceRequest struct {
 	internal.SSEQuery
 	ID uint `path:"id" minimum:"1" doc:"The ID of the server"`
 }
+type WatchTopProcessesRequest struct {
+	internal.SSEQuery
+	ID     uint                   `path:"id" minimum:"1" doc:"The ID of the server"`
+	SortBy proto.TopProcessSortBy `query:"sort_by" required:"true" doc:"The field to sort top processes by"`
+	Limit  uint32                 `query:"limit" required:"true" minimum:"1" doc:"The maximum number of top processes to return"`
+}
 type ServerUsageItem struct {
 	Usage float64 `json:"usage" doc:"The usage statistics of the server"`
 	Total float64 `json:"total" doc:"The total resources of the server"`

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -32,12 +33,9 @@ func getInfo(ctx context.Context) (*proto.GetServerInfoResponse, error) {
 func topProcesses(ctx context.Context, req *proto.TopProcessRequest) (*proto.TopProcessResponse, error) {
 	switch req.SortBy {
 	case proto.TopProcessSortBy_CPU_USAGE:
-		// Implement CPU usage sorting logic here
+		return getTopProcessesByCpu(ctx, int(req.Limit))
 	case proto.TopProcessSortBy_MEMORY_USAGE:
-		// Implement memory usage sorting logic here
-	case proto.TopProcessSortBy_DISK_USAGE:
-		// Implement disk usage sorting logic here
+		return getTopProcessesByMemory(ctx, int(req.Limit))
 	}
-	// Implement the logic to gather top processes here
-	return nil, nil
+	return nil, fmt.Errorf("unsupported sort by option: %v", req.SortBy)
 }

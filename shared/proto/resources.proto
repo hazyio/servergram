@@ -36,22 +36,24 @@ message GetServerInfoResponse {
   string cpu_model = 7;
   string system_time = 8;
 }
-message TopProcessResponse {
-  uint32 pid = 1;
-  string name = 2;
-  double cpu_usage = 3;
-  double memory_usage = 4;
-  double disk_usage = 5;
 
+message TopProcessResponse {
+  message Item {
+    int32 pid = 1;
+    string name = 2;
+    double cpu_usage = 3;
+    uint64 memory_usage = 4;
+  }
+  repeated Item items = 1;
 }
 enum TopProcessSortBy {
   CPU_USAGE = 0;
   MEMORY_USAGE = 1;
-  DISK_USAGE = 2;
 }
 message TopProcessRequest {
   TopProcessSortBy sort_by = 1;
   uint32 limit = 2;
+
 
 }
 service ServerResources {

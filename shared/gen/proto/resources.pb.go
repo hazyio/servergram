@@ -27,7 +27,6 @@ type TopProcessSortBy int32
 const (
 	TopProcessSortBy_CPU_USAGE    TopProcessSortBy = 0
 	TopProcessSortBy_MEMORY_USAGE TopProcessSortBy = 1
-	TopProcessSortBy_DISK_USAGE   TopProcessSortBy = 2
 )
 
 // Enum value maps for TopProcessSortBy.
@@ -35,12 +34,10 @@ var (
 	TopProcessSortBy_name = map[int32]string{
 		0: "CPU_USAGE",
 		1: "MEMORY_USAGE",
-		2: "DISK_USAGE",
 	}
 	TopProcessSortBy_value = map[string]int32{
 		"CPU_USAGE":    0,
 		"MEMORY_USAGE": 1,
-		"DISK_USAGE":   2,
 	}
 )
 
@@ -368,12 +365,8 @@ func (x *GetServerInfoResponse) GetSystemTime() string {
 }
 
 type TopProcessResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pid           uint32                 `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	CpuUsage      float64                `protobuf:"fixed64,3,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`
-	MemoryUsage   float64                `protobuf:"fixed64,4,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
-	DiskUsage     float64                `protobuf:"fixed64,5,opt,name=disk_usage,json=diskUsage,proto3" json:"disk_usage,omitempty"`
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	Items         []*TopProcessResponse_Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -408,39 +401,11 @@ func (*TopProcessResponse) Descriptor() ([]byte, []int) {
 	return file_proto_resources_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *TopProcessResponse) GetPid() uint32 {
+func (x *TopProcessResponse) GetItems() []*TopProcessResponse_Item {
 	if x != nil {
-		return x.Pid
+		return x.Items
 	}
-	return 0
-}
-
-func (x *TopProcessResponse) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *TopProcessResponse) GetCpuUsage() float64 {
-	if x != nil {
-		return x.CpuUsage
-	}
-	return 0
-}
-
-func (x *TopProcessResponse) GetMemoryUsage() float64 {
-	if x != nil {
-		return x.MemoryUsage
-	}
-	return 0
-}
-
-func (x *TopProcessResponse) GetDiskUsage() float64 {
-	if x != nil {
-		return x.DiskUsage
-	}
-	return 0
+	return nil
 }
 
 type TopProcessRequest struct {
@@ -495,6 +460,74 @@ func (x *TopProcessRequest) GetLimit() uint32 {
 	return 0
 }
 
+type TopProcessResponse_Item struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pid           int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	CpuUsage      float64                `protobuf:"fixed64,3,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`
+	MemoryUsage   uint64                 `protobuf:"varint,4,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TopProcessResponse_Item) Reset() {
+	*x = TopProcessResponse_Item{}
+	mi := &file_proto_resources_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TopProcessResponse_Item) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TopProcessResponse_Item) ProtoMessage() {}
+
+func (x *TopProcessResponse_Item) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TopProcessResponse_Item.ProtoReflect.Descriptor instead.
+func (*TopProcessResponse_Item) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{4, 0}
+}
+
+func (x *TopProcessResponse_Item) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *TopProcessResponse_Item) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TopProcessResponse_Item) GetCpuUsage() float64 {
+	if x != nil {
+		return x.CpuUsage
+	}
+	return 0
+}
+
+func (x *TopProcessResponse_Item) GetMemoryUsage() uint64 {
+	if x != nil {
+		return x.MemoryUsage
+	}
+	return 0
+}
+
 var File_proto_resources_proto protoreflect.FileDescriptor
 
 const file_proto_resources_proto_rawDesc = "" +
@@ -523,22 +556,20 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\bplatform\x18\x06 \x01(\tR\bplatform\x12\x1b\n" +
 	"\tcpu_model\x18\a \x01(\tR\bcpuModel\x12\x1f\n" +
 	"\vsystem_time\x18\b \x01(\tR\n" +
-	"systemTime\"\x99\x01\n" +
-	"\x12TopProcessResponse\x12\x10\n" +
-	"\x03pid\x18\x01 \x01(\rR\x03pid\x12\x12\n" +
+	"systemTime\"\xb8\x01\n" +
+	"\x12TopProcessResponse\x124\n" +
+	"\x05items\x18\x01 \x03(\v2\x1e.proto.TopProcessResponse.ItemR\x05items\x1al\n" +
+	"\x04Item\x12\x10\n" +
+	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
 	"\tcpu_usage\x18\x03 \x01(\x01R\bcpuUsage\x12!\n" +
-	"\fmemory_usage\x18\x04 \x01(\x01R\vmemoryUsage\x12\x1d\n" +
-	"\n" +
-	"disk_usage\x18\x05 \x01(\x01R\tdiskUsage\"[\n" +
+	"\fmemory_usage\x18\x04 \x01(\x04R\vmemoryUsage\"[\n" +
 	"\x11TopProcessRequest\x120\n" +
 	"\asort_by\x18\x01 \x01(\x0e2\x17.proto.TopProcessSortByR\x06sortBy\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\rR\x05limit*C\n" +
+	"\x05limit\x18\x02 \x01(\rR\x05limit*3\n" +
 	"\x10TopProcessSortBy\x12\r\n" +
 	"\tCPU_USAGE\x10\x00\x12\x10\n" +
-	"\fMEMORY_USAGE\x10\x01\x12\x0e\n" +
-	"\n" +
-	"DISK_USAGE\x10\x022\xd6\x01\n" +
+	"\fMEMORY_USAGE\x10\x012\xd6\x01\n" +
 	"\x0fServerResources\x12@\n" +
 	"\x03Get\x12\x16.google.protobuf.Empty\x1a!.proto.GetServerResourcesResponse\x12<\n" +
 	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponse\x12C\n" +
@@ -557,7 +588,7 @@ func file_proto_resources_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_resources_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_resources_proto_goTypes = []any{
 	(TopProcessSortBy)(0),              // 0: proto.TopProcessSortBy
 	(*ServerUsageItem)(nil),            // 1: proto.ServerUsageItem
@@ -566,25 +597,27 @@ var file_proto_resources_proto_goTypes = []any{
 	(*GetServerInfoResponse)(nil),      // 4: proto.GetServerInfoResponse
 	(*TopProcessResponse)(nil),         // 5: proto.TopProcessResponse
 	(*TopProcessRequest)(nil),          // 6: proto.TopProcessRequest
-	(*emptypb.Empty)(nil),              // 7: google.protobuf.Empty
+	(*TopProcessResponse_Item)(nil),    // 7: proto.TopProcessResponse.Item
+	(*emptypb.Empty)(nil),              // 8: google.protobuf.Empty
 }
 var file_proto_resources_proto_depIdxs = []int32{
 	2, // 0: proto.GetServerResourcesResponse.cpu:type_name -> proto.ServerCPUUsage
 	1, // 1: proto.GetServerResourcesResponse.memory:type_name -> proto.ServerUsageItem
 	1, // 2: proto.GetServerResourcesResponse.disk:type_name -> proto.ServerUsageItem
 	1, // 3: proto.GetServerResourcesResponse.swap:type_name -> proto.ServerUsageItem
-	0, // 4: proto.TopProcessRequest.sort_by:type_name -> proto.TopProcessSortBy
-	7, // 5: proto.ServerResources.Get:input_type -> google.protobuf.Empty
-	7, // 6: proto.ServerResources.Info:input_type -> google.protobuf.Empty
-	6, // 7: proto.ServerResources.TopProcesses:input_type -> proto.TopProcessRequest
-	3, // 8: proto.ServerResources.Get:output_type -> proto.GetServerResourcesResponse
-	4, // 9: proto.ServerResources.Info:output_type -> proto.GetServerInfoResponse
-	5, // 10: proto.ServerResources.TopProcesses:output_type -> proto.TopProcessResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7, // 4: proto.TopProcessResponse.items:type_name -> proto.TopProcessResponse.Item
+	0, // 5: proto.TopProcessRequest.sort_by:type_name -> proto.TopProcessSortBy
+	8, // 6: proto.ServerResources.Get:input_type -> google.protobuf.Empty
+	8, // 7: proto.ServerResources.Info:input_type -> google.protobuf.Empty
+	6, // 8: proto.ServerResources.TopProcesses:input_type -> proto.TopProcessRequest
+	3, // 9: proto.ServerResources.Get:output_type -> proto.GetServerResourcesResponse
+	4, // 10: proto.ServerResources.Info:output_type -> proto.GetServerInfoResponse
+	5, // 11: proto.ServerResources.TopProcesses:output_type -> proto.TopProcessResponse
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_proto_resources_proto_init() }
@@ -598,7 +631,7 @@ func file_proto_resources_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_resources_proto_rawDesc), len(file_proto_resources_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

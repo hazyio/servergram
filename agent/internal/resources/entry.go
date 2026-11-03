@@ -41,3 +41,4 @@ func (s *ResourcesServer) Info(ctx context.Context, _ *emptypb.Empty) (*proto.Ge
 func (s *ResourcesServer) TopProcesses(ctx context.Context, req *proto.TopProcessRequest) (*proto.TopProcessResponse, error) {
 	return topProcesses(ctx, req)
 }
+

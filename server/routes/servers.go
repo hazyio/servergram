@@ -25,6 +25,7 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 
 	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSEInterval("/watch-resources/{id}", watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
+	server.SSEInterval("/watch-top-process/{id}", watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
 
 }
 
@@ -159,6 +160,25 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 	}
 	defer cancel()
 	res, err := resource.Get(ctx, &emptypb.Empty{})
+	if err != nil {
+		slog.Error("Failed to get server resources", "error", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
+	}
+	return res, nil
+}
+func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest]) (*proto.TopProcessResponse, error) {
+	id := data.Input.ID
+	ctx := data.Context
+	sshmanager := data.SSHManager
+	resource, ctx, cancel, err := getConnected(ctx, sshmanager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	res, err := resource.TopProcesses(ctx, &proto.TopProcessRequest{
+		SortBy: data.Input.SortBy,
+		Limit:  data.Input.Limit,
+	})
 	if err != nil {
 		slog.Error("Failed to get server resources", "error", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")

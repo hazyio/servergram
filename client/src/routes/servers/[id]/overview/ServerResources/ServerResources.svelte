@@ -25,7 +25,7 @@
     $state(undefined);
   let refreshFrequencySeconds = $state(1);
   let eventSource: EventSource | undefined = undefined;
-  let viewMode = $state<"bar" | "chart">("chart");
+  let viewMode = $state<"bar" | "chart">("bar");
 
   async function getServerResources() {
     if (eventSource) {

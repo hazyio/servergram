@@ -131,19 +131,17 @@
       onclick={() => go(1)}><ChevronRight /></Button
     >
   </div>
-  <div class="grow-2">
-    <Input
-      bind:value={dir}
-      class="grow-2"
-      onkeydown={(e: KeyboardEvent) => e.key === "Enter" && navigate(dir)}
-    />
-  </div>
-
+  <Input
+    bind:value={dir}
+    class="grow-2"
+    onkeydown={(e: KeyboardEvent) => e.key === "Enter" && navigate(dir)}
+  />
   <Input
     name="filter-files"
     placeholder="Search files here..."
     autocomplete="off"
     type="search"
+    class="shrink"
     oninput={(e) => (search = e.currentTarget.value)}
   />
   <SettingOption

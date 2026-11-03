@@ -53,7 +53,7 @@
     {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
       <Table.Row>
         {#each headerGroup.headers as header (header.id)}
-          <Table.Head colspan={header.colSpan}>
+          <Table.Head colspan={header.colSpan} class="h-12 px-4">
             {#if !header.isPlaceholder}
               <FlexRender {header} />
             {/if}
@@ -69,7 +69,7 @@
         ondblclick={() => onOpen(row.original)}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell>
+          <Table.Cell class="px-4 py-3.5">
             <FlexRender {cell} />
           </Table.Cell>
         {/each}

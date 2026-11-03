@@ -56,7 +56,7 @@
   onMount(getServerInfo);
 </script>
 
-<Card class="col-start-1 col-end-13">
+<Card class="min-w-0 md:col-span-2 xl:col-span-12">
   <CardHeader><CardTitle>System Information</CardTitle></CardHeader>
   <CardContent class="space-y-2">
     {#if loading}

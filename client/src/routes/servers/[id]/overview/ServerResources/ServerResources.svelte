@@ -33,8 +33,11 @@
     }
     loading = true;
     loadError = null;
+    const query = new URLSearchParams({
+      interval: String(refreshFrequencySeconds * 1000),
+    });
     eventSource = new EventSource(
-      `/api/server/watch-resources/${id}?interval=${refreshFrequencySeconds * 1000}`,
+      `/api/server/watch-resources/${id}?${query}`,
       {
         withCredentials: true, // send cookies; omit if same-origin or no auth
       },
@@ -82,9 +85,9 @@
         onclick={() => (viewMode = viewMode === "chart" ? "bar" : "chart")}
       >
         {#if viewMode === "chart"}
-          <ChartColumnDecreasing />
-        {:else}
           <Menu />
+        {:else}
+          <ChartColumnDecreasing />
         {/if}
       </Button>
       <Sort

@@ -26,7 +26,7 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
 
 	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
-	server.SSEInterval("/watch-resources/{id}", watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
+	server.SSE("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSE("/watch-top-process/{id}", http.StatusOK, watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
 
 }
@@ -137,23 +137,6 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
-
-func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest]) (*proto.GetServerResourcesResponse, error) {
-	id := data.Input.ID
-	ctx := data.Context
-	sshmanager := data.SSHManager
-	resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-	res, err := resource.Get(ctx, &emptypb.Empty{})
-	if err != nil {
-		slog.Error("Failed to get server resources", "error", err)
-		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
-	}
-	return res, nil
-}
 func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
 		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
@@ -169,8 +152,43 @@ func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id 
 
 	return resource, ctx, cancel, nil
 }
+func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest], send sse.Sender) *proto.GetServerResourcesResponse {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		slog.Error("Failed to get server connected", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
+		return nil
+	}
+	defer cancel()
+	stream, err := resource.Get(ctx, &proto.GetServerResourcesRequest{
+		IntervalMs: uint32(data.Input.IntervalMs),
+	})
+	if err != nil {
+		internal.SendSSEError(send, err)
+		return nil
+	}
+	for {
+		chunk, err := stream.Recv()
+
+		if errors.Is(err, io.EOF) {
+			slog.Info("Server resources stream ended")
+			// Stream ended without a done chunk;
+			return nil
+		}
+		if err != nil {
+			internal.SendSSEError(send, err)
+			return nil
+		}
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
+
+	}
+}
+
 func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest], send sse.Sender) *proto.TopProcessResponse {
-	input := data.Input.Body
+	input := data.Input
 	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, input.ID)
 	if err != nil {
 		slog.Error("Failed to get server connected", "error", err)
@@ -205,23 +223,6 @@ func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest],
 
 	}
 
-	// // func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest]) (*proto.TopProcessResponse, error) {
-	// id := data.Input.ID
-	// ctx := data.Context
-	// sshmanager := data.SSHManager
-	// resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer cancel()
-	// res, err := resource.TopProcesses(ctx, &proto.TopProcessRequest{
-	// 	SortBy: data.Input.SortBy,
-	// 	Limit:  data.Input.Limit,
-	// })
-	// if err != nil {
-	// 	slog.Error("Failed to get server resources", "error", err)
-	// 	return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
-	// }
 }
 
 func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {

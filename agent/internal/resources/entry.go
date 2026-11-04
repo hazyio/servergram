@@ -11,34 +11,34 @@ type ResourcesServer struct {
 	proto.UnimplementedServerResourcesServer
 }
 
-func (s *ResourcesServer) Get(ctx context.Context, _ *emptypb.Empty) (*proto.GetServerResourcesResponse, error) {
-	memUsage, err := memoryUsage()
-	if err != nil {
-		return nil, err
-	}
-	cpuUsage, err := cpuUsage(ctx)
-	if err != nil {
-		return nil, err
-	}
-	diskUsage, err := diskUsage(ctx)
-	if err != nil {
-		return nil, err
-	}
-	swapUsage, err := swapUsage(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &proto.GetServerResourcesResponse{
-		Cpu:    cpuUsage,
-		Memory: &memUsage,
-		Disk:   diskUsage,
-		Swap:   swapUsage,
-	}, nil
+func (s *ResourcesServer) Get(req *proto.GetServerResourcesRequest, stream proto.ServerResources_GetServer) error {
+	return getResourcesUsage(req, stream)
+	// memUsage, err := memoryUsage()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// cpuUsage, err := cpuUsage(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// diskUsage, err := diskUsage(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// swapUsage, err := swapUsage(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return &proto.GetServerResourcesResponse{
+	// 	Cpu:    cpuUsage,
+	// 	Memory: &memUsage,
+	// 	Disk:   diskUsage,
+	// 	Swap:   swapUsage,
+	// }, nil
 }
 func (s *ResourcesServer) Info(ctx context.Context, _ *emptypb.Empty) (*proto.GetServerInfoResponse, error) {
 	return getInfo(ctx)
 }
-func (s *ResourcesServer) TopProcesses(ctx context.Context, req *proto.TopProcessRequest) (*proto.TopProcessResponse, error) {
-	return topProcesses(ctx, req)
+func (s *ResourcesServer) TopProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_TopProcessesServer) error {
+	return topProcesses(req, stream)
 }
-

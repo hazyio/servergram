@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
@@ -50,16 +49,14 @@ type UpdateServerFingerPrintRequest struct {
 }
 
 type WatchServerResourceRequest struct {
-	internal.SSEQuery
-	ID uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	IntervalMs int  `query:"interval" default:"1000" minimum:"1000" maximum:"60000" doc:"Update interval in ms"`
+	ID         uint `path:"id" minimum:"1" doc:"The ID of the server"`
 }
 type WatchTopProcessesRequest struct {
-	Body struct {
-		ID         uint                   `json:"id" minimum:"1" doc:"The ID of the server"`
-		SortBy     proto.TopProcessSortBy `json:"sort_by" required:"true" doc:"The field to sort top processes by"`
-		Limit      uint32                 `json:"limit" required:"true" minimum:"1" doc:"The maximum number of top processes to return"`
-		IntervalMs int                    `json:"interval" default:"1000" minimum:"250" maximum:"60000" doc:"Update interval in ms"`
-	}
+	ID         uint                   `path:"id" minimum:"1" doc:"The ID of the server"`
+	SortBy     proto.TopProcessSortBy `query:"sortBy" required:"true" doc:"The field to sort top processes by"`
+	Limit      uint32                 `query:"limit" required:"true" minimum:"1" doc:"The maximum number of top processes to return"`
+	IntervalMs int                    `query:"interval" default:"1000" minimum:"1000" maximum:"60000" doc:"Update interval in ms"`
 }
 type ServerUsageItem struct {
 	Usage float64 `json:"usage" doc:"The usage statistics of the server"`

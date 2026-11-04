@@ -56,13 +56,13 @@ func swapUsage(ctx context.Context) (*proto.ServerUsageItem, error) {
 	}, nil
 }
 
-func memoryUsage() (proto.ServerUsageItem, error) {
+func memoryUsage() (*proto.ServerUsageItem, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
-		return proto.ServerUsageItem{}, err
+		return &proto.ServerUsageItem{}, err
 	}
 
-	return proto.ServerUsageItem{
+	return &proto.ServerUsageItem{
 		Usage:     v.Used,
 		Total:     v.Total,
 		Available: v.Available,
@@ -86,9 +86,7 @@ func getProcessesForTop(ctx context.Context) (*proto.TopProcessResponse, error) 
 			continue
 		}
 		pr := proto.TopProcessResponse_Item{Pid: p.Pid, Name: name}
-		// TODO: This can go over 100% for multiple CPU cores,
-		// consider normalizing by the number of cores if needed.
-		// This is left as-is for now to reflect raw CPU usage.
+		// TODO: This can go over 100% for multiple CPU cores, consider normalizing by the number of cores if needed. This is left as-is for now to reflect raw CPU usage.
 		pr.CpuUsage, _ = p.CPUPercentWithContext(ctx)
 
 		memInfo, _ := p.MemoryInfoWithContext(ctx)

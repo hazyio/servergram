@@ -29,7 +29,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServerResourcesClient interface {
-	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error)
+	Get(ctx context.Context, in *GetServerResourcesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetServerResourcesResponse], error)
 	Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error)
 	TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TopProcessResponse], error)
 }
@@ -42,15 +42,24 @@ func NewServerResourcesClient(cc grpc.ClientConnInterface) ServerResourcesClient
 	return &serverResourcesClient{cc}
 }
 
-func (c *serverResourcesClient) Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error) {
+func (c *serverResourcesClient) Get(ctx context.Context, in *GetServerResourcesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetServerResourcesResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetServerResourcesResponse)
-	err := c.cc.Invoke(ctx, ServerResources_Get_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ServerResources_ServiceDesc.Streams[0], ServerResources_Get_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[GetServerResourcesRequest, GetServerResourcesResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_GetClient = grpc.ServerStreamingClient[GetServerResourcesResponse]
 
 func (c *serverResourcesClient) Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -64,7 +73,7 @@ func (c *serverResourcesClient) Info(ctx context.Context, in *emptypb.Empty, opt
 
 func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TopProcessResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ServerResources_ServiceDesc.Streams[0], ServerResources_TopProcesses_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ServerResources_ServiceDesc.Streams[1], ServerResources_TopProcesses_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +94,7 @@ type ServerResources_TopProcessesClient = grpc.ServerStreamingClient[TopProcessR
 // All implementations must embed UnimplementedServerResourcesServer
 // for forward compatibility.
 type ServerResourcesServer interface {
-	Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error)
+	Get(*GetServerResourcesRequest, grpc.ServerStreamingServer[GetServerResourcesResponse]) error
 	Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error)
 	TopProcesses(*TopProcessRequest, grpc.ServerStreamingServer[TopProcessResponse]) error
 	mustEmbedUnimplementedServerResourcesServer()
@@ -98,8 +107,8 @@ type ServerResourcesServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServerResourcesServer struct{}
 
-func (UnimplementedServerResourcesServer) Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedServerResourcesServer) Get(*GetServerResourcesRequest, grpc.ServerStreamingServer[GetServerResourcesResponse]) error {
+	return status.Error(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedServerResourcesServer) Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
@@ -128,23 +137,16 @@ func RegisterServerResourcesServer(s grpc.ServiceRegistrar, srv ServerResourcesS
 	s.RegisterService(&ServerResources_ServiceDesc, srv)
 }
 
-func _ServerResources_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
+func _ServerResources_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetServerResourcesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(ServerResourcesServer).Get(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ServerResources_Get_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerResourcesServer).Get(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(ServerResourcesServer).Get(m, &grpc.GenericServerStream[GetServerResourcesRequest, GetServerResourcesResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_GetServer = grpc.ServerStreamingServer[GetServerResourcesResponse]
 
 func _ServerResources_Info_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
@@ -183,15 +185,16 @@ var ServerResources_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ServerResourcesServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _ServerResources_Get_Handler,
-		},
-		{
 			MethodName: "Info",
 			Handler:    _ServerResources_Info_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Get",
+			Handler:       _ServerResources_Get_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "TopProcesses",
 			Handler:       _ServerResources_TopProcesses_Handler,

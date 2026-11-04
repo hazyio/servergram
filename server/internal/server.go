@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/sse"
@@ -48,14 +47,6 @@ func NewSSEInternalError(message string) SSEError {
 	return SSEError{Status: http.StatusInternalServerError, Message: message}
 }
 
-type SSEQuery struct {
-	IntervalMs int `query:"interval" default:"1000" minimum:"250" maximum:"60000" doc:"Update interval in ms"`
-}
-
-func (q SSEQuery) Interval() time.Duration {
-	return time.Duration(q.IntervalMs) * time.Millisecond
-}
-
 func SendSSEError(send sse.Sender, err error) {
 	st, _ := status.FromError(err)
 	switch st.Code() {
@@ -66,10 +57,6 @@ func SendSSEError(send sse.Sender, err error) {
 	default:
 		_ = send.Data(NewSSEError(http.StatusInternalServerError, "Internal server error"))
 	}
-}
-
-type Intervaler interface {
-	Interval() time.Duration
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
@@ -172,53 +159,6 @@ func (s *Server) SSE[I, O any](pattern string, status int, next func(routeData R
 		"error": SSEError{},
 	}, func(ctx context.Context, input *I, send sse.Sender) {
 		next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}, send)
-	})
-}
-
-func (s *Server) SSEInterval[I Intervaler, O any](
-	pattern string, runOnInterval func(RouteData[I]) (*O, error),
-	errs ...int,
-) {
-	sse.Register(s.group, huma.Operation{
-		OperationID: "sse-interval-" + opSlug(s.prefix, pattern),
-		Summary:     huma.GenerateSummary(http.MethodGet, pattern, new(O)),
-		Method:      http.MethodGet,
-		Path:        pattern,
-		Errors:      errs,
-	}, map[string]any{
-		"data":  *new(O),
-		"error": SSEError{},
-	}, func(ctx context.Context, input *I, send sse.Sender) {
-		t := time.NewTicker((*input).Interval())
-		intervalFunc := func() {
-			resp, err := runOnInterval(RouteData[I]{
-				Input:      *input,
-				Database:   s.database,
-				Context:    ctx,
-				SSHManager: s.sshManager,
-			})
-			if err != nil {
-				err = send.Data(SSEError{Message: err.Error()})
-				if err != nil {
-					slog.Error("Failed to send SSE error", "error", err)
-				}
-
-			}
-			if err := send.Data(*resp); err != nil {
-				slog.Error("Failed to send SSE data", "error", err)
-			}
-		}
-		defer t.Stop()
-		// send initial data immediately before entering the loop
-		intervalFunc()
-		for {
-			select {
-			case <-ctx.Done():
-				return // client left; nobody to send to
-			case <-t.C:
-				intervalFunc()
-			}
-		}
 	})
 }
 

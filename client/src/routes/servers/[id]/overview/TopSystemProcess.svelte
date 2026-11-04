@@ -18,7 +18,7 @@
   type SortBy = "CPU" | "Memory";
   let { id } = $props();
   let sortBy: SortBy = $state("CPU");
-  let refreshFrequencySeconds = $state(5);
+  let refreshFrequencySeconds = $state(1);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let processes: TopProcess[] = $state([]);
@@ -41,7 +41,7 @@
     const sortValue = sortBy === "CPU" ? 0 : 1;
     const query = new URLSearchParams({
       interval: String(refreshFrequencySeconds * 1000),
-      sort_by: String(sortValue),
+      sortBy: String(sortValue),
       limit: "5",
     });
     const source = new EventSource(
@@ -104,7 +104,7 @@
         onChange={getTopProcesses}
       />
       <Sort
-        items={[5, 10, 15, 30]}
+        items={[1, 5, 10, 15, 30]}
         bind:value={refreshFrequencySeconds}
         capitalize={false}
         caption="Refresh interval"

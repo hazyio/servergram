@@ -17,7 +17,9 @@ message ServerCPUUsage {
   int32 cores = 2;
   int32 threads = 3;
 }
-
+message GetServerResourcesRequest {
+  uint32 interval_ms = 3;
+}
 message GetServerResourcesResponse {
   ServerCPUUsage cpu = 1;
   ServerUsageItem memory = 2;
@@ -58,7 +60,7 @@ message TopProcessRequest {
 }
 
 service ServerResources {
-  rpc Get(google.protobuf.Empty) returns (GetServerResourcesResponse);
+  rpc Get(GetServerResourcesRequest) returns (stream GetServerResourcesResponse);
   rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
   rpc TopProcesses(TopProcessRequest) returns (stream TopProcessResponse);
 }

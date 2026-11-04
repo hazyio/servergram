@@ -3,7 +3,6 @@
   import * as Table from "#lib/components/ui/table/index.js";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
   import { getColumns, isDir, type FileEntry } from "./filesColumns";
-  import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
 
   let {
     files,
@@ -79,10 +78,12 @@
         }}
         ondblclick={() => {
           onOpen(row.original);
+          //   clear selection
+          selected = [];
         }}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell class="px-4 py-3.5">
+          <Table.Cell class=" p-0 px-4">
             <FlexRender {cell} />
           </Table.Cell>
         {/each}

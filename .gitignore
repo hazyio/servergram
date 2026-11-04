@@ -7,5 +7,4 @@ openapi.json
 postman/
 tmp/*
 tmp
-# Ignore built agent binaries
-*bin
+

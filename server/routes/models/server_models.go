@@ -52,6 +52,7 @@ type WatchServerResourceRequest struct {
 	IntervalMs int  `query:"interval" default:"1000" minimum:"1000" maximum:"60000" doc:"Update interval in ms"`
 	ID         uint `path:"id" minimum:"1" doc:"The ID of the server"`
 }
+
 type WatchTopProcessesRequest struct {
 	ID         uint                   `path:"id" minimum:"1" doc:"The ID of the server"`
 	SortBy     proto.TopProcessSortBy `query:"sortBy" required:"true" doc:"The field to sort top processes by"`

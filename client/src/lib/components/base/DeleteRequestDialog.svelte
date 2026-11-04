@@ -5,6 +5,7 @@
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/index.js";
   import { Trash } from "@lucide/svelte";
+  import type { Snippet } from "svelte";
   let deleting = $state(false);
   let deleteError = $state("");
   let open = $state(false);
@@ -14,12 +15,14 @@
     onDeleted,
     type,
     useIcon = false,
+    children,
   }: {
-    useIcon: boolean;
+    useIcon?: boolean;
     id: number;
     name: string;
     onDeleted?: () => void;
     type: string;
+    children?: Snippet;
   } = $props();
   async function deleteServer() {
     deleting = true;
@@ -48,12 +51,18 @@
 </script>
 
 <AlertDialog.Root bind:open>
-  <AlertDialog.Trigger class={buttonVariants({ variant: "destructive" })}>
-    {#if useIcon}
-      <Trash />
-      <span class="sr-only">Delete</span>
+  <AlertDialog.Trigger
+    class={children ? null : buttonVariants({ variant: "destructive" })}
+  >
+    {#if children}
+      {@render children()}
     {:else}
-      Delete
+      {#if useIcon}
+        <Trash />
+        <span class="sr-only">Delete</span>
+      {:else}
+        Delete
+      {/if}
     {/if}
   </AlertDialog.Trigger>
   <AlertDialog.Content>

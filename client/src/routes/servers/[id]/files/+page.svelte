@@ -1,25 +1,30 @@
 <script lang="ts">
-  import { untrack } from "svelte";
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import type { components } from "#lib/types/request-schema.d.ts";
+  import { untrack } from "svelte";
+
   import {
     ChevronLeft,
     ChevronRight,
     Loader,
     RefreshCcw,
+    Upload,
   } from "@lucide/svelte";
   import type { PageProps } from "./$types";
-  import { isDir, type FileEntry } from "./filesColumns";
-  import FilesTable from "./FilesTable.svelte";
-  import SettingOption from "./SettingOption.svelte";
+  import { isDir, type FileEntry } from "./FilesTable/filesColumns";
+  import FilesTable from "./FilesTable/FilesTable.svelte";
+  import SettingOption, {
+    type SettingOptionProps,
+  } from "./SettingOption.svelte";
+  import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
 
   let { params }: PageProps = $props();
-  let settings = $state({
+  let settings = $state<SettingOptionProps>({
     showHidden: false,
     dirsFirst: true,
     columns: { size: true, modified: true, mode: true, owner: true },
@@ -169,12 +174,28 @@
     </div>
   {/if}
   <div class="p-4 mb-10 px-12">
-    <FilesTable
-      {files}
-      {search}
-      dirsFirst={settings.dirsFirst}
-      visibleColumns={settings.columns}
-      onOpen={openEntry}
-    />
+    <ContextMenu.Root>
+      <ContextMenu.Trigger>
+        <FilesTable
+          {files}
+          {search}
+          dirsFirst={settings.dirsFirst}
+          visibleColumns={settings.columns}
+          onOpen={openEntry}
+        />
+      </ContextMenu.Trigger>
+      <ContextMenu.Content class="h-50 w-50">
+        <ContextMenu.Group
+          ><ContextMenu.Item>
+            <Upload />
+            Upload File
+          </ContextMenu.Item>
+          <ContextMenu.Item onclick={loadFiles}>
+            <RefreshCcw />
+            Refresh
+          </ContextMenu.Item>
+        </ContextMenu.Group>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   </div>
 {/if}

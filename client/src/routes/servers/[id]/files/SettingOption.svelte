@@ -1,11 +1,21 @@
+<script lang="ts" module>
+  export interface SettingOptionProps {
+    showHidden: boolean;
+    dirsFirst: boolean;
+    columns: Record<string, boolean>;
+  }
+</script>
+
 <script lang="ts">
   import Button from "#lib/components/ui/button/button.svelte";
-  import { Settings } from "@lucide/svelte";
-  import * as Popover from "#lib/components/ui/popover/index.js";
-  import type { PageProps } from "./$types";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import * as Field from "#lib/components/ui/field/index.js";
   import { Label } from "#lib/components/ui/label/index.js";
+  import * as Popover from "#lib/components/ui/popover/index.js";
+  import { useLocalStorage } from "#lib/local-storage.ts";
+  import { Settings } from "@lucide/svelte";
+  import { onMount } from "svelte";
+
   const columnOptions = [
     { id: "size", label: "Size" },
     { id: "modified", label: "Modified" },
@@ -15,8 +25,31 @@
   let {
     showHidden = $bindable(false),
     dirsFirst = $bindable(true),
-    columns = $bindable({} as Record<string, boolean>),
-  } = $props();
+    columns = $bindable({}),
+  }: SettingOptionProps = $props();
+  let mounted = $state(false);
+  $effect(() => {
+    if (!mounted) return;
+    useLocalStorage().save<SettingOptionProps>("file-explorer-settings", {
+      showHidden,
+      dirsFirst,
+      columns,
+    });
+  });
+  onMount(() => {
+    const saved = useLocalStorage().get<SettingOptionProps>(
+      "file-explorer-settings",
+      {
+        showHidden: false,
+        dirsFirst: true,
+        columns: {},
+      },
+    );
+    showHidden = saved.showHidden;
+    dirsFirst = saved.dirsFirst;
+    columns = saved.columns;
+    mounted = true;
+  });
 </script>
 
 <Popover.Root>

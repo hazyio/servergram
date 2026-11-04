@@ -19,6 +19,18 @@
   } = $props();
   let selected = $state<string[]>([]);
 
+  function clearSelection() {
+    selected = [];
+  }
+
+  $effect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") clearSelection();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
   const columns = getColumns();
   const table = createTable({
     features: dataTableFeatures,
@@ -66,7 +78,7 @@
   <Table.Body>
     {#each rows as row (row.id)}
       <Table.Row
-        class={`${selected.includes(row.original.name ?? "") ? "bg-muted" : ""} ${isDir(row.original) ? "cursor-pointer" : ""}`}
+        class={`${selected.includes(row.original.name ?? "") ? "bg-accent hover:bg-accent/50" : ""} ${isDir(row.original) ? "cursor-pointer" : ""}`}
         onclick={() => {
           if (row.original.name) {
             if (!selected.includes(row.original.name)) {

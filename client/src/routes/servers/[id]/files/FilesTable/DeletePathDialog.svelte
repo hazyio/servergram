@@ -50,7 +50,7 @@
   <AlertDialog.Trigger class="w-full">
     <ContextMenu.Item
       variant="destructive"
-      class={`gap-2 w-full ${buttonVariants({ variant: "destructive" })}`}
+      class={`gap-2 w-full justify-start ${buttonVariants({ variant: "destructive" })}`}
     >
       <TrashIcon class="text-destructive! hover:text-destructive!" />
       <span class="text-destructive!">Delete</span>

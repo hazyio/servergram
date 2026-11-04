@@ -9,6 +9,8 @@
   import {
     ChevronLeft,
     ChevronRight,
+    FileIcon,
+    FolderIcon,
     Loader,
     RefreshCcw,
     Upload,
@@ -19,6 +21,7 @@
   import SettingOption, {
     type SettingOptionProps,
   } from "./SettingOption.svelte";
+  import Actions from "./Actions.svelte";
   import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
@@ -154,6 +157,8 @@
     class="shrink"
     oninput={(e) => (search = e.currentTarget.value)}
   />
+  <Actions />
+
   <SettingOption
     bind:showHidden={settings.showHidden}
     bind:dirsFirst={settings.dirsFirst}
@@ -185,8 +190,16 @@
         />
       </ContextMenu.Trigger>
       <ContextMenu.Content class="h-50 w-50">
-        <ContextMenu.Group
-          ><ContextMenu.Item>
+        <ContextMenu.Group>
+          <ContextMenu.Item>
+            <FileIcon />
+            New File
+          </ContextMenu.Item>
+          <ContextMenu.Item>
+            <FolderIcon />
+            New Folder
+          </ContextMenu.Item>
+          <ContextMenu.Item>
             <Upload />
             Upload File
           </ContextMenu.Item>

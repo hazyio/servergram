@@ -335,7 +335,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get watch top process by ID */
-        get: operations["sse-interval-server--watch-top-process-id"];
+        get: operations["sse-server--watch-top-process-id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -697,6 +697,29 @@ export interface components {
         ViewSSHKeyResponseBody: {
             private: string;
         };
+        WatchTopProcessesRequestBody: {
+            /**
+             * Format: int64
+             * @description The ID of the server
+             */
+            id: number;
+            /**
+             * Format: int64
+             * @description Update interval in ms
+             * @default 1000
+             */
+            interval: number;
+            /**
+             * Format: int32
+             * @description The maximum number of top processes to return
+             */
+            limit: number;
+            /**
+             * Format: int32
+             * @description The field to sort top processes by
+             */
+            sort_by: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -740,9 +763,9 @@ export interface operations {
     };
     "sse-files--list-in-server-id": {
         parameters: {
-            query: {
-                /** @description The directory to list */
-                dir: string;
+            query?: {
+                /** @description The directory to list, if empty it defaults to home */
+                dir?: string;
                 /** @description Include hidden files */
                 include_hidden?: boolean;
             };
@@ -1439,24 +1462,18 @@ export interface operations {
             };
         };
     };
-    "sse-interval-server--watch-top-process-id": {
+    "sse-server--watch-top-process-id": {
         parameters: {
-            query: {
-                /** @description Update interval in ms */
-                interval?: number;
-                /** @description The field to sort top processes by */
-                sort_by: number;
-                /** @description The maximum number of top processes to return */
-                limit: number;
-            };
+            query?: never;
             header?: never;
-            path: {
-                /** @description The ID of the server */
-                id: number;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WatchTopProcessesRequestBody"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

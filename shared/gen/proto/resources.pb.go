@@ -412,6 +412,7 @@ type TopProcessRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SortBy        TopProcessSortBy       `protobuf:"varint,1,opt,name=sort_by,json=sortBy,proto3,enum=proto.TopProcessSortBy" json:"sort_by,omitempty"`
 	Limit         uint32                 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	IntervalMs    uint32                 `protobuf:"varint,3,opt,name=interval_ms,json=intervalMs,proto3" json:"interval_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -456,6 +457,13 @@ func (x *TopProcessRequest) GetSortBy() TopProcessSortBy {
 func (x *TopProcessRequest) GetLimit() uint32 {
 	if x != nil {
 		return x.Limit
+	}
+	return 0
+}
+
+func (x *TopProcessRequest) GetIntervalMs() uint32 {
+	if x != nil {
+		return x.IntervalMs
 	}
 	return 0
 }
@@ -563,17 +571,19 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
 	"\tcpu_usage\x18\x03 \x01(\x01R\bcpuUsage\x12!\n" +
-	"\fmemory_usage\x18\x04 \x01(\x04R\vmemoryUsage\"[\n" +
+	"\fmemory_usage\x18\x04 \x01(\x04R\vmemoryUsage\"|\n" +
 	"\x11TopProcessRequest\x120\n" +
 	"\asort_by\x18\x01 \x01(\x0e2\x17.proto.TopProcessSortByR\x06sortBy\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\rR\x05limit*3\n" +
+	"\x05limit\x18\x02 \x01(\rR\x05limit\x12\x1f\n" +
+	"\vinterval_ms\x18\x03 \x01(\rR\n" +
+	"intervalMs*3\n" +
 	"\x10TopProcessSortBy\x12\r\n" +
 	"\tCPU_USAGE\x10\x00\x12\x10\n" +
-	"\fMEMORY_USAGE\x10\x012\xd6\x01\n" +
+	"\fMEMORY_USAGE\x10\x012\xd8\x01\n" +
 	"\x0fServerResources\x12@\n" +
 	"\x03Get\x12\x16.google.protobuf.Empty\x1a!.proto.GetServerResourcesResponse\x12<\n" +
-	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponse\x12C\n" +
-	"\fTopProcesses\x12\x18.proto.TopProcessRequest\x1a\x19.proto.TopProcessResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponse\x12E\n" +
+	"\fTopProcesses\x12\x18.proto.TopProcessRequest\x1a\x19.proto.TopProcessResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_resources_proto_rawDescOnce sync.Once

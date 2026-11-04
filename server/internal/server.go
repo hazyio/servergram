@@ -9,6 +9,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/sse"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal/sshmanager"
 
@@ -52,6 +54,18 @@ type SSEQuery struct {
 
 func (q SSEQuery) Interval() time.Duration {
 	return time.Duration(q.IntervalMs) * time.Millisecond
+}
+
+func SendSSEError(send sse.Sender, err error) {
+	st, _ := status.FromError(err)
+	switch st.Code() {
+	case codes.NotFound:
+		_ = send.Data(NewSSEError(http.StatusNotFound, st.Message()))
+	case codes.PermissionDenied:
+		_ = send.Data(NewSSEError(http.StatusForbidden, st.Message()))
+	default:
+		_ = send.Data(NewSSEError(http.StatusInternalServerError, "Internal server error"))
+	}
 }
 
 type Intervaler interface {

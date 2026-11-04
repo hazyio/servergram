@@ -30,11 +30,11 @@ func HandleListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesSe
 		info, _ := e.Info()
 		batch = append(batch, toEntry(info))
 		if len(batch) == 500 {
-			stream.Send(&proto.ListFilesChunkResponse{Entries: batch})
+			stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: req.Dir})
 			batch = batch[:0]
 		}
 	}
-	stream.Send(&proto.ListFilesChunkResponse{Entries: batch, Done: true})
+	stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: req.Dir, Done: true})
 
 	return nil
 }

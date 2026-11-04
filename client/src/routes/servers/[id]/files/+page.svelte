@@ -5,7 +5,12 @@
   import Button from "#lib/components/ui/button/button.svelte";
   import Input from "#lib/components/ui/input/input.svelte";
   import type { components } from "#lib/types/request-schema.d.ts";
-  import { ChevronLeft, ChevronRight, Loader } from "@lucide/svelte";
+  import {
+    ChevronLeft,
+    ChevronRight,
+    Loader,
+    RefreshCcw,
+  } from "@lucide/svelte";
   import type { PageProps } from "./$types";
   import { isDir, type FileEntry } from "./filesColumns";
   import FilesTable from "./FilesTable.svelte";
@@ -20,8 +25,8 @@
     columns: { size: true, modified: true, mode: true, owner: true },
   });
   let search = $state("");
-  let dir = $state("/");
-  let history = $state(["/"]);
+  let dir = $state("");
+  let history = $state([""]);
   let historyIndex = $state(0);
   let loading = $state(true);
   let updating = $state(false);
@@ -89,7 +94,7 @@
       }
       stop();
       loading = false;
-      loadError ??= "File stream closed";
+      loadError ??= "File stream closed, an unexpected error occurred";
     };
   }
 
@@ -149,12 +154,13 @@
     bind:dirsFirst={settings.dirsFirst}
     bind:columns={settings.columns}
   />
+  <Button variant="outline" onclick={loadFiles}><RefreshCcw /></Button>
 </div>
 
 {#if loading}
   <Loading loading class="my-7" />
 {:else if loadError}
-  <ErrorSection message={loadError} onRetry={loadFiles} />
+  <ErrorSection message={loadError} onRetry={loadFiles} class="my-7" />
 {:else}
   {#if updating}
     <div class="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
@@ -162,7 +168,7 @@
       Updating...
     </div>
   {/if}
-  <div class="p-4">
+  <div class="p-4 mb-10 px-12">
     <FilesTable
       {files}
       {search}

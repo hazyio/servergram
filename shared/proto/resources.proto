@@ -53,11 +53,12 @@ enum TopProcessSortBy {
 message TopProcessRequest {
   TopProcessSortBy sort_by = 1;
   uint32 limit = 2;
-
+  uint32 interval_ms = 3;
 
 }
+
 service ServerResources {
   rpc Get(google.protobuf.Empty) returns (GetServerResourcesResponse);
   rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
-  rpc TopProcesses(TopProcessRequest) returns (TopProcessResponse);
+  rpc TopProcesses(TopProcessRequest) returns (stream TopProcessResponse);
 }

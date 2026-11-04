@@ -3,6 +3,7 @@
   import * as Table from "#lib/components/ui/table/index.js";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
   import { getColumns, isDir, type FileEntry } from "./filesColumns";
+  import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
 
   let {
     files,
@@ -17,6 +18,7 @@
     visibleColumns: Record<string, boolean>;
     onOpen: (entry: FileEntry) => void;
   } = $props();
+  let selected = $state<string[]>([]);
 
   const columns = getColumns();
   const table = createTable({
@@ -48,7 +50,7 @@
   });
 </script>
 
-<Table.Root class="mt-2 mb-10">
+<Table.Root class="mt-2 ">
   <Table.Header>
     {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
       <Table.Row>
@@ -65,8 +67,19 @@
   <Table.Body>
     {#each rows as row (row.id)}
       <Table.Row
-        class={isDir(row.original) ? "cursor-pointer" : ""}
-        ondblclick={() => onOpen(row.original)}
+        class={`${selected.includes(row.original.name ?? "") ? "bg-muted" : ""} ${isDir(row.original) ? "cursor-pointer" : ""}`}
+        onclick={() => {
+          if (row.original.name) {
+            if (!selected.includes(row.original.name)) {
+              selected.push(row.original.name);
+            } else {
+              selected = selected.filter((name) => name !== row.original.name);
+            }
+          }
+        }}
+        ondblclick={() => {
+          onOpen(row.original);
+        }}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell class="px-4 py-3.5">

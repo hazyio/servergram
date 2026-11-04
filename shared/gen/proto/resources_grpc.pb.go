@@ -31,7 +31,7 @@ const (
 type ServerResourcesClient interface {
 	Get(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerResourcesResponse, error)
 	Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error)
-	TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (*TopProcessResponse, error)
+	TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TopProcessResponse], error)
 }
 
 type serverResourcesClient struct {
@@ -62,15 +62,24 @@ func (c *serverResourcesClient) Info(ctx context.Context, in *emptypb.Empty, opt
 	return out, nil
 }
 
-func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (*TopProcessResponse, error) {
+func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TopProcessResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TopProcessResponse)
-	err := c.cc.Invoke(ctx, ServerResources_TopProcesses_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ServerResources_ServiceDesc.Streams[0], ServerResources_TopProcesses_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[TopProcessRequest, TopProcessResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_TopProcessesClient = grpc.ServerStreamingClient[TopProcessResponse]
 
 // ServerResourcesServer is the server API for ServerResources service.
 // All implementations must embed UnimplementedServerResourcesServer
@@ -78,7 +87,7 @@ func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcess
 type ServerResourcesServer interface {
 	Get(context.Context, *emptypb.Empty) (*GetServerResourcesResponse, error)
 	Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error)
-	TopProcesses(context.Context, *TopProcessRequest) (*TopProcessResponse, error)
+	TopProcesses(*TopProcessRequest, grpc.ServerStreamingServer[TopProcessResponse]) error
 	mustEmbedUnimplementedServerResourcesServer()
 }
 
@@ -95,8 +104,8 @@ func (UnimplementedServerResourcesServer) Get(context.Context, *emptypb.Empty) (
 func (UnimplementedServerResourcesServer) Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
 }
-func (UnimplementedServerResourcesServer) TopProcesses(context.Context, *TopProcessRequest) (*TopProcessResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method TopProcesses not implemented")
+func (UnimplementedServerResourcesServer) TopProcesses(*TopProcessRequest, grpc.ServerStreamingServer[TopProcessResponse]) error {
+	return status.Error(codes.Unimplemented, "method TopProcesses not implemented")
 }
 func (UnimplementedServerResourcesServer) mustEmbedUnimplementedServerResourcesServer() {}
 func (UnimplementedServerResourcesServer) testEmbeddedByValue()                         {}
@@ -155,23 +164,16 @@ func _ServerResources_Info_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ServerResources_TopProcesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TopProcessRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _ServerResources_TopProcesses_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(TopProcessRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(ServerResourcesServer).TopProcesses(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ServerResources_TopProcesses_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerResourcesServer).TopProcesses(ctx, req.(*TopProcessRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(ServerResourcesServer).TopProcesses(m, &grpc.GenericServerStream[TopProcessRequest, TopProcessResponse]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_TopProcessesServer = grpc.ServerStreamingServer[TopProcessResponse]
 
 // ServerResources_ServiceDesc is the grpc.ServiceDesc for ServerResources service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -188,11 +190,13 @@ var ServerResources_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Info",
 			Handler:    _ServerResources_Info_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "TopProcesses",
-			Handler:    _ServerResources_TopProcesses_Handler,
+			StreamName:    "TopProcesses",
+			Handler:       _ServerResources_TopProcesses_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/resources.proto",
 }

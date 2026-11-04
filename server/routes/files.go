@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
@@ -40,19 +38,6 @@ func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id u
 	return resource, ctx, cancel, nil
 }
 
-func sendFilesError(send sse.Sender, err error) {
-	st, _ := status.FromError(err)
-	switch st.Code() {
-	case codes.NotFound:
-		_ = send.Data(internal.NewSSEError(http.StatusNotFound, st.Message()))
-	case codes.PermissionDenied:
-		_ = send.Data(internal.NewSSEError(http.StatusForbidden, st.Message()))
-	default:
-		slog.Error("Failed to list files", "error", err)
-		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, "Internal server error"))
-	}
-}
-
 func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse.Sender) *proto.ListFilesChunkResponse {
 	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
@@ -66,7 +51,7 @@ func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse
 		IncludeHidden: data.Input.IncludeHidden,
 	})
 	if err != nil {
-		sendFilesError(send, err)
+		internal.SendSSEError(send, err)
 		return nil
 	}
 	for {
@@ -77,7 +62,7 @@ func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse
 			return nil
 		}
 		if err != nil {
-			sendFilesError(send, err)
+			internal.SendSSEError(send, err)
 			return nil
 		}
 		if err := send.Data(chunk); err != nil {

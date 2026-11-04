@@ -3,10 +3,12 @@ package routes
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/sse"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/server/db"
@@ -25,7 +27,7 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 
 	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSEInterval("/watch-resources/{id}", watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
-	server.SSEInterval("/watch-top-process/{id}", watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
+	server.SSE("/watch-top-process/{id}", http.StatusOK, watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
 
 }
 
@@ -167,25 +169,59 @@ func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id 
 
 	return resource, ctx, cancel, nil
 }
-
-func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest]) (*proto.TopProcessResponse, error) {
-	id := data.Input.ID
-	ctx := data.Context
-	sshmanager := data.SSHManager
-	resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
+func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest], send sse.Sender) *proto.TopProcessResponse {
+	input := data.Input.Body
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, input.ID)
 	if err != nil {
-		return nil, err
+		slog.Error("Failed to get server connected", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
+		return nil
 	}
 	defer cancel()
-	res, err := resource.TopProcesses(ctx, &proto.TopProcessRequest{
-		SortBy: data.Input.SortBy,
-		Limit:  data.Input.Limit,
+	stream, err := resource.TopProcesses(ctx, &proto.TopProcessRequest{
+		SortBy:     input.SortBy,
+		Limit:      input.Limit,
+		IntervalMs: uint32(input.IntervalMs),
 	})
 	if err != nil {
-		slog.Error("Failed to get server resources", "error", err)
-		return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
+		internal.SendSSEError(send, err)
+		return nil
 	}
-	return res, nil
+	for {
+		chunk, err := stream.Recv()
+
+		if errors.Is(err, io.EOF) {
+			slog.Info("Top processes stream ended")
+			// Stream ended without a done chunk; tell the client to stop reconnecting.
+			return nil
+		}
+		if err != nil {
+			internal.SendSSEError(send, err)
+			return nil
+		}
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
+
+	}
+
+	// // func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest]) (*proto.TopProcessResponse, error) {
+	// id := data.Input.ID
+	// ctx := data.Context
+	// sshmanager := data.SSHManager
+	// resource, ctx, cancel, err := getServerConnected(ctx, sshmanager, id)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer cancel()
+	// res, err := resource.TopProcesses(ctx, &proto.TopProcessRequest{
+	// 	SortBy: data.Input.SortBy,
+	// 	Limit:  data.Input.Limit,
+	// })
+	// if err != nil {
+	// 	slog.Error("Failed to get server resources", "error", err)
+	// 	return nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get server resources")
+	// }
 }
 
 func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {

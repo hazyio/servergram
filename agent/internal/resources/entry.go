@@ -21,3 +21,4 @@ func (s *ResourcesServer) Info(ctx context.Context, _ *emptypb.Empty) (*proto.Ge
 func (s *ResourcesServer) TopProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_TopProcessesServer) error {
 	return topProcesses(req, stream)
 }
+	

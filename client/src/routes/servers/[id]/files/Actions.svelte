@@ -24,7 +24,7 @@
     <div class="flex flex-col gap-1">
       <Button
         variant="ghost"
-        class="justify-start gap-2 w-full"
+        class="justify-start py-4 gap-2 w-full"
         onclick={() => {}}
       >
         <FolderPlus class="size-4" />
@@ -32,7 +32,7 @@
       </Button>
       <Button
         variant="ghost"
-        class="justify-start gap-2 w-full"
+        class="justify-start py-4 gap-2 w-full"
         onclick={() => {}}
       >
         <FilePlus class="size-4" />
@@ -40,23 +40,16 @@
       </Button>
       <Button
         variant="ghost"
-        class="justify-start gap-2 w-full"
+        class="justify-start py-4 gap-2 w-full"
         onclick={() => {}}
       >
         <Upload class="size-4" />
         Upload
       </Button>
+
       <Button
         variant="ghost"
-        class="justify-start gap-2 w-full"
-        onclick={() => {}}
-      >
-        <Download class="size-4" />
-        Download
-      </Button>
-      <Button
-        variant="ghost"
-        class="justify-start gap-2 w-full"
+        class="justify-start py-4 gap-2 w-full"
         onclick={() => {}}
       >
         <RefreshCcw class="size-4" />

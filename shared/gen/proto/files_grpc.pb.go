@@ -19,7 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Files_ListFiles_FullMethodName = "/proto.Files/ListFiles"
+	Files_ListFiles_FullMethodName       = "/proto.Files/ListFiles"
+	Files_CreateDirectory_FullMethodName = "/proto.Files/CreateDirectory"
+	Files_RemoveDirectory_FullMethodName = "/proto.Files/RemoveDirectory"
+	Files_WatchDirectory_FullMethodName  = "/proto.Files/WatchDirectory"
 )
 
 // FilesClient is the client API for Files service.
@@ -27,6 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FilesClient interface {
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error)
+	CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error)
 }
 
 type filesClient struct {
@@ -56,11 +62,53 @@ func (c *filesClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_ListFilesClient = grpc.ServerStreamingClient[ListFilesChunkResponse]
 
+func (c *filesClient) CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, Files_CreateDirectory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, Files_RemoveDirectory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[1], Files_WatchDirectory_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchDirectoryRequest, WatchDirectoryResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_WatchDirectoryClient = grpc.ServerStreamingClient[WatchDirectoryResponse]
+
 // FilesServer is the server API for Files service.
 // All implementations must embed UnimplementedFilesServer
 // for forward compatibility.
 type FilesServer interface {
 	ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error
+	CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error)
+	RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error)
+	WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error
 	mustEmbedUnimplementedFilesServer()
 }
 
@@ -73,6 +121,15 @@ type UnimplementedFilesServer struct{}
 
 func (UnimplementedFilesServer) ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error {
 	return status.Error(codes.Unimplemented, "method ListFiles not implemented")
+}
+func (UnimplementedFilesServer) CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateDirectory not implemented")
+}
+func (UnimplementedFilesServer) RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveDirectory not implemented")
+}
+func (UnimplementedFilesServer) WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error {
+	return status.Error(codes.Unimplemented, "method WatchDirectory not implemented")
 }
 func (UnimplementedFilesServer) mustEmbedUnimplementedFilesServer() {}
 func (UnimplementedFilesServer) testEmbeddedByValue()               {}
@@ -106,17 +163,78 @@ func _Files_ListFiles_Handler(srv interface{}, stream grpc.ServerStream) error {
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_ListFilesServer = grpc.ServerStreamingServer[ListFilesChunkResponse]
 
+func _Files_CreateDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDirectoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).CreateDirectory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Files_CreateDirectory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).CreateDirectory(ctx, req.(*CreateDirectoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_RemoveDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveDirectoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).RemoveDirectory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Files_RemoveDirectory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).RemoveDirectory(ctx, req.(*RemoveDirectoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_WatchDirectory_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchDirectoryRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(FilesServer).WatchDirectory(m, &grpc.GenericServerStream[WatchDirectoryRequest, WatchDirectoryResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_WatchDirectoryServer = grpc.ServerStreamingServer[WatchDirectoryResponse]
+
 // Files_ServiceDesc is the grpc.ServiceDesc for Files service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Files_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Files",
 	HandlerType: (*FilesServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateDirectory",
+			Handler:    _Files_CreateDirectory_Handler,
+		},
+		{
+			MethodName: "RemoveDirectory",
+			Handler:    _Files_RemoveDirectory_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ListFiles",
 			Handler:       _Files_ListFiles_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchDirectory",
+			Handler:       _Files_WatchDirectory_Handler,
 			ServerStreams: true,
 		},
 	},

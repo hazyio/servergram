@@ -189,21 +189,25 @@
           onOpen={openEntry}
         />
       </ContextMenu.Trigger>
-      <ContextMenu.Content class="h-50 w-50">
+      <ContextMenu.Content class="min-h-30 w-50">
         <ContextMenu.Group>
-          <ContextMenu.Item>
+          <ContextMenu.Label
+            >Actions on <span class="truncate" title={dir}>{dir}</span
+            ></ContextMenu.Label
+          >
+          <ContextMenu.Item class="py-2">
             <FileIcon />
             New File
           </ContextMenu.Item>
-          <ContextMenu.Item>
+          <ContextMenu.Item class="py-2">
             <FolderIcon />
             New Folder
           </ContextMenu.Item>
-          <ContextMenu.Item>
+          <ContextMenu.Item class="py-2">
             <Upload />
-            Upload File
+            Upload
           </ContextMenu.Item>
-          <ContextMenu.Item onclick={loadFiles}>
+          <ContextMenu.Item class="py-2" onclick={loadFiles}>
             <RefreshCcw />
             Refresh
           </ContextMenu.Item>

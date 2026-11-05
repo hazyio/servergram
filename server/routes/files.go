@@ -21,6 +21,7 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server := internal.NewGroup("/files", api, database, []string{"Files"}, ssh)
 
 	server.SSE("/list-in-server/{id}", http.StatusOK, listFilesInServer)
+	server.SSE("/watch-dir-in-server/{id}", http.StatusOK, watchDirectoryInServer)
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -71,5 +72,37 @@ func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse
 		if chunk.Done {
 			return nil
 		}
+	}
+}
+
+func watchDirectoryInServer(data internal.RouteData[models.FileListRequest], send sse.Sender) *proto.WatchDirectoryResponse {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		slog.Error("Failed to get files connected", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
+		return nil
+	}
+	defer cancel()
+	stream, err := resource.WatchDirectory(ctx, &proto.WatchDirectoryRequest{
+		Path:          data.Input.Dir,
+		IncludeHidden: data.Input.IncludeHidden,
+	})
+	if err != nil {
+		internal.SendSSEError(send, err)
+		return nil
+	}
+	for {
+		chunk, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			internal.SendSSEError(send, err)
+			return nil
+		}
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
+
 	}
 }

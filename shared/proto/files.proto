@@ -32,8 +32,33 @@ message ListFilesRequest {
   string dir = 1;
   bool include_hidden = 2;
 }
-
+message CreateDirectoryRequest {
+  string path = 1;
+  string name = 2;
+}
+message SuccessResponse {
+  bool success = 1;
+}
+message RemoveDirectoryRequest {
+  string path = 1;
+}
+message WatchDirectoryRequest {
+  string path = 1;
+  bool include_hidden = 2;
+}
+enum WatchDirectoryKind {
+  MODIFIED = 0;
+  CREATED = 1;
+  DELETED = 2;
+}
+message WatchDirectoryResponse {
+  WatchDirectoryKind kind = 1;
+  string path = 2;
+}
 service Files {
   rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
+  rpc CreateDirectory(CreateDirectoryRequest) returns (SuccessResponse);
+  rpc RemoveDirectory(RemoveDirectoryRequest) returns (SuccessResponse);
+  rpc WatchDirectory(WatchDirectoryRequest) returns (stream WatchDirectoryResponse);
 }
 

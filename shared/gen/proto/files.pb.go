@@ -73,6 +73,55 @@ func (FileEntryKind) EnumDescriptor() ([]byte, []int) {
 	return file_proto_files_proto_rawDescGZIP(), []int{0}
 }
 
+type WatchDirectoryKind int32
+
+const (
+	WatchDirectoryKind_MODIFIED WatchDirectoryKind = 0
+	WatchDirectoryKind_CREATED  WatchDirectoryKind = 1
+	WatchDirectoryKind_DELETED  WatchDirectoryKind = 2
+)
+
+// Enum value maps for WatchDirectoryKind.
+var (
+	WatchDirectoryKind_name = map[int32]string{
+		0: "MODIFIED",
+		1: "CREATED",
+		2: "DELETED",
+	}
+	WatchDirectoryKind_value = map[string]int32{
+		"MODIFIED": 0,
+		"CREATED":  1,
+		"DELETED":  2,
+	}
+)
+
+func (x WatchDirectoryKind) Enum() *WatchDirectoryKind {
+	p := new(WatchDirectoryKind)
+	*p = x
+	return p
+}
+
+func (x WatchDirectoryKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WatchDirectoryKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_files_proto_enumTypes[1].Descriptor()
+}
+
+func (WatchDirectoryKind) Type() protoreflect.EnumType {
+	return &file_proto_files_proto_enumTypes[1]
+}
+
+func (x WatchDirectoryKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WatchDirectoryKind.Descriptor instead.
+func (WatchDirectoryKind) EnumDescriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{1}
+}
+
 type FileEntry struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -301,6 +350,250 @@ func (x *ListFilesRequest) GetIncludeHidden() bool {
 	return false
 }
 
+type CreateDirectoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateDirectoryRequest) Reset() {
+	*x = CreateDirectoryRequest{}
+	mi := &file_proto_files_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateDirectoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateDirectoryRequest) ProtoMessage() {}
+
+func (x *CreateDirectoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateDirectoryRequest.ProtoReflect.Descriptor instead.
+func (*CreateDirectoryRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateDirectoryRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *CreateDirectoryRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type SuccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuccessResponse) Reset() {
+	*x = SuccessResponse{}
+	mi := &file_proto_files_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuccessResponse) ProtoMessage() {}
+
+func (x *SuccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuccessResponse.ProtoReflect.Descriptor instead.
+func (*SuccessResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SuccessResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type RemoveDirectoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveDirectoryRequest) Reset() {
+	*x = RemoveDirectoryRequest{}
+	mi := &file_proto_files_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveDirectoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveDirectoryRequest) ProtoMessage() {}
+
+func (x *RemoveDirectoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveDirectoryRequest.ProtoReflect.Descriptor instead.
+func (*RemoveDirectoryRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RemoveDirectoryRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+type WatchDirectoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	IncludeHidden bool                   `protobuf:"varint,2,opt,name=include_hidden,json=includeHidden,proto3" json:"include_hidden,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchDirectoryRequest) Reset() {
+	*x = WatchDirectoryRequest{}
+	mi := &file_proto_files_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchDirectoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchDirectoryRequest) ProtoMessage() {}
+
+func (x *WatchDirectoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchDirectoryRequest.ProtoReflect.Descriptor instead.
+func (*WatchDirectoryRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WatchDirectoryRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *WatchDirectoryRequest) GetIncludeHidden() bool {
+	if x != nil {
+		return x.IncludeHidden
+	}
+	return false
+}
+
+type WatchDirectoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kind          WatchDirectoryKind     `protobuf:"varint,1,opt,name=kind,proto3,enum=proto.WatchDirectoryKind" json:"kind,omitempty"`
+	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchDirectoryResponse) Reset() {
+	*x = WatchDirectoryResponse{}
+	mi := &file_proto_files_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchDirectoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchDirectoryResponse) ProtoMessage() {}
+
+func (x *WatchDirectoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchDirectoryResponse.ProtoReflect.Descriptor instead.
+func (*WatchDirectoryResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *WatchDirectoryResponse) GetKind() WatchDirectoryKind {
+	if x != nil {
+		return x.Kind
+	}
+	return WatchDirectoryKind_MODIFIED
+}
+
+func (x *WatchDirectoryResponse) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
 var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
@@ -325,14 +618,34 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x04done\x18\x03 \x01(\bR\x04done\"K\n" +
 	"\x10ListFilesRequest\x12\x10\n" +
 	"\x03dir\x18\x01 \x01(\tR\x03dir\x12%\n" +
-	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden*:\n" +
+	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden\"@\n" +
+	"\x16CreateDirectoryRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"+\n" +
+	"\x0fSuccessResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\",\n" +
+	"\x16RemoveDirectoryRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"R\n" +
+	"\x15WatchDirectoryRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12%\n" +
+	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden\"[\n" +
+	"\x16WatchDirectoryResponse\x12-\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x19.proto.WatchDirectoryKindR\x04kind\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +
 	"\aSYMLINK\x10\x02\x12\t\n" +
-	"\x05OTHER\x10\x032N\n" +
+	"\x05OTHER\x10\x03*<\n" +
+	"\x12WatchDirectoryKind\x12\f\n" +
+	"\bMODIFIED\x10\x00\x12\v\n" +
+	"\aCREATED\x10\x01\x12\v\n" +
+	"\aDELETED\x10\x022\xb3\x02\n" +
 	"\x05Files\x12E\n" +
-	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01\x12H\n" +
+	"\x0fCreateDirectory\x12\x1d.proto.CreateDirectoryRequest\x1a\x16.proto.SuccessResponse\x12H\n" +
+	"\x0fRemoveDirectory\x12\x1d.proto.RemoveDirectoryRequest\x1a\x16.proto.SuccessResponse\x12O\n" +
+	"\x0eWatchDirectory\x12\x1c.proto.WatchDirectoryRequest\x1a\x1d.proto.WatchDirectoryResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -346,24 +659,37 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 	return file_proto_files_proto_rawDescData
 }
 
-var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proto_files_proto_goTypes = []any{
 	(FileEntryKind)(0),             // 0: proto.FileEntryKind
-	(*FileEntry)(nil),              // 1: proto.FileEntry
-	(*ListFilesChunkResponse)(nil), // 2: proto.ListFilesChunkResponse
-	(*ListFilesRequest)(nil),       // 3: proto.ListFilesRequest
+	(WatchDirectoryKind)(0),        // 1: proto.WatchDirectoryKind
+	(*FileEntry)(nil),              // 2: proto.FileEntry
+	(*ListFilesChunkResponse)(nil), // 3: proto.ListFilesChunkResponse
+	(*ListFilesRequest)(nil),       // 4: proto.ListFilesRequest
+	(*CreateDirectoryRequest)(nil), // 5: proto.CreateDirectoryRequest
+	(*SuccessResponse)(nil),        // 6: proto.SuccessResponse
+	(*RemoveDirectoryRequest)(nil), // 7: proto.RemoveDirectoryRequest
+	(*WatchDirectoryRequest)(nil),  // 8: proto.WatchDirectoryRequest
+	(*WatchDirectoryResponse)(nil), // 9: proto.WatchDirectoryResponse
 }
 var file_proto_files_proto_depIdxs = []int32{
 	0, // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
-	1, // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
-	3, // 2: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	2, // 3: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
+	1, // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
+	4, // 3: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	5, // 4: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7, // 5: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	8, // 6: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	3, // 7: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6, // 8: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
+	6, // 9: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
+	9, // 10: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }
@@ -376,8 +702,8 @@ func file_proto_files_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_files_proto_rawDesc), len(file_proto_files_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      2,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

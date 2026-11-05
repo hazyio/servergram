@@ -98,7 +98,7 @@
     }
 
     if (!stopped) {
-      availabilityTimer = setTimeout(checkUnreadNotifications, 50_000);
+      availabilityTimer = setTimeout(checkUnreadNotifications, 120_000);
     }
   }
 

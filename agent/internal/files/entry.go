@@ -1,6 +1,7 @@
 package files
 
 import (
+	"context"
 	"os"
 
 	"hazyio.com/servergram/shared/gen/proto"
@@ -21,5 +22,15 @@ func (s *FilesServer) ListFiles(req *proto.ListFilesRequest, stream proto.Files_
 		}
 	}
 	req.Dir = dir
-	return HandleListFiles(req, stream)
+	return handleListFiles(req, stream)
+}
+
+func (s *FilesServer) CreateDirectory(_ context.Context, req *proto.CreateDirectoryRequest) (*proto.SuccessResponse, error) {
+	return handleCreateDirectory(req)
+}
+func (s *FilesServer) RemoveDirectory(_ context.Context, req *proto.RemoveDirectoryRequest) (*proto.SuccessResponse, error) {
+	return handleRemoveDirectory(req)
+}
+func (s *FilesServer) WatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_WatchDirectoryServer) error {
+	return handleWatchDirectory(req, stream)
 }

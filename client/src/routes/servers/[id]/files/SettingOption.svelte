@@ -1,8 +1,10 @@
 <script lang="ts" module>
+  export type SettingColumns = "size" | "modified" | "mode" | "owner";
   export interface SettingOptionProps {
     showHidden: boolean;
     dirsFirst: boolean;
-    columns: Record<string, boolean>;
+    columns: Record<SettingColumns, boolean>;
+    askBeforeDelete: boolean;
   }
 </script>
 
@@ -10,22 +12,17 @@
   import Button from "#lib/components/ui/button/button.svelte";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import * as Field from "#lib/components/ui/field/index.js";
-  import { Label } from "#lib/components/ui/label/index.js";
   import * as Popover from "#lib/components/ui/popover/index.js";
   import { useLocalStorage } from "#lib/local-storage.ts";
   import { Settings } from "@lucide/svelte";
   import { onMount } from "svelte";
 
-  const columnOptions = [
-    { id: "size", label: "Size" },
-    { id: "modified", label: "Modified" },
-    { id: "mode", label: "Mode" },
-    { id: "owner", label: "Owner" },
-  ];
+
   let {
     showHidden = $bindable(false),
     dirsFirst = $bindable(true),
-    columns = $bindable({}),
+    columns = $bindable(),
+    askBeforeDelete = $bindable(true),
   }: SettingOptionProps = $props();
   let mounted = $state(false);
   $effect(() => {
@@ -34,6 +31,7 @@
       showHidden,
       dirsFirst,
       columns,
+      askBeforeDelete,
     });
   });
   onMount(() => {
@@ -42,19 +40,28 @@
       {
         showHidden: false,
         dirsFirst: true,
-        columns: {},
+        columns: {
+          size: true,
+          modified: true,
+          mode: true,
+          owner: true,
+        },
+        askBeforeDelete: true,
       },
     );
     showHidden = saved.showHidden;
     dirsFirst = saved.dirsFirst;
     columns = saved.columns;
+    askBeforeDelete = saved.askBeforeDelete;
     mounted = true;
   });
 </script>
 
 <Popover.Root>
   <Popover.Trigger>
-    <Button variant="outline"><Settings /></Button>
+    <Button variant="outline"
+      ><Settings /></Button
+    >
   </Popover.Trigger>
 
   <Popover.Content align="end" class="min-h-50">
@@ -63,31 +70,58 @@
     </Popover.Header>
     <div class="mt-3">
       <Field.Group class="max-w-sm">
-        <Field.Field orientation="horizontal">
-          <Checkbox
-            id="show-hidden"
-            name="show-hidden"
-            bind:checked={showHidden}
-          />
-          <Label for="show-hidden">Show Hidden</Label>
-        </Field.Field>
-        <Field.Field orientation="horizontal">
-          <Checkbox
-            id="dirs-first"
-            name="dirs-first"
-            bind:checked={dirsFirst}
-          />
-          <Label for="dirs-first">Show Directories First</Label>
-        </Field.Field>
-        <h4 class="text-sm font-medium">Show as column</h4>
-        {#each columnOptions as option (option.id)}
+        <Field.Label>
           <Field.Field orientation="horizontal">
             <Checkbox
-              id={`column-${option.id}`}
-              name={`column-${option.id}`}
-              bind:checked={columns[option.id]}
+              id="show-hidden"
+              name="show-hidden"
+              bind:checked={showHidden}
             />
-            <Label for={`column-${option.id}`}>{option.label}</Label>
+            <Field.Content>
+              <Field.Title>Show Hidden</Field.Title>
+              <Field.Description>
+                Toggle hidden files and directories.
+              </Field.Description>
+            </Field.Content>
+          </Field.Field></Field.Label
+        >
+        <Field.Label>
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id="dirs-first"
+              name="dirs-first"
+              bind:checked={dirsFirst}
+            />
+            <Field.Content>
+              <Field.Title>Show Directories First</Field.Title>
+            </Field.Content>
+          </Field.Field></Field.Label
+        >
+        <Field.Label>
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id="ask-before-delete"
+              name="ask-before-delete"
+              bind:checked={askBeforeDelete}
+            />
+            <Field.Content>
+              <Field.Title>Ask Before Delete</Field.Title>
+              <Field.Description>
+                Show prompt when deleting one file or directory.</Field.Description
+              >
+            </Field.Content>
+          </Field.Field></Field.Label
+        >
+
+        <h4 class="text-sm font-medium">Show as column</h4>
+        {#each ["size", "modified", "mode", "owner"] as SettingColumns[] as option (option)}
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id={`column-${option}`}
+              name={`column-${option}`}
+              bind:checked={columns[option]}
+            />
+            <Field.Label for={`column-${option}`} class="capitalize">{option}</Field.Label>
           </Field.Field>
         {/each}
       </Field.Group>

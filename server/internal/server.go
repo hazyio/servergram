@@ -58,6 +58,26 @@ func SendSSEError(send sse.Sender, err error) {
 		_ = send.Data(NewSSEError(http.StatusInternalServerError, "Internal server error"))
 	}
 }
+func FromGrpcError(err error) error {
+	st, ok := status.FromError(err)
+	if !ok {
+		// not a gRPC status error
+		return err
+	}
+	switch st.Code() {
+	case codes.NotFound:
+		return NewHumaError(http.StatusNotFound, st.Message())
+	case codes.PermissionDenied:
+
+		return NewHumaError(http.StatusForbidden, st.Message())
+	case codes.AlreadyExists:
+		return NewHumaError(http.StatusConflict, st.Message())
+	case codes.DeadlineExceeded, codes.Unavailable:
+		return NewHumaError(http.StatusServiceUnavailable, st.Message())
+	default:
+		return NewHumaError(http.StatusInternalServerError, "Internal server error")
+	}
+}
 
 // NewGroup wraps mux with a Server whose queries use pool.
 func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, sshManager *sshmanager.SSHManager) *Server {

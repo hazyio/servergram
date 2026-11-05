@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/watch-dir-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch dir in server by ID */
+        get: operations["sse-files--watch-dir-in-server-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/group/create": {
         parameters: {
             query?: never;
@@ -318,7 +335,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get watch resources by ID */
-        get: operations["sse-interval-server--watch-resources-id"];
+        get: operations["sse-server--watch-resources-id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -697,28 +714,10 @@ export interface components {
         ViewSSHKeyResponseBody: {
             private: string;
         };
-        WatchTopProcessesRequestBody: {
-            /**
-             * Format: int64
-             * @description The ID of the server
-             */
-            id: number;
-            /**
-             * Format: int64
-             * @description Update interval in ms
-             * @default 1000
-             */
-            interval: number;
-            /**
-             * Format: int32
-             * @description The maximum number of top processes to return
-             */
-            limit: number;
-            /**
-             * Format: int32
-             * @description The field to sort top processes by
-             */
-            sort_by: number;
+        WatchDirectoryResponse: {
+            /** Format: int32 */
+            kind?: number;
+            path?: string;
         };
     };
     responses: never;
@@ -763,11 +762,11 @@ export interface operations {
     };
     "sse-files--list-in-server-id": {
         parameters: {
-            query?: {
+            query: {
                 /** @description The directory to list, if empty it defaults to home */
-                dir?: string;
+                dir: string;
                 /** @description Include hidden files */
-                include_hidden?: boolean;
+                include_hidden: boolean;
             };
             header?: never;
             path: {
@@ -786,6 +785,65 @@ export interface operations {
                 content: {
                     "text/event-stream": ({
                         data: components["schemas"]["ListFilesChunkResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "sse-files--watch-dir-in-server-id": {
+        parameters: {
+            query: {
+                /** @description The directory to list, if empty it defaults to home */
+                dir: string;
+                /** @description Include hidden files */
+                include_hidden: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["WatchDirectoryResponse"];
                         /**
                          * @description The event name.
                          * @constant
@@ -1387,7 +1445,7 @@ export interface operations {
             };
         };
     };
-    "sse-interval-server--watch-resources-id": {
+    "sse-server--watch-resources-id": {
         parameters: {
             query?: {
                 /** @description Update interval in ms */
@@ -1464,16 +1522,22 @@ export interface operations {
     };
     "sse-server--watch-top-process-id": {
         parameters: {
-            query?: never;
+            query: {
+                /** @description The field to sort top processes by */
+                sortBy: number;
+                /** @description The maximum number of top processes to return */
+                limit: number;
+                /** @description Update interval in ms */
+                interval?: number;
+            };
             header?: never;
-            path?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WatchTopProcessesRequestBody"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

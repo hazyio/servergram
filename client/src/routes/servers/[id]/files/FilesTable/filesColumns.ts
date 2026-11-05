@@ -3,6 +3,7 @@ import type { components } from "#lib/types/request-schema.d.ts";
 import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 import FileName from "./FileName.svelte";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
+import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
 
 export type FileEntry = components["schemas"]["FileEntry"];
 
@@ -35,7 +36,7 @@ function formatMode(entry: FileEntry) {
   return out;
 }
 
-export const getColumns = () =>
+export const getColumns = (onDelete: (entry: DeleteEntryProps) => void) =>
   columnHelper.columns([
     columnHelper.accessor((row) => row.name ?? "", {
       id: "name",
@@ -48,6 +49,7 @@ export const getColumns = () =>
         renderComponent(FileName, {
           name: info.getValue(),
           isDir: isDir(info.row.original),
+          onDelete: (entry: DeleteEntryProps) => onDelete(entry),
         }),
     }),
     columnHelper.accessor((row) => row.size ?? 0, {

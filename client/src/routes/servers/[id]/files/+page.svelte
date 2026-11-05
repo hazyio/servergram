@@ -14,6 +14,8 @@
     Loader,
     RefreshCcw,
     Upload,
+    Eye,
+    EyeOff,
   } from "@lucide/svelte";
   import type { PageProps } from "./$types";
   import { isDir, type FileEntry } from "./FilesTable/filesColumns";
@@ -23,14 +25,24 @@
   } from "./SettingOption.svelte";
   import Actions from "./Actions.svelte";
   import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
+  import DeleteEntriesDialog, {
+    type DeleteEntryProps,
+  } from "./DeleteEntriesDialog.svelte";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
+  type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
 
   let { params }: PageProps = $props();
   let settings = $state<SettingOptionProps>({
     showHidden: false,
     dirsFirst: true,
-    columns: { size: true, modified: true, mode: true, owner: true },
+    columns: {
+      size: true,
+      modified: true,
+      mode: true,
+      owner: true,
+    },
+    askBeforeDelete: true,
   });
   let search = $state("");
   let dir = $state("");
@@ -38,14 +50,25 @@
   let historyIndex = $state(0);
   let loading = $state(true);
   let updating = $state(false);
+  let deleteEntries = $state<DeleteEntryProps[]>([]);
   let loadError = $state<string | null>(null);
+  let fileStreamError = $state<string | null>(null);
   let files: FileEntry[] = $state([]);
   let eventSource: EventSource | undefined;
+  let watchSource: EventSource | undefined;
+  let watching = $state(false);
 
   function stop() {
+    stopWatch();
     eventSource?.close();
     eventSource = undefined;
     updating = false;
+  }
+
+  function stopWatch() {
+    watchSource?.close();
+    watchSource = undefined;
+    watching = false;
   }
 
   function loadFiles() {
@@ -74,8 +97,13 @@
           history[historyIndex] = dir;
         }
         loading = false;
-        if (chunk.done) stop();
-        else updating = true;
+        if (chunk.done) {
+          stop();
+          // start watching for changes after the initial load is complete,
+          watchFiles();
+        } else {
+          updating = true;
+        }
       } catch {
         stop();
         loading = false;
@@ -102,7 +130,7 @@
       }
       stop();
       loading = false;
-      loadError ??= "File stream closed, an unexpected error occurred";
+      fileStreamError ??= "File stream closed, an unexpected error occurred";
     };
   }
 
@@ -124,11 +152,98 @@
     navigate(`${dir.replace(/\/+$/, "")}/${entry.name}`);
   }
 
+  function watchFiles() {
+    if (watching) return;
+
+    stopWatch();
+    watching = true;
+
+    const query = new URLSearchParams({
+      dir,
+      include_hidden: String(settings.showHidden),
+    });
+    const source = new EventSource(
+      `/api/files/watch-dir-in-server/${params.id}?${query}`,
+      { withCredentials: true },
+    );
+    watchSource = source;
+
+    source.addEventListener("data", (event) => {
+      if (source !== watchSource) return;
+      try {
+        const watchEvent = JSON.parse(
+          (event as MessageEvent<string>).data,
+        ) as WatchEvent;
+        handleWatchEvent(watchEvent);
+      } catch {
+        console.error("Failed to parse watch event");
+      }
+    });
+
+    source.addEventListener("error", (event) => {
+      if (source !== watchSource || !(event instanceof MessageEvent)) return;
+      try {
+        const response = JSON.parse(event.data) as { message?: string };
+        console.error(
+          "Watch error:",
+          response.message ?? "Failed to watch directory",
+        );
+      } catch {
+        console.error("Watch error: Failed to watch directory");
+      }
+      stopWatch();
+    });
+
+    source.onerror = () => {
+      if (source !== watchSource || source.readyState !== EventSource.CLOSED) {
+        return;
+      }
+      stopWatch();
+      console.warn("Watch stream closed");
+    };
+  }
+
+  function handleWatchEvent(event: WatchEvent) {
+    const { kind, path } = event;
+    const fullPath = `${dir.replace(/\/+$/, "")}/${path}`.replace(/\/+/g, "/");
+
+    switch (kind) {
+      case 0: // MODIFIED
+        // For modified files, we could update the file entry
+        // For now, just reload the directory
+        loadFiles();
+        break;
+      case 1: // CREATED
+        // Add the new file/directory to the list
+        // We'll reload for simplicity, but could optimize by adding the entry
+        loadFiles();
+        break;
+      case 2: // DELETED
+        // Remove the file/directory from the list
+        files = files.filter((f) => {
+          const filePath = `${dir.replace(/\/+$/, "")}/${f.name}`.replace(
+            /\/+/g,
+            "/",
+          );
+          return filePath !== fullPath;
+        });
+        break;
+    }
+  }
+
   $effect(() => {
     void settings.showHidden;
     untrack(loadFiles);
     return stop;
   });
+
+  // $effect(() => {
+  //   // Start watching when directory loads successfully
+  //   if (!loading && !loadError && dir) {
+  //     watchFiles();
+  //   }
+  //   return stopWatch;
+  // });
 </script>
 
 <div class="flex gap-2">
@@ -151,22 +266,36 @@
   />
   <Input
     name="filter-files"
-    placeholder="Search files here..."
+    placeholder="Search here..."
     autocomplete="off"
     type="search"
     class="shrink"
     oninput={(e) => (search = e.currentTarget.value)}
   />
-  <Actions />
-
   <SettingOption
     bind:showHidden={settings.showHidden}
     bind:dirsFirst={settings.dirsFirst}
     bind:columns={settings.columns}
+    bind:askBeforeDelete={settings.askBeforeDelete}
   />
   <Button variant="outline" onclick={loadFiles}><RefreshCcw /></Button>
-</div>
+  <Actions />
 
+  <Button
+    variant={watching ? "default" : "outline"}
+    onclick={watching ? stopWatch : watchFiles}
+    class="flex items-center gap-1"
+    title={watching ? "Stop watching for changes" : "Watch for changes"}
+  >
+    {#if watching}
+      <Eye class="size-4" />
+    {:else}
+      <EyeOff class="size-4" />
+    {/if}
+    <span class="hidden sm:inline">{watching ? "Watching" : "Watch"}</span>
+  </Button>
+</div>
+<DeleteEntriesDialog {dir} items={deleteEntries} onDeleted={() => {}} />
 {#if loading}
   <Loading loading class="my-7" />
 {:else if loadError}
@@ -178,6 +307,7 @@
       Updating...
     </div>
   {/if}
+
   <div class="p-4 mb-10 px-12">
     <ContextMenu.Root>
       <ContextMenu.Trigger>
@@ -187,6 +317,9 @@
           dirsFirst={settings.dirsFirst}
           visibleColumns={settings.columns}
           onOpen={openEntry}
+          onDelete={(entry) => {
+            deleteEntries = [entry];
+          }}
         />
       </ContextMenu.Trigger>
       <ContextMenu.Content class="min-h-30 w-50">

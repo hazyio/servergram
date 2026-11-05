@@ -3,6 +3,7 @@
   import * as Table from "#lib/components/ui/table/index.js";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
   import { getColumns, isDir, type FileEntry } from "./filesColumns";
+  import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
 
   let {
     files,
@@ -10,12 +11,14 @@
     dirsFirst = true,
     visibleColumns,
     onOpen,
+    onDelete = $bindable(),
   }: {
     files: FileEntry[];
     search?: string;
     dirsFirst?: boolean;
     visibleColumns: Record<string, boolean>;
     onOpen: (entry: FileEntry) => void;
+    onDelete: (entry: DeleteEntryProps) => void;
   } = $props();
   let selected = $state<string[]>([]);
 
@@ -31,7 +34,7 @@
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
-  const columns = getColumns();
+  const columns = getColumns(onDelete);
   const table = createTable({
     features: dataTableFeatures,
     get data() {
@@ -66,7 +69,7 @@
     {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
       <Table.Row>
         {#each headerGroup.headers as header (header.id)}
-          <Table.Head colspan={header.colSpan} class="h-12 px-4">
+          <Table.Head colspan={header.colSpan} class="h-12 px-1 md:px-4">
             {#if !header.isPlaceholder}
               <FlexRender {header} />
             {/if}

@@ -22,6 +22,8 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 
 	server.SSE("/list-in-server/{id}", http.StatusOK, listFilesInServer)
 	server.SSE("/watch-dir-in-server/{id}", http.StatusOK, watchDirectoryInServer)
+	server.Put("/create-dir-in-server/{id}", http.StatusOK, createDirectoryInServer)
+	server.Delete("/remove-dir-in-server/{id}", http.StatusOK, removeDirectoryInServer)
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -75,7 +77,7 @@ func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse
 	}
 }
 
-func watchDirectoryInServer(data internal.RouteData[models.FileListRequest], send sse.Sender) *proto.WatchDirectoryResponse {
+func watchDirectoryInServer(data internal.RouteData[models.WatchDirectoryRequest], send sse.Sender) *proto.WatchDirectoryResponse {
 	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
 		slog.Error("Failed to get files connected", "error", err)
@@ -105,4 +107,37 @@ func watchDirectoryInServer(data internal.RouteData[models.FileListRequest], sen
 		}
 
 	}
+}
+
+func createDirectoryInServer(data internal.RouteData[models.CreateDirectoryRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.CreateDirectory(ctx, &proto.CreateDirectoryRequest{
+		Path: data.Input.Body.Path,
+		Name: data.Input.Body.Name,
+	})
+	if err != nil {
+		slog.Error("Failed to create directory in server", "error", err)
+		return nil, internal.FromGrpcError(err)
+
+	}
+	return &EmptyRR{}, nil
+}
+func removeDirectoryInServer(data internal.RouteData[models.RemoveDirectoryRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.RemoveDirectory(ctx, &proto.RemoveDirectoryRequest{
+		Path: data.Input.Body.Path,
+	})
+	if err != nil {
+		return nil, internal.FromGrpcError(err)
+
+	}
+	return &EmptyRR{}, nil
 }

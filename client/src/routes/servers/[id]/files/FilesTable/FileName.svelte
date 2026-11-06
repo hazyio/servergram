@@ -12,11 +12,13 @@
     isDir,
     onDelete,
     onRenameClicked,
+    onOpenPropertiesClicked,
   }: {
     name: string;
     isDir: boolean;
     onDelete: (entry: DeleteEntryProps) => void;
     onRenameClicked: (entry: DeleteEntryProps) => void;
+    onOpenPropertiesClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   const icon = $derived(getFileIcon(name, isDir));
 </script>
@@ -55,7 +57,10 @@
           Download
         </ContextMenu.Item>
       {/if}
-      <ContextMenu.Item class="py-2 my-1">
+      <ContextMenu.Item
+        class="py-2 my-1"
+        onclick={() => onOpenPropertiesClicked({ name, isDir })}
+      >
         <Info />
         Properties
       </ContextMenu.Item>

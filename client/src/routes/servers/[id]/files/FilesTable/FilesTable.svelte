@@ -13,6 +13,7 @@
     onOpen,
     onDelete = $bindable(),
     onRenameClicked = $bindable(),
+    onOpenPropertiesClicked = $bindable(),
   }: {
     files: FileEntry[];
     search?: string;
@@ -21,6 +22,7 @@
     onOpen: (entry: FileEntry) => void;
     onDelete: (entry: DeleteEntryProps) => void;
     onRenameClicked: (entry: DeleteEntryProps) => void;
+    onOpenPropertiesClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   let selected = $state<string[]>([]);
 
@@ -36,7 +38,11 @@
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
-  const columns = getColumns(onDelete, onRenameClicked);
+  const columns = getColumns(
+    onDelete,
+    onRenameClicked,
+    onOpenPropertiesClicked,
+  );
   const table = createTable({
     features: dataTableFeatures,
     get data() {

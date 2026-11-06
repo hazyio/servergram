@@ -31,6 +31,7 @@
   } from "./SettingOption.svelte";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
   import RenameEntry from "./RenameEntry.svelte";
+  import EntryProperty from "./EntryProperty.svelte";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -62,6 +63,7 @@
   let deleteEntries = $state<DeleteEntryProps[]>([]);
   let newEntryType = $state<NewEntryType>("none");
   let renameOldName = $state<null | string>(null);
+  let openEntryProperties = $state<null | string>(null);
 
   function stop() {
     stopWatch();
@@ -308,6 +310,11 @@
 />
 <NewEntry serverId={Number(params.id)} bind:type={newEntryType} {dir} />
 <RenameEntry serverId={Number(params.id)} bind:oldName={renameOldName} {dir} />
+<EntryProperty
+  serverId={Number(params.id)}
+  bind:entryName={openEntryProperties}
+  {dir}
+/>
 
 {#if loading}
   <Loading loading class="mt-20 w-12 h-12" />
@@ -335,6 +342,9 @@
           }}
           onRenameClicked={(entry) => {
             renameOldName = entry.name;
+          }}
+          onOpenPropertiesClicked={(entry) => {
+            openEntryProperties = entry.name;
           }}
         />
       </div>

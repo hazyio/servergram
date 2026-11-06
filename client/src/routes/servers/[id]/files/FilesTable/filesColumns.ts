@@ -4,6 +4,7 @@ import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 import FileName from "./FileName.svelte";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
 import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
+import { formatBytes } from "#lib/utils.ts";
 
 export type FileEntry = components["schemas"]["FileEntry"];
 
@@ -14,15 +15,6 @@ export const isDir = (entry: FileEntry) => entry.kind === KIND_DIR;
 
 const columnHelper = createColumnHelper<DataTableFeatures, FileEntry>();
 
-function formatBytes(bytes: number) {
-  if (bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  );
-  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(bytes / 1024 ** i)} ${units[i]}`;
-}
 
 function formatMode(entry: FileEntry) {
   const mode = entry.mode ?? 0;
@@ -39,6 +31,7 @@ function formatMode(entry: FileEntry) {
 export const getColumns = (
   onDelete: (entry: DeleteEntryProps) => void,
   onRenameClicked: (entry: DeleteEntryProps) => void,
+  onOpenPropertiesClicked: (entry: DeleteEntryProps) => void,
 ) =>
   columnHelper.columns([
     columnHelper.accessor((row) => row.name ?? "", {
@@ -52,8 +45,9 @@ export const getColumns = (
         renderComponent(FileName, {
           name: info.getValue(),
           isDir: isDir(info.row.original),
-          onDelete: (entry: DeleteEntryProps) => onDelete(entry),
-          onRenameClicked: (entry: DeleteEntryProps) => onRenameClicked(entry),
+          onDelete: onDelete,
+          onRenameClicked: onRenameClicked,
+          onOpenPropertiesClicked: onOpenPropertiesClicked,
         }),
     }),
     columnHelper.accessor((row) => row.size ?? 0, {

@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/create-dir-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put create dir in server by ID */
+        put: operations["put-files--create-dir-in-server-id"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/list-in-server/{id}": {
         parameters: {
             query?: never;
@@ -33,6 +50,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/remove-dir-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete remove dir in server by ID */
+        delete: operations["delete-files--remove-dir-in-server-id"];
         options?: never;
         head?: never;
         patch?: never;
@@ -472,6 +506,12 @@ export interface components {
         BooleanResponseBody: {
             value: boolean;
         };
+        CreateDirectoryRequestBody: {
+            /** @description The name of the new directory */
+            name: string;
+            /** @description The path of the directory to create */
+            path: string;
+        };
         CreateGroupRequestBody: {
             /** @description The name of the group */
             name: string;
@@ -616,6 +656,10 @@ export interface components {
             /** @description The URL associated with the notification */
             url: string | null;
         };
+        RemoveDirectoryRequestBody: {
+            /** @description The path of the directory to remove */
+            path: string;
+        };
         SSEError: {
             message: string;
             /** Format: int64 */
@@ -715,6 +759,7 @@ export interface components {
             private: string;
         };
         WatchDirectoryResponse: {
+            entry?: components["schemas"]["FileEntry"];
             /** Format: int32 */
             kind?: number;
             path?: string;
@@ -760,11 +805,45 @@ export interface operations {
             };
         };
     };
+    "put-files--create-dir-in-server-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDirectoryRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "sse-files--list-in-server-id": {
         parameters: {
             query: {
-                /** @description The directory to list, if empty it defaults to home */
-                dir: string;
+                /** @description The directory to watch, if empty it defaults to home */
+                dir?: string;
                 /** @description Include hidden files */
                 include_hidden: boolean;
             };
@@ -819,10 +898,44 @@ export interface operations {
             };
         };
     };
+    "delete-files--remove-dir-in-server-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoveDirectoryRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "sse-files--watch-dir-in-server-id": {
         parameters: {
             query: {
-                /** @description The directory to list, if empty it defaults to home */
+                /** @description The directory to watch, if empty it defaults to home */
                 dir: string;
                 /** @description Include hidden files */
                 include_hidden: boolean;

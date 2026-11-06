@@ -139,7 +139,13 @@ func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_W
 		}
 
 	}()
-
+	getPathEntryInfo := func(path string) (*proto.FileEntry, error) {
+		info, err := os.Stat(path)
+		if err != nil {
+			return nil, err
+		}
+		return toEntry(info), nil
+	}
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -147,7 +153,12 @@ func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_W
 				name := stripDirFromPath(event.Name, req.Path) // remove the directory from the path to save bytes
 				if event.Has(fsnotify.Create) {
 					log.Println("created:", event.Name)
-					stream.Send(&proto.WatchDirectoryResponse{Kind: proto.WatchDirectoryKind_CREATED, Path: name})
+					entry, err := getPathEntryInfo(event.Name)
+					if err != nil {
+						log.Printf("failed to get entry for %q: %v", event.Name, err)
+						continue
+					}
+					stream.Send(&proto.WatchDirectoryResponse{Kind: proto.WatchDirectoryKind_CREATED, Path: name, Entry: entry})
 					watcher.Add(event.Name)
 				} else if event.Has(fsnotify.Remove) {
 					log.Println("deleted:", event.Name)

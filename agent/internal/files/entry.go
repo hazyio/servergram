@@ -34,3 +34,6 @@ func (s *FilesServer) RemoveDirectory(_ context.Context, req *proto.RemoveDirect
 func (s *FilesServer) WatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_WatchDirectoryServer) error {
 	return handleWatchDirectory(req, stream)
 }
+func (s *FilesServer) CreateFile(_ context.Context, req *proto.CreateFileRequest) (*proto.SuccessResponse, error) {
+	return handleCreateFile(req)
+}

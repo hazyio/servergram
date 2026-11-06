@@ -3,12 +3,16 @@
   import * as Popover from "#lib/components/ui/popover/index.js";
   import {
     EllipsisVertical,
-    FolderPlus,
     FilePlus,
-    RefreshCcw,
-    Upload,
-    Download,
+    FolderPlus,
+    Upload
   } from "@lucide/svelte";
+  import type { NewEntryType } from "./NewEntry.svelte";
+  let {
+    entryType = $bindable(),
+  }: {
+    entryType: NewEntryType;
+  } = $props();
 </script>
 
 <Popover.Root>
@@ -25,15 +29,9 @@
       <Button
         variant="ghost"
         class="justify-start py-4 gap-2 w-full"
-        onclick={() => {}}
-      >
-        <FolderPlus class="size-4" />
-        New Folder
-      </Button>
-      <Button
-        variant="ghost"
-        class="justify-start py-4 gap-2 w-full"
-        onclick={() => {}}
+        onclick={() => {
+          entryType = "file";
+        }}
       >
         <FilePlus class="size-4" />
         New File
@@ -41,10 +39,12 @@
       <Button
         variant="ghost"
         class="justify-start py-4 gap-2 w-full"
-        onclick={() => {}}
+        onclick={() => {
+          entryType = "directory";
+        }}
       >
-        <Upload class="size-4" />
-        Upload
+        <FolderPlus class="size-4" />
+        New Directory
       </Button>
 
       <Button
@@ -52,8 +52,8 @@
         class="justify-start py-4 gap-2 w-full"
         onclick={() => {}}
       >
-        <RefreshCcw class="size-4" />
-        Refresh
+        <Upload class="size-4" />
+        Upload
       </Button>
     </div>
   </Popover.Content>

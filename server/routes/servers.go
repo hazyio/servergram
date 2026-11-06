@@ -181,7 +181,7 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 			return nil
 		}
 		if err := send.Data(chunk); err != nil {
-			return nil
+			return nil 
 		}
 
 	}
@@ -224,7 +224,6 @@ func watchTopProcesses(data internal.RouteData[models.WatchTopProcessesRequest],
 	}
 
 }
-
 func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoResponse, error) {
 	id := data.Input.ID
 	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)

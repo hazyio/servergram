@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package proto;
+
 option go_package = "hazyio.com/servergram/shared/proto;proto";
 
 enum FileEntryKind {
@@ -25,7 +26,6 @@ message ListFilesChunkResponse {
   repeated FileEntry entries = 1; // batches of ~500
   string resolved_path = 2; // first chunk only
   bool done = 3;
-
 }
 
 message ListFilesRequest {
@@ -54,11 +54,16 @@ enum WatchDirectoryKind {
 message WatchDirectoryResponse {
   WatchDirectoryKind kind = 1;
   string path = 2;
+  FileEntry entry = 3;
+}
+message CreateFileRequest {
+  string path = 1;
+  string name = 2;
 }
 service Files {
   rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
   rpc CreateDirectory(CreateDirectoryRequest) returns (SuccessResponse);
   rpc RemoveDirectory(RemoveDirectoryRequest) returns (SuccessResponse);
+  rpc CreateFile(CreateFileRequest) returns (SuccessResponse);
   rpc WatchDirectory(WatchDirectoryRequest) returns (stream WatchDirectoryResponse);
 }
-

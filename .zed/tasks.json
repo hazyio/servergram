@@ -1,0 +1,47 @@
+// Project-local run tasks for scripts/
+//
+// Run them with `task: spawn` (or the task picker) in Zed.
+// For more documentation on task configuration, see:
+// https://zed.dev/docs/tasks
+[
+  {
+    "label": "scripts: build agent to server",
+    "command": "./scripts/build-agent-to-server.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "scripts: generate OpenAPI TS types",
+    "command": "./generate-openapi-ts.sh",
+    "cwd": "$ZED_WORKTREE_ROOT/scripts",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "scripts: generate protobuf",
+    "command": "./generate-protobuf.sh",
+    "cwd": "$ZED_WORKTREE_ROOT/scripts",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "scripts: generate websockets TS",
+    "command": "./generate-websockets-ts.sh",
+    "cwd": "$ZED_WORKTREE_ROOT/scripts",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "scripts: run agent",
+    "command": "./scripts/run-agent.sh",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]

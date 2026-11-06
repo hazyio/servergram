@@ -546,6 +546,7 @@ type WatchDirectoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          WatchDirectoryKind     `protobuf:"varint,1,opt,name=kind,proto3,enum=proto.WatchDirectoryKind" json:"kind,omitempty"`
 	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	Entry         *FileEntry             `protobuf:"bytes,3,opt,name=entry,proto3" json:"entry,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -594,6 +595,13 @@ func (x *WatchDirectoryResponse) GetPath() string {
 	return ""
 }
 
+func (x *WatchDirectoryResponse) GetEntry() *FileEntry {
+	if x != nil {
+		return x.Entry
+	}
+	return nil
+}
+
 var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
@@ -628,10 +636,11 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"R\n" +
 	"\x15WatchDirectoryRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12%\n" +
-	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden\"[\n" +
+	"\x0einclude_hidden\x18\x02 \x01(\bR\rincludeHidden\"\x83\x01\n" +
 	"\x16WatchDirectoryResponse\x12-\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x19.proto.WatchDirectoryKindR\x04kind\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path*:\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x12&\n" +
+	"\x05entry\x18\x03 \x01(\v2\x10.proto.FileEntryR\x05entry*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +
@@ -677,19 +686,20 @@ var file_proto_files_proto_depIdxs = []int32{
 	0, // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
 	2, // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
 	1, // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
-	4, // 3: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	5, // 4: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
-	7, // 5: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
-	8, // 6: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
-	3, // 7: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	6, // 8: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
-	6, // 9: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
-	9, // 10: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
+	4, // 4: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	5, // 5: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7, // 6: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	8, // 7: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	3, // 8: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6, // 9: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
+	6, // 10: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
+	9, // 11: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }

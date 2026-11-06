@@ -6,28 +6,30 @@
   import type { components } from "#lib/types/request-schema.d.ts";
   import { untrack } from "svelte";
 
+  import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
   import {
     ChevronLeft,
     ChevronRight,
+    Eye,
+    EyeOff,
     FileIcon,
     FolderIcon,
     Loader,
     RefreshCcw,
     Upload,
-    Eye,
-    EyeOff,
   } from "@lucide/svelte";
   import type { PageProps } from "./$types";
-  import { isDir, type FileEntry } from "./FilesTable/filesColumns";
-  import FilesTable from "./FilesTable/FilesTable.svelte";
-  import SettingOption, {
-    type SettingOptionProps,
-  } from "./SettingOption.svelte";
   import Actions from "./Actions.svelte";
-  import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
   import DeleteEntriesDialog, {
     type DeleteEntryProps,
   } from "./DeleteEntriesDialog.svelte";
+  import { isDir, type FileEntry } from "./FilesTable/filesColumns";
+  import FilesTable from "./FilesTable/FilesTable.svelte";
+  import NewEntry, { type NewEntryType } from "./NewEntry.svelte";
+  import SettingOption, {
+    type SettingOptionProps,
+  } from "./SettingOption.svelte";
+  import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -45,18 +47,19 @@
     askBeforeDelete: true,
   });
   let search = $state("");
-  let dir = $state("");
+  let dir = $state(severPageInfo.lastVisitedDir);
   let history = $state([""]);
   let historyIndex = $state(0);
   let loading = $state(true);
   let updating = $state(false);
-  let deleteEntries = $state<DeleteEntryProps[]>([]);
   let loadError = $state<string | null>(null);
   let fileStreamError = $state<string | null>(null);
   let files: FileEntry[] = $state([]);
   let eventSource: EventSource | undefined;
   let watchSource: EventSource | undefined;
   let watching = $state(false);
+  let deleteEntries = $state<DeleteEntryProps[]>([]);
+  let newEntryType = $state<NewEntryType>("none");
 
   function stop() {
     stopWatch();
@@ -93,7 +96,9 @@
         const chunk = JSON.parse((event as MessageEvent<string>).data) as Chunk;
         if (chunk.entries?.length) files = [...files, ...chunk.entries];
         if (chunk.resolved_path) {
+          // update dir and last visited dir
           dir = chunk.resolved_path;
+          severPageInfo.lastVisitedDir = chunk.resolved_path;
           history[historyIndex] = dir;
         }
         loading = false;
@@ -202,10 +207,15 @@
       console.warn("Watch stream closed");
     };
   }
-
+  function removeFile(pathName: string) {
+    files = files.filter((f) => f.name !== pathName);
+  }
   function handleWatchEvent(event: WatchEvent) {
-    const { kind, path } = event;
-    const fullPath = `${dir.replace(/\/+$/, "")}/${path}`.replace(/\/+/g, "/");
+    const {
+      kind,
+      path,
+      entry,
+    }: components["schemas"]["WatchDirectoryResponse"] = event;
 
     switch (kind) {
       case 0: // MODIFIED
@@ -215,18 +225,25 @@
         break;
       case 1: // CREATED
         // Add the new file/directory to the list
-        // We'll reload for simplicity, but could optimize by adding the entry
-        loadFiles();
+        if (entry) {
+          files = [...files, entry];
+        } else {
+          loadFiles();
+        }
         break;
       case 2: // DELETED
         // Remove the file/directory from the list
-        files = files.filter((f) => {
-          const filePath = `${dir.replace(/\/+$/, "")}/${f.name}`.replace(
-            /\/+/g,
-            "/",
-          );
-          return filePath !== fullPath;
-        });
+        if (path) {
+          removeFile(path);
+        }
+        // files = files.filter((f) => {
+        //   const filePath = `${dir.replace(/\/+$/, "")}/${f.name}`.replace(
+        //     /\/+/g,
+        //     "/",
+        //   );
+
+        //   return filePath !== fullPath;
+        // });
         break;
     }
   }
@@ -236,14 +253,6 @@
     untrack(loadFiles);
     return stop;
   });
-
-  // $effect(() => {
-  //   // Start watching when directory loads successfully
-  //   if (!loading && !loadError && dir) {
-  //     watchFiles();
-  //   }
-  //   return stopWatch;
-  // });
 </script>
 
 <div class="flex gap-2">
@@ -279,7 +288,7 @@
     bind:askBeforeDelete={settings.askBeforeDelete}
   />
   <Button variant="outline" onclick={loadFiles}><RefreshCcw /></Button>
-  <Actions />
+  <Actions bind:entryType={newEntryType} />
 
   <Button
     variant={watching ? "default" : "outline"}
@@ -295,9 +304,19 @@
     <span class="hidden sm:inline">{watching ? "Watching" : "Watch"}</span>
   </Button>
 </div>
-<DeleteEntriesDialog {dir} items={deleteEntries} onDeleted={() => {}} />
+
+<DeleteEntriesDialog
+  serverId={Number(params.id)}
+  {dir}
+  bind:items={deleteEntries}
+  onDeleted={(name) => {
+    // client-side update, backend will send an update but we cannot depend on that since watching can be turned off
+    removeFile(name);
+  }}
+/>
+<NewEntry serverId={Number(params.id)} bind:type={newEntryType} {dir} />
 {#if loading}
-  <Loading loading class="my-7" />
+  <Loading loading class="mt-20 w-12 h-12" />
 {:else if loadError}
   <ErrorSection message={loadError} onRetry={loadFiles} class="my-7" />
 {:else}
@@ -308,9 +327,9 @@
     </div>
   {/if}
 
-  <div class="p-4 mb-10 px-12">
-    <ContextMenu.Root>
-      <ContextMenu.Trigger>
+  <ContextMenu.Root>
+    <ContextMenu.Trigger
+      ><div class="p-4 mb-10 px-12 min-h-[70vh]">
         <FilesTable
           {files}
           {search}
@@ -321,31 +340,41 @@
             deleteEntries = [entry];
           }}
         />
-      </ContextMenu.Trigger>
-      <ContextMenu.Content class="min-h-30 w-50">
-        <ContextMenu.Group>
-          <ContextMenu.Label
-            >Actions on <span class="truncate" title={dir}>{dir}</span
-            ></ContextMenu.Label
-          >
-          <ContextMenu.Item class="py-2">
-            <FileIcon />
-            New File
-          </ContextMenu.Item>
-          <ContextMenu.Item class="py-2">
-            <FolderIcon />
-            New Folder
-          </ContextMenu.Item>
-          <ContextMenu.Item class="py-2">
-            <Upload />
-            Upload
-          </ContextMenu.Item>
-          <ContextMenu.Item class="py-2" onclick={loadFiles}>
-            <RefreshCcw />
-            Refresh
-          </ContextMenu.Item>
-        </ContextMenu.Group>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
-  </div>
+      </div>
+    </ContextMenu.Trigger>
+    <ContextMenu.Content class="min-h-30 w-50">
+      <ContextMenu.Group>
+        <ContextMenu.Label
+          >Actions on <span class="truncate" title={dir}>{dir}</span
+          ></ContextMenu.Label
+        >
+        <ContextMenu.Item
+          class="py-2"
+          onclick={() => {
+            newEntryType = "file";
+          }}
+        >
+          <FileIcon />
+          New File
+        </ContextMenu.Item>
+        <ContextMenu.Item
+          class="py-2"
+          onclick={() => {
+            newEntryType = "directory";
+          }}
+        >
+          <FolderIcon />
+          New Directory
+        </ContextMenu.Item>
+        <ContextMenu.Item class="py-2">
+          <Upload />
+          Upload
+        </ContextMenu.Item>
+        <ContextMenu.Item class="py-2" onclick={loadFiles}>
+          <RefreshCcw />
+          Refresh
+        </ContextMenu.Item>
+      </ContextMenu.Group>
+    </ContextMenu.Content>
+  </ContextMenu.Root>
 {/if}

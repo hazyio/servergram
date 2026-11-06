@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/get-path-properties-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get get path properties in server by ID */
+        get: operations["get-files--get-path-properties-in-server-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/list-in-server/{id}": {
         parameters: {
             query?: never;
@@ -719,6 +736,9 @@ export interface components {
             /** @description The URL associated with the notification */
             url: string | null;
         };
+        PathPropertiesResponseBody: {
+            Enity: components["schemas"]["FileEntry"];
+        };
         RemoveDirectoryRequestBody: {
             /** @description The path of the directory to remove */
             path: string;
@@ -932,6 +952,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-files--get-path-properties-in-server-id": {
+        parameters: {
+            query: {
+                /** @description The current path of the file/directory */
+                path: string;
+                /** @description The name of the file/directory */
+                name: string;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PathPropertiesResponseBody"];
+                };
             };
             /** @description Error */
             default: {

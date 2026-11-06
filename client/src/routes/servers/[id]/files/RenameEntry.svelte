@@ -71,6 +71,11 @@
     entryName = "";
     oldName = null;
   }
+  function close() {
+    entryName = "";
+    formError.name = "";
+    oldName = null;
+  }
   $effect(() => {
     entryName = oldName ?? "";
   });
@@ -79,7 +84,9 @@
 <Dialog.Root open={!!oldName}>
   <Dialog.Content
     showCloseButton={false}
-    onEscapeKeydown={(event) => event.preventDefault()}
+    onEscapeKeydown={() => {
+      close()
+    }}
     onInteractOutside={(event) => event.preventDefault()}
   >
     <Dialog.Header>
@@ -115,11 +122,7 @@
     <Dialog.Footer>
       <Button
         disabled={submitting}
-        onclick={() => {
-          entryName = "";
-          formError.name = "";
-          oldName = null;
-        }}>Cancel</Button
+        onclick={close}>Cancel</Button
       >
       <Button
         disabled={submitting}

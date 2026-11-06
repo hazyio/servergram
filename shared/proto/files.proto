@@ -69,6 +69,24 @@ message RenamePathRequest {
   string old_name = 2;
   string new_name = 3;
 }
+
+message PathPropertiesRequest {
+  string path = 1;
+  string name = 2;
+}
+message PathPropertiesResponse {
+  FileEntry entry = 1;
+}
+
+message ReadFileRequest {
+  string path = 1;
+  string name = 2;
+  int64 max_bytes_size = 3;
+}
+message ReadFileResponse {
+  bytes data = 2;
+  bool done = 3;
+}
 service Files {
   rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
   rpc CreateDirectory(CreateDirectoryRequest) returns (SuccessResponse);
@@ -77,4 +95,6 @@ service Files {
   rpc RemoveFile(RemoveFileRequest) returns (SuccessResponse);
   rpc WatchDirectory(WatchDirectoryRequest) returns (stream WatchDirectoryResponse);
   rpc RenamePath(RenamePathRequest) returns (SuccessResponse);
+  rpc PathProperties(PathPropertiesRequest) returns (PathPropertiesResponse);
+  rpc ReadFile(ReadFileRequest) returns (stream ReadFileResponse);
 }

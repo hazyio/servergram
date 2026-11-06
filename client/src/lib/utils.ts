@@ -1,4 +1,15 @@
-import type { EntryKind } from "./types";
+import {
+  MODE_CHAR_DEV,
+  MODE_DEVICE,
+  MODE_DIR,
+  MODE_NAMED_PIPE,
+  MODE_SETGID,
+  MODE_SETUID,
+  MODE_SOCKET,
+  MODE_STICKY,
+  MODE_SYMLINK,
+  type FileEntry
+} from "./types";
 
 export { cn } from "cn";
 
@@ -32,13 +43,33 @@ export function formatBytes(bytes: number) {
   return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(bytes / 1024 ** i)} ${units[i]}`;
 }
 
+export function formatMode(entry: FileEntry): string {
+  const mode = (entry.mode ?? 0) >>> 0; // force unsigned 32-bit
+  const has = (flag: number) => (mode & flag) !== 0;
+  console.log(mode);
+  let type = "-";
+  if (has(MODE_DIR)) type = "d";
+  else if (has(MODE_SYMLINK)) type = "l";
+  else if (has(MODE_NAMED_PIPE)) type = "p";
+  else if (has(MODE_SOCKET)) type = "s";
+  else if (has(MODE_DEVICE)) type = has(MODE_CHAR_DEV) ? "c" : "b";
 
-export function formatMode(mode: number, kind: EntryKind) {
-  const type = kind === "directory" ? "d" : kind === "symlink" ? "l" : "-";
-  const bits = "rwxrwxrwx";
-  let out = type;
-  for (let i = 0; i < 9; i++) {
-    out += mode & (1 << (8 - i)) ? bits[i] : "-";
-  }
-  return out;
+  const triplet = (shift: number, special: boolean, sChar: string) => {
+    const r = mode & (1 << (shift + 2)) ? "r" : "-";
+    const w = mode & (1 << (shift + 1)) ? "w" : "-";
+    const x = (mode & (1 << shift)) !== 0;
+    const xc = special ? (x ? sChar : sChar.toUpperCase()) : x ? "x" : "-";
+    return r + w + xc;
+  };
+
+  return (
+    type +
+    triplet(6, has(MODE_SETUID), "s") +
+    triplet(3, has(MODE_SETGID), "s") +
+    triplet(0, has(MODE_STICKY), "t")
+  );
+}
+export function joinPath(dir: string, name: string): string {
+  const base = dir.endsWith("/") ? dir.slice(0, -1) : dir;
+  return `${base}/${name}`; // dir "/" -> "" + "/name" = "/name"
 }

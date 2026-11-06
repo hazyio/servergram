@@ -2,6 +2,7 @@ package files
 
 import (
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -275,7 +276,22 @@ func handleDeleteFile(req *proto.RemoveFileRequest) (*proto.SuccessResponse, err
 
 	return &proto.SuccessResponse{Success: true}, nil
 }
-
+func handlePathProperties(req *proto.PathPropertiesRequest) (*proto.PathPropertiesResponse, error) {
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
+	}
+	_, err = probePathExists(newPath)
+	if err != nil {
+		return nil, err
+	}
+	readPath := filepath.Join(newPath, req.Name)
+	entry, err := probePathExists(readPath)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.PathPropertiesResponse{Entry: toEntry(entry)}, nil
+}
 func handleRenamePath(req *proto.RenamePathRequest) (*proto.SuccessResponse, error) {
 	newPath, err := validateAndCleanPath(req.Path)
 	if err != nil {
@@ -318,5 +334,60 @@ func handleRenamePath(req *proto.RenamePathRequest) (*proto.SuccessResponse, err
 	}
 
 	return &proto.SuccessResponse{Success: true}, nil
+
+}
+
+func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServer) error {
+
+	newPath, err := validateAndCleanPath(req.Path)
+
+	if err != nil {
+		return err
+	}
+	_, err = probePathExists(newPath)
+	if err != nil {
+
+		return err
+	}
+	filePath := filepath.Join(newPath, req.Name)
+	file, err := probePathExists(filePath)
+	if err != nil {
+		return err
+	}
+	if file.IsDir() {
+		return status.Errorf(codes.InvalidArgument, "path '%q' is of type directory, a file was expected ", req.Path)
+	}
+	if file.Size() > req.MaxBytesSize {
+		// Do not stream files larger than the requested max size.
+		return status.Errorf(codes.OutOfRange, "File cannot be read, too large, download %q", req.Name)
+	}
+	buf := make([]byte, 64*1024)
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		default:
+			n, err := f.Read(buf)
+			if err != nil && err != io.EOF {
+				return err
+			}
+			if n > 0 {
+				if sendErr := stream.Send(&proto.ReadFileResponse{Data: buf[:n], Done: false}); sendErr != nil {
+					return sendErr
+				}
+			} else if err == io.EOF {
+				// send done
+				stream.Send(&proto.ReadFileResponse{Done: true})
+				return nil
+			}
+		}
+
+	}
 
 }

@@ -2,8 +2,9 @@
   import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import * as Table from "#lib/components/ui/table/index.js";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
-  import { getColumns, isDir, type FileEntry } from "./filesColumns";
+  import { getColumns, isDir } from "./filesColumns";
   import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
+  import type { FileEntry } from "#lib/types/index.ts";
 
   let {
     files,
@@ -14,6 +15,7 @@
     onDelete = $bindable(),
     onRenameClicked = $bindable(),
     onOpenPropertiesClicked = $bindable(),
+    onViewClicked = $bindable(),
   }: {
     files: FileEntry[];
     search?: string;
@@ -23,6 +25,7 @@
     onDelete: (entry: DeleteEntryProps) => void;
     onRenameClicked: (entry: DeleteEntryProps) => void;
     onOpenPropertiesClicked: (entry: DeleteEntryProps) => void;
+    onViewClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   let selected = $state<string[]>([]);
 
@@ -42,6 +45,7 @@
     onDelete,
     onRenameClicked,
     onOpenPropertiesClicked,
+    onViewClicked,
   );
   const table = createTable({
     features: dataTableFeatures,

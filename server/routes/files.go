@@ -29,7 +29,9 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server.Put("/create-file-in-server/{id}", http.StatusOK, createFileInServer)
 	server.Delete("/remove-file-in-server/{id}", http.StatusOK, removeFileInServer)
 	server.Patch("/rename-path-in-server/{id}", http.StatusOK, renamePathInServer)
-	
+	server.Get("/get-path-properties-in-server/{id}", http.StatusOK, getPathPropertiesInServer)
+	server.SSE("/read-file-in-server/{id}", http.StatusOK, readFileInServer)
+
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -213,4 +215,69 @@ func renamePathInServer(data internal.RouteData[models.RenamePathRequest]) (*Emp
 
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Renamed path \"%s\" to \"%s\" in server \"%d\"", data.Input.Body.OldName, data.Input.Body.NewName, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
+}
+
+func getPathPropertiesInServer(data internal.RouteData[models.PathPropertiesRequest]) (*models.PathPropertiesResponse, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	resp, err := resource.PathProperties(ctx, &proto.PathPropertiesRequest{
+		Path: data.Input.Path,
+		Name: data.Input.Name,
+	})
+	if err != nil {
+		slog.Error("Failed to get path properties from server", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+	result := &models.PathPropertiesResponse{
+		Body: struct {
+			Enity *proto.FileEntry
+		}{
+			Enity: resp.Entry,
+		},
+	}
+	return result, nil
+}
+func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.Sender) *proto.ListFilesChunkResponse {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		slog.Error("Failed to get files connected", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
+		return nil
+	}
+	defer cancel()
+	stream, err := resource.ReadFile(ctx, &proto.ReadFileRequest{
+		Path:         data.Input.Path,
+		Name:         data.Input.Name,
+		MaxBytesSize: data.Input.MaxBytesSize,
+	})
+	if err != nil {
+		slog.Error("Failed to read file", "error", err)
+		internal.SendSSEError(send, err)
+		return nil
+	}
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("read file \"%s\" in server \"%d\"", data.Input.Name, data.Input.ID), data.Database)
+
+	for {
+		chunk, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			// Stream ended without a done chunk; tell the client to stop reconnecting.
+			_ = send.Data(&proto.ReadFileResponse{Done: true})
+			return nil
+
+		}
+		if err != nil {
+			slog.Error("Failed to receive file chunk", "error", err)
+			internal.SendSSEError(send, err)
+			return nil
+		}
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
+		if chunk.Done {
+			return nil
+		}
+	}
 }

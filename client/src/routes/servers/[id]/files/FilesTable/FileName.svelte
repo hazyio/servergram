@@ -13,12 +13,14 @@
     onDelete,
     onRenameClicked,
     onOpenPropertiesClicked,
+    onViewClicked,
   }: {
     name: string;
     isDir: boolean;
     onDelete: (entry: DeleteEntryProps) => void;
     onRenameClicked: (entry: DeleteEntryProps) => void;
     onOpenPropertiesClicked: (entry: DeleteEntryProps) => void;
+    onViewClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   const icon = $derived(getFileIcon(name, isDir));
 </script>
@@ -38,7 +40,10 @@
           Open
         </ContextMenu.Item>
       {:else}
-        <ContextMenu.Item class="py-2 my-1">
+        <ContextMenu.Item
+          class="py-2 my-1"
+          onclick={() => onViewClicked({ name, isDir })}
+        >
           <Eye />
           View
         </ContextMenu.Item>

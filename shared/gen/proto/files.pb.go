@@ -766,6 +766,214 @@ func (x *RenamePathRequest) GetNewName() string {
 	return ""
 }
 
+type PathPropertiesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PathPropertiesRequest) Reset() {
+	*x = PathPropertiesRequest{}
+	mi := &file_proto_files_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PathPropertiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PathPropertiesRequest) ProtoMessage() {}
+
+func (x *PathPropertiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PathPropertiesRequest.ProtoReflect.Descriptor instead.
+func (*PathPropertiesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PathPropertiesRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *PathPropertiesRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type PathPropertiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entry         *FileEntry             `protobuf:"bytes,1,opt,name=entry,proto3" json:"entry,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PathPropertiesResponse) Reset() {
+	*x = PathPropertiesResponse{}
+	mi := &file_proto_files_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PathPropertiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PathPropertiesResponse) ProtoMessage() {}
+
+func (x *PathPropertiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PathPropertiesResponse.ProtoReflect.Descriptor instead.
+func (*PathPropertiesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PathPropertiesResponse) GetEntry() *FileEntry {
+	if x != nil {
+		return x.Entry
+	}
+	return nil
+}
+
+type ReadFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MaxBytesSize  int64                  `protobuf:"varint,3,opt,name=max_bytes_size,json=maxBytesSize,proto3" json:"max_bytes_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReadFileRequest) Reset() {
+	*x = ReadFileRequest{}
+	mi := &file_proto_files_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReadFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadFileRequest) ProtoMessage() {}
+
+func (x *ReadFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadFileRequest.ProtoReflect.Descriptor instead.
+func (*ReadFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ReadFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ReadFileRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ReadFileRequest) GetMaxBytesSize() int64 {
+	if x != nil {
+		return x.MaxBytesSize
+	}
+	return 0
+}
+
+type ReadFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReadFileResponse) Reset() {
+	*x = ReadFileResponse{}
+	mi := &file_proto_files_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReadFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadFileResponse) ProtoMessage() {}
+
+func (x *ReadFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadFileResponse.ProtoReflect.Descriptor instead.
+func (*ReadFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ReadFileResponse) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *ReadFileResponse) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
 var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
@@ -814,7 +1022,19 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x11RenamePathRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
 	"\bold_name\x18\x02 \x01(\tR\aoldName\x12\x19\n" +
-	"\bnew_name\x18\x03 \x01(\tR\anewName*:\n" +
+	"\bnew_name\x18\x03 \x01(\tR\anewName\"?\n" +
+	"\x15PathPropertiesRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"@\n" +
+	"\x16PathPropertiesResponse\x12&\n" +
+	"\x05entry\x18\x01 \x01(\v2\x10.proto.FileEntryR\x05entry\"_\n" +
+	"\x0fReadFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12$\n" +
+	"\x0emax_bytes_size\x18\x03 \x01(\x03R\fmaxBytesSize\":\n" +
+	"\x10ReadFileResponse\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\fR\x04data\x12\x12\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +
@@ -823,7 +1043,7 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x12WatchDirectoryKind\x12\f\n" +
 	"\bMODIFIED\x10\x00\x12\v\n" +
 	"\aCREATED\x10\x01\x12\v\n" +
-	"\aDELETED\x10\x022\xf3\x03\n" +
+	"\aDELETED\x10\x022\x81\x05\n" +
 	"\x05Files\x12E\n" +
 	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01\x12H\n" +
 	"\x0fCreateDirectory\x12\x1d.proto.CreateDirectoryRequest\x1a\x16.proto.SuccessResponse\x12H\n" +
@@ -834,7 +1054,9 @@ const file_proto_files_proto_rawDesc = "" +
 	"RemoveFile\x12\x18.proto.RemoveFileRequest\x1a\x16.proto.SuccessResponse\x12O\n" +
 	"\x0eWatchDirectory\x12\x1c.proto.WatchDirectoryRequest\x1a\x1d.proto.WatchDirectoryResponse0\x01\x12>\n" +
 	"\n" +
-	"RenamePath\x12\x18.proto.RenamePathRequest\x1a\x16.proto.SuccessResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"RenamePath\x12\x18.proto.RenamePathRequest\x1a\x16.proto.SuccessResponse\x12M\n" +
+	"\x0ePathProperties\x12\x1c.proto.PathPropertiesRequest\x1a\x1d.proto.PathPropertiesResponse\x12=\n" +
+	"\bReadFile\x12\x16.proto.ReadFileRequest\x1a\x17.proto.ReadFileResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -849,7 +1071,7 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proto_files_proto_goTypes = []any{
 	(FileEntryKind)(0),             // 0: proto.FileEntryKind
 	(WatchDirectoryKind)(0),        // 1: proto.WatchDirectoryKind
@@ -864,31 +1086,40 @@ var file_proto_files_proto_goTypes = []any{
 	(*CreateFileRequest)(nil),      // 10: proto.CreateFileRequest
 	(*RemoveFileRequest)(nil),      // 11: proto.RemoveFileRequest
 	(*RenamePathRequest)(nil),      // 12: proto.RenamePathRequest
+	(*PathPropertiesRequest)(nil),  // 13: proto.PathPropertiesRequest
+	(*PathPropertiesResponse)(nil), // 14: proto.PathPropertiesResponse
+	(*ReadFileRequest)(nil),        // 15: proto.ReadFileRequest
+	(*ReadFileResponse)(nil),       // 16: proto.ReadFileResponse
 }
 var file_proto_files_proto_depIdxs = []int32{
 	0,  // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
 	2,  // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
 	1,  // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
 	2,  // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
-	4,  // 4: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	5,  // 5: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
-	7,  // 6: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
-	10, // 7: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
-	11, // 8: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
-	8,  // 9: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
-	12, // 10: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
-	3,  // 11: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	6,  // 12: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
-	6,  // 13: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
-	6,  // 14: proto.Files.CreateFile:output_type -> proto.SuccessResponse
-	6,  // 15: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
-	9,  // 16: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
-	6,  // 17: proto.Files.RenamePath:output_type -> proto.SuccessResponse
-	11, // [11:18] is the sub-list for method output_type
-	4,  // [4:11] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	2,  // 4: proto.PathPropertiesResponse.entry:type_name -> proto.FileEntry
+	4,  // 5: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	5,  // 6: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7,  // 7: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	10, // 8: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
+	11, // 9: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
+	8,  // 10: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	12, // 11: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
+	13, // 12: proto.Files.PathProperties:input_type -> proto.PathPropertiesRequest
+	15, // 13: proto.Files.ReadFile:input_type -> proto.ReadFileRequest
+	3,  // 14: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6,  // 15: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
+	6,  // 16: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
+	6,  // 17: proto.Files.CreateFile:output_type -> proto.SuccessResponse
+	6,  // 18: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
+	9,  // 19: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	6,  // 20: proto.Files.RenamePath:output_type -> proto.SuccessResponse
+	14, // 21: proto.Files.PathProperties:output_type -> proto.PathPropertiesResponse
+	16, // 22: proto.Files.ReadFile:output_type -> proto.ReadFileResponse
+	14, // [14:23] is the sub-list for method output_type
+	5,  // [5:14] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }
@@ -902,7 +1133,7 @@ func file_proto_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_files_proto_rawDesc), len(file_proto_files_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   11,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

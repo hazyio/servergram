@@ -23,7 +23,7 @@
   import DeleteEntriesDialog, {
     type DeleteEntryProps,
   } from "./DeleteEntriesDialog.svelte";
-  import { isDir, type FileEntry } from "./FilesTable/filesColumns";
+  import { isDir } from "./FilesTable/filesColumns";
   import FilesTable from "./FilesTable/FilesTable.svelte";
   import NewEntry, { type NewEntryType } from "./NewEntry.svelte";
   import SettingOption, {
@@ -32,6 +32,9 @@
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
   import RenameEntry from "./RenameEntry.svelte";
   import EntryProperty from "./EntryProperty.svelte";
+  import ViewFile from "./ViewFile.svelte";
+  import type { FileEntry } from "#lib/types/index.ts";
+  import { joinPath } from "#lib/utils.ts";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -64,6 +67,7 @@
   let newEntryType = $state<NewEntryType>("none");
   let renameOldName = $state<null | string>(null);
   let openEntryProperties = $state<null | string>(null);
+  let openViewFile = $state<null | string>(null);
 
   function stop() {
     stopWatch();
@@ -157,8 +161,16 @@
   }
 
   function openEntry(entry: FileEntry) {
-    if (!isDir(entry) || !entry.name) return;
-    navigate(`${dir.replace(/\/+$/, "")}/${entry.name}`);
+    if (!entry.name) {
+      console.error("Entry has no name", entry);
+      return;
+    }
+    if (!isDir(entry)) {
+      // open file dialog
+      openViewFile = entry.name;
+      return;
+    }
+    navigate(joinPath(dir, entry.name));
   }
 
   function watchFiles() {
@@ -315,6 +327,7 @@
   bind:entryName={openEntryProperties}
   {dir}
 />
+<ViewFile serverId={Number(params.id)} bind:entryName={openViewFile} {dir} />
 
 {#if loading}
   <Loading loading class="mt-20 w-12 h-12" />
@@ -345,6 +358,9 @@
           }}
           onOpenPropertiesClicked={(entry) => {
             openEntryProperties = entry.name;
+          }}
+          onViewClicked={(entry) => {
+            openViewFile = entry.name;
           }}
         />
       </div>

@@ -1,5 +1,7 @@
 package models
 
+import "hazyio.com/servergram/shared/gen/proto"
+
 type FileListRequest struct {
 	ID            uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
 	Dir           string `query:"dir" doc:"The directory to watch, if empty it defaults to home"`
@@ -47,4 +49,22 @@ type RenamePathRequest struct {
 		NewName string `json:"new_name" required:"true" doc:"The new name for the file/directory"`
 	} `json:"body"`
 	ID uint `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+}
+
+type PathPropertiesRequest struct {
+	Path string `query:"path" required:"true" doc:"The current path of the file/directory"`
+	Name string `query:"name" required:"true" doc:"The name of the file/directory"`
+	ID   uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+}
+type PathPropertiesResponse struct {
+	Body struct {
+		Enity *proto.FileEntry
+	}
+}
+
+type ReadFileRequest struct {
+	Path         string `query:"path" required:"true" doc:"The path of the file to read"`
+	Name         string `query:"name" required:"true" doc:"The name of the file to read"`
+	MaxBytesSize int64  `query:"max_bytes_size" required:"true" doc:"The maximum number of bytes to read from the file"`
+	ID           uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
 }

@@ -7,28 +7,17 @@
   import Loading from "#lib/components/base/loading.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { formatBytes, formatMode } from "#lib/utils.ts";
-  import type { EntryKind } from "#lib/types/index.ts";
+  import type { EntryKind, FileEntry } from "#lib/types/index.ts";
+  import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
 
-  interface EntryProperties {
-    name: string;
-    path: string;
-    kind: EntryKind;
-    size: number;
-    modifiedUnixNs: number;
-    mode: number;
-    uid: number;
-    gid: number;
-    hidden: boolean;
-    symlinkTarget?: string;
-  }
-
-  const kindLabels: Record<EntryKind, string> = {
-    file: "File",
-    directory: "Directory",
-    symlink: "Symlink",
+  const kindLabels: Record<number, string> = {
+    0: "File",
+    1: "Directory",
+    2: "Symlink",
   };
 
   let {
+    serverId,
     dir,
     entryName = $bindable(),
   }: {
@@ -39,30 +28,33 @@
   let loading = $state(false);
   let loaded = $state(false);
   let loadError = $state<string | null>(null);
-  let entry = $state<EntryProperties | null>(null);
+  let entry = $state<FileEntry | null>(null);
 
   async function loadProperties() {
+    if (!entryName) return;
     loading = true;
     loadError = null;
-    try {
-      // TODO: replace with a request for the entry's real properties
-      entry = {
-        name: entryName ?? "",
-        path: `${dir.replace(/\/+$/, "")}/${entryName ?? ""}`,
-        kind: "file",
-        size: 24_576,
-        modifiedUnixNs: Date.now() * 1e6,
-        mode: 0o644,
-        uid: 1000,
-        gid: 1000,
-        hidden: entryName?.startsWith(".") ?? false,
-      };
-      loaded = true;
-    } catch (error) {
-      loadError = error instanceof Error ? error.message : String(error);
-    } finally {
-      loading = false;
+    const { data, error } = await NewRequestClient().GET(
+      "/api/files/get-path-properties-in-server/{id}",
+      {
+        params: {
+          path: {
+            id: serverId,
+          },
+          query: {
+            name: entryName,
+            path: dir,
+          },
+        },
+      },
+    );
+    loading = false;
+
+    if (error) {
+      loadError = unWrapErrorMessage(error);
+      return;
     }
+    entry = data.Enity;
   }
 
   $effect(() => {
@@ -86,10 +78,7 @@
           <span class="truncate text-base font-medium" title={entry.name}
             >{entry.name}</span
           >
-          <Badge variant="outline">{kindLabels[entry.kind]}</Badge>
-          {#if entry.hidden}
-            <Badge variant="secondary">Hidden</Badge>
-          {/if}
+          <Badge variant="outline">{kindLabels[entry.kind ?? 0]}</Badge>
         {/if}
       </Dialog.Title>
     </Dialog.Header>
@@ -108,31 +97,35 @@
 
           <dl class="grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-3 text-sm">
             <dt class="text-muted-foreground">Path</dt>
-            <dd class="break-all font-mono text-xs">{entry.path}</dd>
+            <dd class="break-all font-mono">{dir}</dd>
 
             <dt class="text-muted-foreground">Type</dt>
-            <dd>{kindLabels[entry.kind]}</dd>
+            <dd>{kindLabels[entry.kind ?? 0]}</dd>
 
             <dt class="text-muted-foreground">Size</dt>
-            <dd>{formatBytes(entry.size)}</dd>
+            <dd>{formatBytes(entry.size ?? 0)}</dd>
 
             <dt class="text-muted-foreground">Modified</dt>
-            <dd>{new Date(entry.modifiedUnixNs / 1e6).toLocaleString()}</dd>
+            <dd class="break-all font-mono text-xs">
+              {new Date(
+                entry.modified_unix_ns ? entry.modified_unix_ns / 1e6 : 0,
+              ).toLocaleString()}
+            </dd>
 
             <dt class="text-muted-foreground">Mode</dt>
             <dd class="font-mono text-xs">
-              {formatMode(entry.mode, entry.kind)}
+              {formatMode(entry)}
             </dd>
 
             <dt class="text-muted-foreground">Owner</dt>
             <dd class="font-mono text-xs">{entry.uid}:{entry.gid}</dd>
 
-            {#if entry.symlinkTarget}
+            <!-- {#if entry.symlinkTarget}
               <dt class="text-muted-foreground">Target</dt>
               <dd class="break-all font-mono text-xs">
                 {entry.symlinkTarget}
               </dd>
-            {/if}
+            {/if} -->
           </dl>
         </div>
       {/if}

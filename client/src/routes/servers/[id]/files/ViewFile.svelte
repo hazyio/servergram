@@ -1,32 +1,10 @@
 <script lang="ts">
-  import { Badge } from "#lib/components/ui/badge/index.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
-  import { Separator } from "#lib/components/ui/separator/index.js";
 
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import { formatBytes, formatMode } from "#lib/utils.ts";
-  import type { EntryKind } from "#lib/types/index.ts";
-
-  interface EntryProperties {
-    name: string;
-    path: string;
-    kind: EntryKind;
-    size: number;
-    modifiedUnixNs: number;
-    mode: number;
-    uid: number;
-    gid: number;
-    hidden: boolean;
-    symlinkTarget?: string;
-  }
-
-  const kindLabels: Record<EntryKind, string> = {
-    file: "File",
-    directory: "Directory",
-    symlink: "Symlink",
-  };
+  import { Download } from "@lucide/svelte";
 
   let {
     dir,
@@ -39,24 +17,20 @@
   let loading = $state(false);
   let loaded = $state(false);
   let loadError = $state<string | null>(null);
-  let entry = $state<EntryProperties | null>(null);
+  let content = $state("");
 
-  async function loadProperties() {
+  const path = $derived(`${dir.replace(/\/+$/, "")}/${entryName ?? ""}`);
+
+  async function loadFile() {
     loading = true;
     loadError = null;
     try {
-      // TODO: replace with a request for the entry's real properties
-      entry = {
-        name: entryName ?? "",
-        path: `${dir.replace(/\/+$/, "")}/${entryName ?? ""}`,
-        kind: "file",
-        size: 24_576,
-        modifiedUnixNs: Date.now() * 1e6,
-        mode: 0o644,
-        uid: 1000,
-        gid: 1000,
-        hidden: entryName?.startsWith(".") ?? false,
-      };
+      // TODO: replace with a request for the file's contents
+      content = `// Stub preview of ${entryName}
+export function greet(name: string) {
+  return \`Hello, \${name}!\`;
+}
+`;
       loaded = true;
     } catch (error) {
       loadError = error instanceof Error ? error.message : String(error);
@@ -65,87 +39,74 @@
     }
   }
 
+  function download() {
+    if (!content) return;
+    // TODO: replace with a request to the file download endpoint
+    const url = URL.createObjectURL(new Blob([content], { type: "text/plain" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = entryName ?? "file.txt";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function close() {
+    entryName = null;
+    loaded = false;
+    loadError = null;
+    content = "";
+  }
+
   $effect(() => {
     if (entryName !== null && !loaded) {
-      loadProperties();
+      loadFile();
     }
   });
 </script>
 
 <Dialog.Root open={!!entryName}>
   <Dialog.Content
+    class="sm:max-w-3xl"
     showCloseButton={false}
     onEscapeKeydown={(event) => event.preventDefault()}
     onInteractOutside={(event) => event.preventDefault()}
   >
     <Dialog.Header>
       <Dialog.Title>
-        {#if loading || entry === null}
-          Loading {entryName} Properties
+        {#if loading || !loaded}
+          Loading {entryName}
         {:else}
-          <span class="truncate text-base font-medium" title={entry.name}
-            >{entry.name}</span
+          <span class="truncate font-medium" title={entryName ?? ""}
+            >{entryName}</span
           >
-          <Badge variant="outline">{kindLabels[entry.kind]}</Badge>
-          {#if entry.hidden}
-            <Badge variant="secondary">Hidden</Badge>
-          {/if}
         {/if}
       </Dialog.Title>
+      <p class="truncate font-mono text-xs text-muted-foreground" title={path}>
+        {path}
+      </p>
     </Dialog.Header>
 
     <div class="min-h-50">
       {#if loading}
         <Loading loading containerClass="h-full" />
       {:else if loadError}
-        <ErrorSection
-          title="Failed to load entry properties"
-          message={loadError}
-        />
-      {:else if entry}
-        <div class="space-y-4">
-          <Separator />
-
-          <dl class="grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-3 text-sm">
-            <dt class="text-muted-foreground">Path</dt>
-            <dd class="break-all font-mono text-xs">{entry.path}</dd>
-
-            <dt class="text-muted-foreground">Type</dt>
-            <dd>{kindLabels[entry.kind]}</dd>
-
-            <dt class="text-muted-foreground">Size</dt>
-            <dd>{formatBytes(entry.size)}</dd>
-
-            <dt class="text-muted-foreground">Modified</dt>
-            <dd>{new Date(entry.modifiedUnixNs / 1e6).toLocaleString()}</dd>
-
-            <dt class="text-muted-foreground">Mode</dt>
-            <dd class="font-mono text-xs">
-              {formatMode(entry.mode, entry.kind)}
-            </dd>
-
-            <dt class="text-muted-foreground">Owner</dt>
-            <dd class="font-mono text-xs">{entry.uid}:{entry.gid}</dd>
-
-            {#if entry.symlinkTarget}
-              <dt class="text-muted-foreground">Target</dt>
-              <dd class="break-all font-mono text-xs">
-                {entry.symlinkTarget}
-              </dd>
-            {/if}
-          </dl>
-        </div>
+        <ErrorSection title="Failed to load file" message={loadError} />
+      {:else}
+        <pre
+          class="max-h-[60vh] overflow-auto rounded-md border bg-muted/40 p-4 text-xs leading-relaxed"><code
+            >{content}</code
+          ></pre>
       {/if}
     </div>
+
     <Dialog.Footer>
-      <Button
-        disabled={loading}
-        onclick={() => {
-          entryName = null;
-          loaded = false;
-          loadError = null;
-        }}>Close</Button
-      >
+      <Button variant="outline" disabled={loading} onclick={close}>
+        Close
+      </Button>
+      <Button disabled={loading || !content} onclick={download}>
+        <Download class="size-4" />
+        Download
+      </Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

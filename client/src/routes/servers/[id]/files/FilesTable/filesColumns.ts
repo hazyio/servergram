@@ -1,37 +1,21 @@
 import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
-import type { components } from "#lib/types/request-schema.d.ts";
-import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
-import FileName from "./FileName.svelte";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
+import { KIND_DIR, type FileEntry } from "#lib/types/index.ts";
+import { formatBytes, formatMode } from "#lib/utils.ts";
+import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
-import { formatBytes } from "#lib/utils.ts";
+import FileName from "./FileName.svelte";
 
-export type FileEntry = components["schemas"]["FileEntry"];
-
-const KIND_DIR = 1;
-const KIND_SYMLINK = 2;
 
 export const isDir = (entry: FileEntry) => entry.kind === KIND_DIR;
 
 const columnHelper = createColumnHelper<DataTableFeatures, FileEntry>();
 
-
-function formatMode(entry: FileEntry) {
-  const mode = entry.mode ?? 0;
-  const type =
-    entry.kind === KIND_DIR ? "d" : entry.kind === KIND_SYMLINK ? "l" : "-";
-  const bits = "rwxrwxrwx";
-  let out = type;
-  for (let i = 0; i < 9; i++) {
-    out += mode & (1 << (8 - i)) ? bits[i] : "-";
-  }
-  return out;
-}
-
 export const getColumns = (
   onDelete: (entry: DeleteEntryProps) => void,
   onRenameClicked: (entry: DeleteEntryProps) => void,
   onOpenPropertiesClicked: (entry: DeleteEntryProps) => void,
+  onViewClicked: (entry: DeleteEntryProps) => void,
 ) =>
   columnHelper.columns([
     columnHelper.accessor((row) => row.name ?? "", {
@@ -48,6 +32,7 @@ export const getColumns = (
           onDelete: onDelete,
           onRenameClicked: onRenameClicked,
           onOpenPropertiesClicked: onOpenPropertiesClicked,
+          onViewClicked: onViewClicked,
         }),
     }),
     columnHelper.accessor((row) => row.size ?? 0, {

@@ -72,7 +72,7 @@ func addServer(data internal.RouteData[models.AddServerRequest]) (*models.AddSer
 		}
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Add, "Added server"+newServer.Name+"", database)
+	db.AddLog(db.LogActionAdd, "Added server"+newServer.Name+"", database)
 	return &models.AddServerResponse{
 		Body: struct {
 			ID uint `json:"id" doc:"The ID of the newly created server"`
@@ -112,7 +112,7 @@ func deleteServer(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 	if err := database.Delete(server).Error; err != nil {
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Delete, "Deleted server "+server.Name+"", database)
+	db.AddLog(db.LogActionDelete, "Deleted server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
 
@@ -134,7 +134,7 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 	if err := database.Save(&server).Error; err != nil {
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Update, "Updated host fingerprint for server "+server.Name+"", database)
+	db.AddLog(db.LogActionUpdate, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
 func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
@@ -181,7 +181,7 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 			return nil
 		}
 		if err := send.Data(chunk); err != nil {
-			return nil 
+			return nil
 		}
 
 	}

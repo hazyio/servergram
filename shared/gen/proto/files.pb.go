@@ -602,6 +602,170 @@ func (x *WatchDirectoryResponse) GetEntry() *FileEntry {
 	return nil
 }
 
+type CreateFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateFileRequest) Reset() {
+	*x = CreateFileRequest{}
+	mi := &file_proto_files_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFileRequest) ProtoMessage() {}
+
+func (x *CreateFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFileRequest.ProtoReflect.Descriptor instead.
+func (*CreateFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CreateFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *CreateFileRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type RemoveFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveFileRequest) Reset() {
+	*x = RemoveFileRequest{}
+	mi := &file_proto_files_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveFileRequest) ProtoMessage() {}
+
+func (x *RemoveFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveFileRequest.ProtoReflect.Descriptor instead.
+func (*RemoveFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *RemoveFileRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *RemoveFileRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type RenamePathRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	OldName       string                 `protobuf:"bytes,2,opt,name=old_name,json=oldName,proto3" json:"old_name,omitempty"`
+	NewName       string                 `protobuf:"bytes,3,opt,name=new_name,json=newName,proto3" json:"new_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenamePathRequest) Reset() {
+	*x = RenamePathRequest{}
+	mi := &file_proto_files_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenamePathRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenamePathRequest) ProtoMessage() {}
+
+func (x *RenamePathRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenamePathRequest.ProtoReflect.Descriptor instead.
+func (*RenamePathRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RenamePathRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *RenamePathRequest) GetOldName() string {
+	if x != nil {
+		return x.OldName
+	}
+	return ""
+}
+
+func (x *RenamePathRequest) GetNewName() string {
+	if x != nil {
+		return x.NewName
+	}
+	return ""
+}
+
 var File_proto_files_proto protoreflect.FileDescriptor
 
 const file_proto_files_proto_rawDesc = "" +
@@ -640,7 +804,17 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x16WatchDirectoryResponse\x12-\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x19.proto.WatchDirectoryKindR\x04kind\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12&\n" +
-	"\x05entry\x18\x03 \x01(\v2\x10.proto.FileEntryR\x05entry*:\n" +
+	"\x05entry\x18\x03 \x01(\v2\x10.proto.FileEntryR\x05entry\";\n" +
+	"\x11CreateFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\";\n" +
+	"\x11RemoveFileRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"]\n" +
+	"\x11RenamePathRequest\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\bold_name\x18\x02 \x01(\tR\aoldName\x12\x19\n" +
+	"\bnew_name\x18\x03 \x01(\tR\anewName*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +
@@ -649,12 +823,18 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x12WatchDirectoryKind\x12\f\n" +
 	"\bMODIFIED\x10\x00\x12\v\n" +
 	"\aCREATED\x10\x01\x12\v\n" +
-	"\aDELETED\x10\x022\xb3\x02\n" +
+	"\aDELETED\x10\x022\xf3\x03\n" +
 	"\x05Files\x12E\n" +
 	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01\x12H\n" +
 	"\x0fCreateDirectory\x12\x1d.proto.CreateDirectoryRequest\x1a\x16.proto.SuccessResponse\x12H\n" +
-	"\x0fRemoveDirectory\x12\x1d.proto.RemoveDirectoryRequest\x1a\x16.proto.SuccessResponse\x12O\n" +
-	"\x0eWatchDirectory\x12\x1c.proto.WatchDirectoryRequest\x1a\x1d.proto.WatchDirectoryResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\x0fRemoveDirectory\x12\x1d.proto.RemoveDirectoryRequest\x1a\x16.proto.SuccessResponse\x12>\n" +
+	"\n" +
+	"CreateFile\x12\x18.proto.CreateFileRequest\x1a\x16.proto.SuccessResponse\x12>\n" +
+	"\n" +
+	"RemoveFile\x12\x18.proto.RemoveFileRequest\x1a\x16.proto.SuccessResponse\x12O\n" +
+	"\x0eWatchDirectory\x12\x1c.proto.WatchDirectoryRequest\x1a\x1d.proto.WatchDirectoryResponse0\x01\x12>\n" +
+	"\n" +
+	"RenamePath\x12\x18.proto.RenamePathRequest\x1a\x16.proto.SuccessResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -669,7 +849,7 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_files_proto_goTypes = []any{
 	(FileEntryKind)(0),             // 0: proto.FileEntryKind
 	(WatchDirectoryKind)(0),        // 1: proto.WatchDirectoryKind
@@ -681,25 +861,34 @@ var file_proto_files_proto_goTypes = []any{
 	(*RemoveDirectoryRequest)(nil), // 7: proto.RemoveDirectoryRequest
 	(*WatchDirectoryRequest)(nil),  // 8: proto.WatchDirectoryRequest
 	(*WatchDirectoryResponse)(nil), // 9: proto.WatchDirectoryResponse
+	(*CreateFileRequest)(nil),      // 10: proto.CreateFileRequest
+	(*RemoveFileRequest)(nil),      // 11: proto.RemoveFileRequest
+	(*RenamePathRequest)(nil),      // 12: proto.RenamePathRequest
 }
 var file_proto_files_proto_depIdxs = []int32{
-	0, // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
-	2, // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
-	1, // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
-	2, // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
-	4, // 4: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	5, // 5: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
-	7, // 6: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
-	8, // 7: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
-	3, // 8: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	6, // 9: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
-	6, // 10: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
-	9, // 11: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0,  // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
+	2,  // 1: proto.ListFilesChunkResponse.entries:type_name -> proto.FileEntry
+	1,  // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
+	2,  // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
+	4,  // 4: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	5,  // 5: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7,  // 6: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	10, // 7: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
+	11, // 8: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
+	8,  // 9: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	12, // 10: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
+	3,  // 11: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6,  // 12: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
+	6,  // 13: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
+	6,  // 14: proto.Files.CreateFile:output_type -> proto.SuccessResponse
+	6,  // 15: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
+	9,  // 16: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	6,  // 17: proto.Files.RenamePath:output_type -> proto.SuccessResponse
+	11, // [11:18] is the sub-list for method output_type
+	4,  // [4:11] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }
@@ -713,7 +902,7 @@ func file_proto_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_files_proto_rawDesc), len(file_proto_files_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

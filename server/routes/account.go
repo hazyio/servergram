@@ -55,7 +55,7 @@ func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfu
 	if err := data.Database.Where("expires < ?", time.Now()).Delete(&db.Sessions{}).Error; err != nil {
 		slog.Error("error deleting expired sessions", "err", err)
 	}
-	db.AddLog(db.Create, "User logged in", data.Database)
+	db.AddLog(db.LogActionCreate, "User logged in", data.Database)
 	return &models.LoginSuccessfulRedirectResponse{
 		Status: http.StatusCreated,
 		SetCookie: http.Cookie{

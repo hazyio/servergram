@@ -4,13 +4,13 @@
 
 <script lang="ts">
   import { Button } from "#lib/components/ui/button/index.ts";
-  import * as z from "zod";
   import * as Field from "#lib/components/ui/field/index.ts";
+  import * as z from "zod";
 
-  import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import Input from "#lib/components/ui/input/input.svelte";
   import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
   import Loading from "#lib/components/base/loading.svelte";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import Input from "#lib/components/ui/input/input.svelte";
   let {
     serverId,
     dir,
@@ -44,20 +44,40 @@
       return;
     }
     submitting = true;
-    const { data, error, response } = await NewRequestClient().PUT(
-      "/api/files/create-dir-in-server/{id}",
-      {
-        body: {
-          name: entryName,
-          path: dir,
-        },
-        params: {
-          path: {
-            id: serverId,
+    const { error } = await (async () => {
+      if (type === "directory") {
+        return await NewRequestClient().PUT(
+          "/api/files/create-dir-in-server/{id}",
+          {
+            body: {
+              name: entryName,
+              path: dir,
+            },
+            params: {
+              path: {
+                id: serverId,
+              },
+            },
           },
-        },
-      },
-    );
+        );
+      } else if (type === "file") {
+        return await NewRequestClient().PUT(
+          "/api/files/create-file-in-server/{id}",
+          {
+            body: {
+              name: entryName,
+              path: dir,
+            },
+            params: {
+              path: {
+                id: serverId,
+              },
+            },
+          },
+        );
+      }
+      throw new Error("Invalid type");
+    })();
 
     submitting = false;
     if (error) {

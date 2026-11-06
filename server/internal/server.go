@@ -72,8 +72,8 @@ func FromGrpcError(err error) error {
 		return NewHumaError(http.StatusForbidden, st.Message())
 	case codes.AlreadyExists:
 		return NewHumaError(http.StatusConflict, st.Message())
-	case codes.DeadlineExceeded, codes.Unavailable:
-		return NewHumaError(http.StatusServiceUnavailable, st.Message())
+	case codes.InvalidArgument:
+		return NewHumaError(http.StatusBadRequest, st.Message())
 	default:
 		return NewHumaError(http.StatusInternalServerError, "Internal server error")
 	}
@@ -123,6 +123,23 @@ func (s *Server) Delete[I, O any](pattern string, status int, next func(RouteDat
 		OperationID:   "delete-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodDelete, pattern, new(O)),
 		Method:        http.MethodDelete,
+		Path:          pattern,
+		DefaultStatus: status,
+		Errors:        errs,
+	}, func(ctx context.Context, input *I) (*O, error) {
+		resp, err := next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
+		if err != nil {
+			return nil, ToHumaError(err)
+		}
+		return resp, nil
+	})
+}
+
+func (s *Server) Patch[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
+	huma.Register(s.group, huma.Operation{
+		OperationID:   "patch-" + opSlug(s.prefix, pattern),
+		Summary:       huma.GenerateSummary(http.MethodPatch, pattern, new(O)),
+		Method:        http.MethodPatch,
 		Path:          pattern,
 		DefaultStatus: status,
 		Errors:        errs,

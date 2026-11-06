@@ -12,6 +12,7 @@
     visibleColumns,
     onOpen,
     onDelete = $bindable(),
+    onRenameClicked = $bindable(),
   }: {
     files: FileEntry[];
     search?: string;
@@ -19,6 +20,7 @@
     visibleColumns: Record<string, boolean>;
     onOpen: (entry: FileEntry) => void;
     onDelete: (entry: DeleteEntryProps) => void;
+    onRenameClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   let selected = $state<string[]>([]);
 
@@ -34,7 +36,7 @@
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
-  const columns = getColumns(onDelete);
+  const columns = getColumns(onDelete, onRenameClicked);
   const table = createTable({
     features: dataTableFeatures,
     get data() {

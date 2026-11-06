@@ -22,7 +22,10 @@ const (
 	Files_ListFiles_FullMethodName       = "/proto.Files/ListFiles"
 	Files_CreateDirectory_FullMethodName = "/proto.Files/CreateDirectory"
 	Files_RemoveDirectory_FullMethodName = "/proto.Files/RemoveDirectory"
+	Files_CreateFile_FullMethodName      = "/proto.Files/CreateFile"
+	Files_RemoveFile_FullMethodName      = "/proto.Files/RemoveFile"
 	Files_WatchDirectory_FullMethodName  = "/proto.Files/WatchDirectory"
+	Files_RenamePath_FullMethodName      = "/proto.Files/RenamePath"
 )
 
 // FilesClient is the client API for Files service.
@@ -32,7 +35,10 @@ type FilesClient interface {
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error)
 	CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 	RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	CreateFile(ctx context.Context, in *CreateFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 	WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error)
+	RenamePath(ctx context.Context, in *RenamePathRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 }
 
 type filesClient struct {
@@ -82,6 +88,26 @@ func (c *filesClient) RemoveDirectory(ctx context.Context, in *RemoveDirectoryRe
 	return out, nil
 }
 
+func (c *filesClient) CreateFile(ctx context.Context, in *CreateFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, Files_CreateFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, Files_RemoveFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *filesClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[1], Files_WatchDirectory_FullMethodName, cOpts...)
@@ -101,6 +127,16 @@ func (c *filesClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequ
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_WatchDirectoryClient = grpc.ServerStreamingClient[WatchDirectoryResponse]
 
+func (c *filesClient) RenamePath(ctx context.Context, in *RenamePathRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, Files_RenamePath_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FilesServer is the server API for Files service.
 // All implementations must embed UnimplementedFilesServer
 // for forward compatibility.
@@ -108,7 +144,10 @@ type FilesServer interface {
 	ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error
 	CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error)
 	RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error)
+	CreateFile(context.Context, *CreateFileRequest) (*SuccessResponse, error)
+	RemoveFile(context.Context, *RemoveFileRequest) (*SuccessResponse, error)
 	WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error
+	RenamePath(context.Context, *RenamePathRequest) (*SuccessResponse, error)
 	mustEmbedUnimplementedFilesServer()
 }
 
@@ -128,8 +167,17 @@ func (UnimplementedFilesServer) CreateDirectory(context.Context, *CreateDirector
 func (UnimplementedFilesServer) RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveDirectory not implemented")
 }
+func (UnimplementedFilesServer) CreateFile(context.Context, *CreateFileRequest) (*SuccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateFile not implemented")
+}
+func (UnimplementedFilesServer) RemoveFile(context.Context, *RemoveFileRequest) (*SuccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveFile not implemented")
+}
 func (UnimplementedFilesServer) WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error {
 	return status.Error(codes.Unimplemented, "method WatchDirectory not implemented")
+}
+func (UnimplementedFilesServer) RenamePath(context.Context, *RenamePathRequest) (*SuccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RenamePath not implemented")
 }
 func (UnimplementedFilesServer) mustEmbedUnimplementedFilesServer() {}
 func (UnimplementedFilesServer) testEmbeddedByValue()               {}
@@ -199,6 +247,42 @@ func _Files_RemoveDirectory_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Files_CreateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).CreateFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Files_CreateFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).CreateFile(ctx, req.(*CreateFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_RemoveFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).RemoveFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Files_RemoveFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).RemoveFile(ctx, req.(*RemoveFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Files_WatchDirectory_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(WatchDirectoryRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -209,6 +293,24 @@ func _Files_WatchDirectory_Handler(srv interface{}, stream grpc.ServerStream) er
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_WatchDirectoryServer = grpc.ServerStreamingServer[WatchDirectoryResponse]
+
+func _Files_RenamePath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenamePathRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).RenamePath(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Files_RenamePath_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).RenamePath(ctx, req.(*RenamePathRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 // Files_ServiceDesc is the grpc.ServiceDesc for Files service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -224,6 +326,18 @@ var Files_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveDirectory",
 			Handler:    _Files_RemoveDirectory_Handler,
+		},
+		{
+			MethodName: "CreateFile",
+			Handler:    _Files_CreateFile_Handler,
+		},
+		{
+			MethodName: "RemoveFile",
+			Handler:    _Files_RemoveFile_Handler,
+		},
+		{
+			MethodName: "RenamePath",
+			Handler:    _Files_RenamePath_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

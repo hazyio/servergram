@@ -36,7 +36,10 @@ function formatMode(entry: FileEntry) {
   return out;
 }
 
-export const getColumns = (onDelete: (entry: DeleteEntryProps) => void) =>
+export const getColumns = (
+  onDelete: (entry: DeleteEntryProps) => void,
+  onRenameClicked: (entry: DeleteEntryProps) => void,
+) =>
   columnHelper.columns([
     columnHelper.accessor((row) => row.name ?? "", {
       id: "name",
@@ -50,6 +53,7 @@ export const getColumns = (onDelete: (entry: DeleteEntryProps) => void) =>
           name: info.getValue(),
           isDir: isDir(info.row.original),
           onDelete: (entry: DeleteEntryProps) => onDelete(entry),
+          onRenameClicked: (entry: DeleteEntryProps) => onRenameClicked(entry),
         }),
     }),
     columnHelper.accessor((row) => row.size ?? 0, {

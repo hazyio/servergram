@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/create-file-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put create file in server by ID */
+        put: operations["put-files--create-file-in-server-id"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/list-in-server/{id}": {
         parameters: {
             query?: never;
@@ -70,6 +87,40 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/files/remove-file-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete remove file in server by ID */
+        delete: operations["delete-files--remove-file-in-server-id"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/rename-path-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch rename path in server by ID */
+        patch: operations["patch-files--rename-path-in-server-id"];
         trace?: never;
     };
     "/api/files/watch-dir-in-server/{id}": {
@@ -512,9 +563,21 @@ export interface components {
             /** @description The path of the directory to create */
             path: string;
         };
+        CreateFileRequestBody: {
+            /** @description The name of the new file */
+            name: string;
+            /** @description The path of the file to create */
+            path: string;
+        };
         CreateGroupRequestBody: {
             /** @description The name of the group */
             name: string;
+        };
+        DeleteFileRequestBody: {
+            /** @description The name of the file to delete */
+            name: string;
+            /** @description The path of the file to delete */
+            path: string;
         };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
@@ -658,6 +721,14 @@ export interface components {
         };
         RemoveDirectoryRequestBody: {
             /** @description The path of the directory to remove */
+            path: string;
+        };
+        RenamePathRequestBody: {
+            /** @description The new name for the file/directory */
+            new_name: string;
+            /** @description The current name of the file/directory */
+            old_name: string;
+            /** @description The current path of the file/directory */
             path: string;
         };
         SSEError: {
@@ -839,6 +910,40 @@ export interface operations {
             };
         };
     };
+    "put-files--create-file-in-server-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFileRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "sse-files--list-in-server-id": {
         parameters: {
             query: {
@@ -911,6 +1016,74 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RemoveDirectoryRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-files--remove-file-in-server-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteFileRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "patch-files--rename-path-in-server-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenamePathRequestBody"];
             };
         };
         responses: {

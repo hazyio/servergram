@@ -11,10 +11,12 @@
     name,
     isDir,
     onDelete,
+    onRenameClicked,
   }: {
     name: string;
     isDir: boolean;
     onDelete: (entry: DeleteEntryProps) => void;
+    onRenameClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   const icon = $derived(getFileIcon(name, isDir));
 </script>
@@ -29,28 +31,31 @@
   <ContextMenu.Content>
     <ContextMenu.Group>
       {#if isDir}
-        <ContextMenu.Item>
+        <ContextMenu.Item class="py-2 my-1">
           <FolderOpen />
           Open
         </ContextMenu.Item>
       {:else}
-        <ContextMenu.Item>
+        <ContextMenu.Item class="py-2 my-1">
           <Eye />
           View
         </ContextMenu.Item>
       {/if}
-      <ContextMenu.Item>
+      <ContextMenu.Item
+        class="py-2 my-1"
+        onclick={() => onRenameClicked({ name, isDir })}
+      >
         <PencilIcon />
         Rename
       </ContextMenu.Item>
 
       {#if !isDir}
-        <ContextMenu.Item>
+        <ContextMenu.Item class="py-2 my-1">
           <ArrowDownToLine />
           Download
         </ContextMenu.Item>
       {/if}
-      <ContextMenu.Item>
+      <ContextMenu.Item class="py-2 my-1">
         <Info />
         Properties
       </ContextMenu.Item>
@@ -58,7 +63,7 @@
     <ContextMenu.Separator />
     <ContextMenu.Group>
       <ContextMenu.Item
-        onclick={() => onDelete({name, isDir })}
+        onclick={() => onDelete({ name, isDir })}
         variant="destructive"
         class={`gap-2 w-full justify-start ${buttonVariants({ variant: "destructive" })}`}
       >

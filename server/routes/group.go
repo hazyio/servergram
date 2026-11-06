@@ -20,7 +20,6 @@ func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
 
 }
 
-
 func createNewGroup(data internal.RouteData[models.CreateGroupRequest]) (*EmptyRR, error) {
 	input := data.Input
 	name := input.Body.Name
@@ -41,7 +40,7 @@ func createNewGroup(data internal.RouteData[models.CreateGroupRequest]) (*EmptyR
 		slog.Error("An error occurred while saving group", "error", err)
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Create, "Group \""+name+"\" created", data.Database)
+	db.AddLog(db.LogActionCreate, "Group \""+name+"\" created", data.Database)
 
 	return &EmptyRR{}, nil
 }
@@ -91,7 +90,7 @@ func deleteGroup(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 		slog.Error("An error occurred while deleting group", "error", err)
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Delete, "Group \""+group.Name+"\" deleted", data.Database)
+	db.AddLog(db.LogActionDelete, "Group \""+group.Name+"\" deleted", data.Database)
 
 	return &EmptyRR{}, nil
 }

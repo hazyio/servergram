@@ -30,6 +30,7 @@
     type SettingOptionProps,
   } from "./SettingOption.svelte";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
+  import RenameEntry from "./RenameEntry.svelte";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -60,6 +61,7 @@
   let watching = $state(false);
   let deleteEntries = $state<DeleteEntryProps[]>([]);
   let newEntryType = $state<NewEntryType>("none");
+  let renameOldName = $state<null | string>(null);
 
   function stop() {
     stopWatch();
@@ -219,9 +221,7 @@
 
     switch (kind) {
       case 0: // MODIFIED
-        // For modified files, we could update the file entry
-        // For now, just reload the directory
-        loadFiles();
+        console.warn("Unimplemented");
         break;
       case 1: // CREATED
         // Add the new file/directory to the list
@@ -236,14 +236,6 @@
         if (path) {
           removeFile(path);
         }
-        // files = files.filter((f) => {
-        //   const filePath = `${dir.replace(/\/+$/, "")}/${f.name}`.replace(
-        //     /\/+/g,
-        //     "/",
-        //   );
-
-        //   return filePath !== fullPath;
-        // });
         break;
     }
   }
@@ -315,6 +307,8 @@
   }}
 />
 <NewEntry serverId={Number(params.id)} bind:type={newEntryType} {dir} />
+<RenameEntry serverId={Number(params.id)} bind:oldName={renameOldName} {dir} />
+
 {#if loading}
   <Loading loading class="mt-20 w-12 h-12" />
 {:else if loadError}
@@ -338,6 +332,9 @@
           onOpen={openEntry}
           onDelete={(entry) => {
             deleteEntries = [entry];
+          }}
+          onRenameClicked={(entry) => {
+            renameOldName = entry.name;
           }}
         />
       </div>

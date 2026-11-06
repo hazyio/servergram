@@ -10,10 +10,10 @@ import (
 type LogAction string
 
 const (
-	Delete LogAction = "delete"
-	Create LogAction = "create"
-	Add    LogAction = "add"
-	Update LogAction = "update"
+	LogActionDelete LogAction = "delete"
+	LogActionCreate LogAction = "create"
+	LogActionAdd             LogAction = "add"
+	LogActionUpdate          LogAction = "update"
 )
 
 type Log struct {

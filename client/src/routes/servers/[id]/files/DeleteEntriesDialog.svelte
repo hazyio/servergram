@@ -12,7 +12,6 @@
   import Loading from "#lib/components/base/loading.svelte";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { Badge } from "#lib/components/ui/badge/index.ts";
-  import { StatusCodes } from "#lib/types/statusCodes.ts";
   let deleting = $state(false);
   let deleteError = $state("");
   let {
@@ -42,19 +41,43 @@
     deleting = true;
     for (const entry of items) {
       deletingName = `${entry.isDir ? "Directory" : "File"} "${entry.name}"`;
-      const { error, response } = await NewRequestClient().DELETE(
-        "/api/files/remove-dir-in-server/{id}",
-        {
-          body: {
-            path: `${dir.replace(/\/+$/, "")}/${entry.name}`,
-          },
-          params: {
-            path: {
-              id: serverId,
+      const { error } = await (async () => {
+        if (entry.isDir) {
+          return await NewRequestClient().DELETE(
+            "/api/files/remove-dir-in-server/{id}",
+            {
+              body: {
+                path: `${dir.replace(/\/+$/, "")}/${entry.name}`.replace(
+                  /\/+/g,
+                  "/",
+                ),
+              },
+              params: {
+                path: {
+                  id: serverId,
+                },
+              },
             },
-          },
-        },
-      );
+          );
+        } else {
+          return await NewRequestClient().DELETE(
+            "/api/files/remove-file-in-server/{id}",
+            {
+              body: {
+                name: entry.name,
+                path: dir,
+              },
+              params: {
+                path: {
+                  id: serverId,
+                },
+              },
+            },
+          );
+        }
+      })();
+
+   
       if (error) {
         deleting = false;
         deleteError = unWrapErrorMessage(

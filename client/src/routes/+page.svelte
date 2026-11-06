@@ -9,12 +9,6 @@
   import Server from "@lucide/svelte/icons/server";
   let sortDirection: SortDirection = $state("asc");
   let sortValue: "Name" | "Date" | "Size" = $state("Name");
-  $effect(() => {
-    async function fetchData() {
-      const { data, error } = await NewRequestClient().GET("/api/files/health");
-    }
-    fetchData();
-  });
 </script>
 
 <svelte:head>
@@ -34,7 +28,6 @@
       bind:value={sortValue}
       items={["Name", "Date", "Size"]}
       bind:direction={sortDirection}
-      
     />
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>

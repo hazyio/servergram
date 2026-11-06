@@ -40,7 +40,7 @@ func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketM
 			return
 		}
 		manageSSHConnection.Queue(msg.Id, msg.Name)
-		db.AddLog(db.Update, "Queued connection to server with ID: "+fmt.Sprint(msg.Id), input.Database)
+		db.AddLog(db.LogActionUpdate, "Queued connection to server with ID: "+fmt.Sprint(msg.Id), input.Database)
 		SendQueueAndConnected(dataQueue, manageSSHConnection)
 		// Handle the server connection asynchronously.
 		go handleServerConnect(manageSSHConnection, input.Database, msg, dataQueue)

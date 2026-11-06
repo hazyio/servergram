@@ -3,11 +3,13 @@ package routes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 
 	"gorm.io/gorm"
+	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes/models"
@@ -24,6 +26,10 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server.SSE("/watch-dir-in-server/{id}", http.StatusOK, watchDirectoryInServer)
 	server.Put("/create-dir-in-server/{id}", http.StatusOK, createDirectoryInServer)
 	server.Delete("/remove-dir-in-server/{id}", http.StatusOK, removeDirectoryInServer)
+	server.Put("/create-file-in-server/{id}", http.StatusOK, createFileInServer)
+	server.Delete("/remove-file-in-server/{id}", http.StatusOK, removeFileInServer)
+	server.Patch("/rename-path-in-server/{id}", http.StatusOK, renamePathInServer)
+	
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -54,17 +60,22 @@ func listFilesInServer(data internal.RouteData[models.FileListRequest], send sse
 		IncludeHidden: data.Input.IncludeHidden,
 	})
 	if err != nil {
+		slog.Error("Failed to list files", "error", err)
 		internal.SendSSEError(send, err)
 		return nil
 	}
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Listed files in server \"%d\", dir \"%s\"", data.Input.ID, data.Input.Dir), data.Database)
+
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			// Stream ended without a done chunk; tell the client to stop reconnecting.
 			_ = send.Data(&proto.ListFilesChunkResponse{Done: true})
 			return nil
+
 		}
 		if err != nil {
+			slog.Error("Failed to receive file chunk", "error", err)
 			internal.SendSSEError(send, err)
 			return nil
 		}
@@ -93,6 +104,7 @@ func watchDirectoryInServer(data internal.RouteData[models.WatchDirectoryRequest
 		internal.SendSSEError(send, err)
 		return nil
 	}
+
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -124,6 +136,7 @@ func createDirectoryInServer(data internal.RouteData[models.CreateDirectoryReque
 		return nil, internal.FromGrpcError(err)
 
 	}
+	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created directory \"%s\" in server \"%d\"", data.Input.Body.Name, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
 }
 func removeDirectoryInServer(data internal.RouteData[models.RemoveDirectoryRequest]) (*EmptyRR, error) {
@@ -136,8 +149,68 @@ func removeDirectoryInServer(data internal.RouteData[models.RemoveDirectoryReque
 		Path: data.Input.Body.Path,
 	})
 	if err != nil {
+		slog.Error("Failed to remove directory from server", "error", err)
 		return nil, internal.FromGrpcError(err)
 
 	}
+	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted directory \"%s\" from server \"%d\"", data.Input.Body.Path, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
+}
+func createFileInServer(data internal.RouteData[models.CreateFileRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.CreateFile(ctx, &proto.CreateFileRequest{
+		Path: data.Input.Body.Path,
+		Name: data.Input.Body.Name,
+	})
+	if err != nil {
+		slog.Error("Failed to create file on server", "error", err)
+		return nil, internal.FromGrpcError(err)
+
+	}
+	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created file \"%s\" in server \"%d\"", data.Input.Body.Name, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
+}
+func removeFileInServer(data internal.RouteData[models.DeleteFileRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.RemoveFile(ctx, &proto.RemoveFileRequest{
+		Path: data.Input.Body.Path,
+		Name: data.Input.Body.Name,
+	})
+	if err != nil {
+
+		slog.Error("Failed to remove file from server", "error", err)
+		return nil, internal.FromGrpcError(err)
+
+	}
+
+	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted file \"%s\" from server \"%d\"", data.Input.Body.Name, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
+}
+func renamePathInServer(data internal.RouteData[models.RenamePathRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.RenamePath(ctx, &proto.RenamePathRequest{
+		Path:    data.Input.Body.Path,
+		OldName: data.Input.Body.OldName,
+		NewName: data.Input.Body.NewName,
+	})
+
+	if err != nil {
+		slog.Error("Failed to rename path on server", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Renamed path \"%s\" to \"%s\" in server \"%d\"", data.Input.Body.OldName, data.Input.Body.NewName, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
 }

@@ -50,7 +50,7 @@ func addSSHKey(data internal.RouteData[models.AddSSHKeyRequest]) (*EmptyRR, erro
 		slog.Error("An error occurred while saving ssh key", "error", err)
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Create, "SSH key \""+name+"\" added", data.Database)
+	db.AddLog(db.LogActionCreate, "SSH key \""+name+"\" added", data.Database)
 	return &EmptyRR{}, nil
 }
 
@@ -92,7 +92,7 @@ func viewSSHKey(data internal.RouteData[PathIdRequest]) (*models.ViewSSHKeyRespo
 	}
 	response := &models.ViewSSHKeyResponse{}
 	response.Body.Private = decryptedKey
-	db.AddLog(db.Update, "SSH key \""+key.Name+"\" viewed", data.Database)
+	db.AddLog(db.LogActionUpdate, "SSH key \""+key.Name+"\" viewed", data.Database)
 	return response, nil
 }
 
@@ -121,6 +121,6 @@ func deleteSSHKey(data internal.RouteData[PathIdRequest]) (*EmptyRR, error) {
 		slog.Error("An error occurred while deleting SSH key", "error", err)
 		return nil, internal.InternalServerError
 	}
-	db.AddLog(db.Delete, "SSH key \""+key.Name+"\" deleted", data.Database)
+	db.AddLog(db.LogActionDelete, "SSH key \""+key.Name+"\" deleted", data.Database)
 	return &EmptyRR{}, nil
 }

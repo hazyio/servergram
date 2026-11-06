@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"log"
 
@@ -15,12 +14,13 @@ import (
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
-func stripDirFromPath(dir, path string) string {
-	return strings.Replace(strings.Replace(path+"/", dir, "", 1), dir, "", 1)
-}
-
 func handleListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesServer) error {
-	entries, err := os.ReadDir(req.Dir)
+
+	newPath, err := validateAndCleanPath(req.Dir)
+	if err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(newPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return status.Errorf(codes.NotFound, "directory %q not found", req.Dir)
@@ -49,11 +49,15 @@ func handleListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesSe
 }
 
 func handleCreateDirectory(req *proto.CreateDirectoryRequest) (*proto.SuccessResponse, error) {
-	if fs.ValidPath(req.Path) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid directory path %q", req.Path)
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
 	}
-	newDirPath := filepath.Join(req.Path, string(req.Name))
-	err := os.Mkdir(newDirPath, 0755)
+	if err := validateEntryName(req.Name); err != nil {
+		return nil, err
+	}
+	newDirPath := filepath.Join(newPath, string(req.Name))
+	err = os.Mkdir(newDirPath, 0755)
 	if err != nil {
 		if errors.Is(err, fs.ErrExist) {
 			return nil, status.Errorf(codes.AlreadyExists, "directory %q already exists", req.Path)
@@ -69,10 +73,11 @@ func handleCreateDirectory(req *proto.CreateDirectoryRequest) (*proto.SuccessRes
 }
 
 func handleRemoveDirectory(req *proto.RemoveDirectoryRequest) (*proto.SuccessResponse, error) {
-	if fs.ValidPath(req.Path) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid directory path %q", req.Path)
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
 	}
-	info, err := os.Stat(req.Path)
+	info, err := os.Stat(newPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, status.Errorf(codes.NotFound, "directory %q not found", req.Path)
@@ -102,10 +107,11 @@ func handleRemoveDirectory(req *proto.RemoveDirectoryRequest) (*proto.SuccessRes
 }
 
 func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_WatchDirectoryServer) error {
-	if fs.ValidPath(req.Path) {
-		return status.Errorf(codes.InvalidArgument, "invalid directory path %q", req.Path)
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return err
 	}
-	info, err := os.Stat(req.Path)
+	info, err := os.Stat(newPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return status.Errorf(codes.NotFound, "directory %q not found", req.Path)
@@ -150,7 +156,7 @@ func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_W
 		select {
 		case event, ok := <-watcher.Events:
 			if ok {
-				name := stripDirFromPath(event.Name, req.Path) // remove the directory from the path to save bytes
+				name := stripDirFromPath(req.Path, event.Name) // remove the directory from the path to save bytes
 				if event.Has(fsnotify.Create) {
 					log.Println("created:", event.Name)
 					entry, err := getPathEntryInfo(event.Name)
@@ -185,5 +191,132 @@ func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_W
 			}
 		}
 	}
+
+}
+
+func handleCreateFile(req *proto.CreateFileRequest) (*proto.SuccessResponse, error) {
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateEntryName(req.Name); err != nil {
+		return nil, err
+	}
+	info, err := probePathExists(newPath)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, status.Errorf(codes.InvalidArgument, "path %q is not a directory", req.Path)
+	}
+
+	filePath := filepath.Join(newPath, req.Name)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return nil, status.Errorf(codes.AlreadyExists, "file %q already exists", req.Name)
+		}
+		if errors.Is(err, fs.ErrPermission) {
+			return nil, status.Errorf(codes.PermissionDenied, "cannot create file %q", req.Name)
+		}
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, status.Errorf(codes.NotFound, "directory %q not found", req.Path)
+		}
+		log.Printf("failed to create file %q: %v", filePath, err)
+		return nil, status.Error(codes.Internal, "unknown error")
+	}
+	if err := file.Close(); err != nil {
+		log.Printf("failed to close file %q: %v", filePath, err)
+		return nil, status.Error(codes.Internal, "unknown error")
+	}
+
+	return &proto.SuccessResponse{Success: true}, nil
+}
+
+func handleDeleteFile(req *proto.RemoveFileRequest) (*proto.SuccessResponse, error) {
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateEntryName(req.Name); err != nil {
+		return nil, err
+	}
+
+	info, err := os.Stat(newPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, status.Errorf(codes.NotFound, "directory %q not found", req.Path)
+		}
+		if errors.Is(err, fs.ErrPermission) {
+			return nil, status.Errorf(codes.PermissionDenied, "cannot access directory %q", req.Path)
+		}
+		log.Printf("failed to access directory %q: %v", req.Path, err)
+		return nil, status.Error(codes.Internal, "unknown error")
+	}
+
+	if !info.IsDir() {
+		return nil, status.Errorf(codes.InvalidArgument, "path %q is not a directory", req.Path)
+	}
+
+	filePath := filepath.Join(newPath, req.Name)
+	err = os.Remove(filePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, status.Errorf(codes.NotFound, "file %q not found", filePath)
+		}
+		if errors.Is(err, fs.ErrPermission) {
+			return nil, status.Errorf(codes.PermissionDenied, "cannot delete file %q", req.Name)
+		}
+		log.Printf("failed to delete file %q: %v", filePath, err)
+		return nil, status.Error(codes.Internal, "unknown error")
+	}
+
+	return &proto.SuccessResponse{Success: true}, nil
+}
+
+func handleRenamePath(req *proto.RenamePathRequest) (*proto.SuccessResponse, error) {
+	newPath, err := validateAndCleanPath(req.Path)
+	if err != nil {
+		return nil, err
+	}
+	_, err = probePathExists(newPath)
+	if err != nil {
+		return nil, err
+	}
+	if req.NewName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "new name cannot be empty")
+	}
+	if req.OldName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "old name cannot be empty")
+	}
+	if req.NewName == req.OldName {
+		return nil, status.Errorf(codes.InvalidArgument, "new name cannot be the same as old name")
+	}
+	if err := validateEntryName(req.OldName); err != nil {
+		return nil, err
+	}
+	if err := validateEntryName(req.NewName); err != nil {
+		return nil, err
+	}
+	oldFilePath := filepath.Join(newPath, req.OldName)
+	newFilePath := filepath.Join(newPath, req.NewName)
+	_, err = probePathExists(oldFilePath)
+	if err != nil {
+		return nil, err
+	}
+	// if new path an value, it means it must exists
+	probeNewPath, _ := probePathExists(newFilePath)
+
+	if probeNewPath != nil {
+		return nil, status.Errorf(codes.AlreadyExists, "rename path %q already exists", req.NewName)
+	}
+	err = os.Rename(oldFilePath, newFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.SuccessResponse{Success: true}, nil
 
 }

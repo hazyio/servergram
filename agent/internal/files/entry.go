@@ -15,11 +15,10 @@ func (s *FilesServer) ListFiles(req *proto.ListFilesRequest, stream proto.Files_
 	dir := req.Dir
 	if dir == "" {
 		homeDir, err := os.UserHomeDir()
-		if err == nil {
-			dir = homeDir
-		} else {
-			dir = "."
+		if err != nil {
+			return err
 		}
+		dir = homeDir
 	}
 	req.Dir = dir
 	return handleListFiles(req, stream)
@@ -36,4 +35,10 @@ func (s *FilesServer) WatchDirectory(req *proto.WatchDirectoryRequest, stream pr
 }
 func (s *FilesServer) CreateFile(_ context.Context, req *proto.CreateFileRequest) (*proto.SuccessResponse, error) {
 	return handleCreateFile(req)
+}
+func (s *FilesServer) RemoveFile(_ context.Context, req *proto.RemoveFileRequest) (*proto.SuccessResponse, error) {
+	return handleDeleteFile(req)
+}
+func (s *FilesServer) RenamePath(_ context.Context, req *proto.RenamePathRequest) (*proto.SuccessResponse, error) {
+	return handleRenamePath(req)
 }

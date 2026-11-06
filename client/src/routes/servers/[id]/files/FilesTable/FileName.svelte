@@ -27,10 +27,10 @@
 
 <ContextMenu.Root>
   <ContextMenu.Trigger>
-    <span class="flex items-center gap-3 h-15">
+    <div class="flex items-center gap-3 h-15 max-w-50">
       <img src={icon} alt="" class="size-6 shrink-0" />
-      {name}
-    </span>
+      <span class="min-h-0 wrap-break-word"> {name}</span>
+    </div>
   </ContextMenu.Trigger>
   <ContextMenu.Content>
     <ContextMenu.Group>

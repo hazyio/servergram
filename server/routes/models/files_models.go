@@ -56,6 +56,7 @@ type PathPropertiesRequest struct {
 	Name string `query:"name" required:"true" doc:"The name of the file/directory"`
 	ID   uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
 }
+
 type PathPropertiesResponse struct {
 	Body struct {
 		Enity *proto.FileEntry

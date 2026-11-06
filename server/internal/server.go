@@ -54,10 +54,15 @@ func SendSSEError(send sse.Sender, err error) {
 		_ = send.Data(NewSSEError(http.StatusNotFound, st.Message()))
 	case codes.PermissionDenied:
 		_ = send.Data(NewSSEError(http.StatusForbidden, st.Message()))
+	case codes.OutOfRange:
+		_ = send.Data(NewSSEError(http.StatusRequestEntityTooLarge, st.Message()))
+	case codes.FailedPrecondition:
+		_ = send.Data(NewSSEError(http.StatusBadRequest, st.Message()))
 	default:
 		_ = send.Data(NewSSEError(http.StatusInternalServerError, "Internal server error"))
 	}
 }
+
 func FromGrpcError(err error) error {
 	st, ok := status.FromError(err)
 	if !ok {
@@ -100,8 +105,8 @@ func opSlug(parts ...string) string {
 	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
 	return strings.Trim(s, "-")
 }
-func (s *Server) Get[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
 
+func (s *Server) Get[I, O any](pattern string, status int, next func(RouteData[I]) (*O, error), errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:   "get-" + opSlug(s.prefix, pattern),
 		Summary:       huma.GenerateSummary(http.MethodGet, pattern, new(O)),

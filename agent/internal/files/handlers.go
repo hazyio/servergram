@@ -12,6 +12,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"hazyio.com/servergram/agent/internal/common"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
@@ -361,30 +362,46 @@ func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServe
 		// Do not stream files larger than the requested max size.
 		return status.Errorf(codes.OutOfRange, "File cannot be read, too large, download %q", req.Name)
 	}
-	buf := make([]byte, 64*1024)
-	f, err := os.Open(filePath)
+
+	openFile, err := os.Open(filePath)
+
+	if err != nil {
+		return err
+
+	}
+	defer openFile.Close()
+	isText, err := common.IsReadableText(openFile)
+
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	if !isText {
+		return status.Errorf(codes.FailedPrecondition, "file %q is not readable text, download instead", req.Name)
+	}
+	if _, err := openFile.Seek(0, io.SeekStart); err != nil {
+		// reset pointer, IsReadableText moved it.
+		return status.Error(codes.Internal, "seek failed")
+	}
 
+	buf := make([]byte, 64*1024)
 	for {
 		select {
 		case <-stream.Context().Done():
 			return stream.Context().Err()
 		default:
-			n, err := f.Read(buf)
+			n, err := openFile.Read(buf)
 			if err != nil && err != io.EOF {
 				return err
+			}
+			if errors.Is(err, io.EOF) {
+				// send done
+				stream.Send(&proto.ReadFileResponse{Done: true})
+				return nil
 			}
 			if n > 0 {
 				if sendErr := stream.Send(&proto.ReadFileResponse{Data: buf[:n], Done: false}); sendErr != nil {
 					return sendErr
 				}
-			} else if err == io.EOF {
-				// send done
-				stream.Send(&proto.ReadFileResponse{Done: true})
-				return nil
 			}
 		}
 

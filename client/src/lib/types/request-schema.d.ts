@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/read-file-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get read file in server by ID */
+        get: operations["sse-files--read-file-in-server-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/remove-dir-in-server/{id}": {
         parameters: {
             query?: never;
@@ -739,6 +756,10 @@ export interface components {
         PathPropertiesResponseBody: {
             Enity: components["schemas"]["FileEntry"];
         };
+        ReadFileResponse: {
+            data?: string;
+            done?: boolean;
+        };
         RemoveDirectoryRequestBody: {
             /** @description The path of the directory to remove */
             path: string;
@@ -1026,6 +1047,67 @@ export interface operations {
                 content: {
                     "text/event-stream": ({
                         data: components["schemas"]["ListFilesChunkResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "sse-files--read-file-in-server-id": {
+        parameters: {
+            query: {
+                /** @description The path of the file to read */
+                path: string;
+                /** @description The name of the file to read */
+                name: string;
+                /** @description The maximum number of bytes to read from the file */
+                max_bytes_size: number;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["ReadFileResponse"];
                         /**
                          * @description The event name.
                          * @constant

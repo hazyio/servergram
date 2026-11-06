@@ -45,6 +45,7 @@ func (s *FilesServer) RenamePath(_ context.Context, req *proto.RenamePathRequest
 func (s *FilesServer) PathProperties(_ context.Context, req *proto.PathPropertiesRequest) (*proto.PathPropertiesResponse, error) {
 	return handlePathProperties(req)
 }
+
 func (s *FilesServer) ReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServer) error {
 	return handleReadFile(req, stream)
 }

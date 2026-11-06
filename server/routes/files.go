@@ -240,7 +240,7 @@ func getPathPropertiesInServer(data internal.RouteData[models.PathPropertiesRequ
 	}
 	return result, nil
 }
-func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.Sender) *proto.ListFilesChunkResponse {
+func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.Sender) *proto.ReadFileResponse {
 	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
 		slog.Error("Failed to get files connected", "error", err)
@@ -248,6 +248,7 @@ func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.
 		return nil
 	}
 	defer cancel()
+
 	stream, err := resource.ReadFile(ctx, &proto.ReadFileRequest{
 		Path:         data.Input.Path,
 		Name:         data.Input.Name,
@@ -258,26 +259,37 @@ func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.
 		internal.SendSSEError(send, err)
 		return nil
 	}
+
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("read file \"%s\" in server \"%d\"", data.Input.Name, data.Input.ID), data.Database)
 
 	for {
-		chunk, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			// Stream ended without a done chunk; tell the client to stop reconnecting.
-			_ = send.Data(&proto.ReadFileResponse{Done: true})
+		select {
+		case <-stream.Context().Done():
+			slog.Debug("Stream context cancelled")
 			return nil
 
-		}
-		if err != nil {
-			slog.Error("Failed to receive file chunk", "error", err)
-			internal.SendSSEError(send, err)
-			return nil
-		}
-		if err := send.Data(chunk); err != nil {
-			return nil
-		}
-		if chunk.Done {
-			return nil
+		default:
+			chunk, err := stream.Recv()
+			if errors.Is(err, io.EOF) {
+				// Stream ended without a done chunk; tell the client to stop reconnecting.
+				_ = send.Data(&proto.ReadFileResponse{Done: true})
+				return nil
+			}
+			if err != nil {
+				slog.Error("Failed to receive file chunk", "error", err)
+
+				internal.SendSSEError(send, err)
+				return nil
+			}
+			slog.Debug("Read file chunk", "chunk_size", len(chunk.Data))
+
+			if err := send.Data(chunk); err != nil {
+				slog.Error("Failed to send file chunk", "error", err)
+				return nil
+			}
+			if chunk.Done {
+				return nil
+			}
 		}
 	}
 }

@@ -18,8 +18,8 @@ import (
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
-func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager) {
-	server := internal.NewGroup("/server", api, database, []string{"Servers"}, sshManager)
+func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/server", api, database, []string{"Servers"}, sshManager, allowedOrigins, polls)
 	server.Post("/add", http.StatusCreated, addServer, http.StatusConflict, http.StatusInternalServerError)
 	server.Get("/list", http.StatusOK, listServers, http.StatusInternalServerError)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusNotFound)

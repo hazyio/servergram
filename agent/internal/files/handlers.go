@@ -1,6 +1,7 @@
 package files
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"io/fs"
@@ -410,5 +411,71 @@ func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServe
 		}
 
 	}
+
+}
+
+func handleWriteFile(stream proto.Files_WriteFileServer) error {
+	// First message must be metadata
+	first, err := stream.Recv()
+	if err != nil {
+		return err
+	}
+	meta := first.GetMeta()
+	if meta == nil {
+		return status.Error(codes.InvalidArgument, "first message must be meta")
+	}
+
+	newPath, err := validateAndCleanPath(meta.Path)
+
+	if err != nil {
+		return err
+	}
+	_, err = probePathExists(newPath)
+	if err != nil {
+		return err
+	}
+	if err := validateEntryName(meta.Name); err != nil {
+		return err
+	}
+	dest := filepath.Join(newPath, filepath.Base(meta.Name))
+
+	fileExists, _ := probePathExists(dest)
+	if fileExists != nil {
+		return status.Errorf(codes.AlreadyExists, "file name %q, already exists", dest)
+	}
+
+	// Write to a temp file, rename at the end, so failed uploads leave no partial file
+	tmp, err := os.CreateTemp(filepath.Dir(dest), ".upload-*")
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	defer os.Remove(tmp.Name())
+	w := bufio.NewWriterSize(tmp, 128*1024)
+	var written int64
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			break // client finished sending
+		}
+		if err != nil {
+			return err // client cancelled or connection died
+		}
+		n, err := w.Write(msg.GetChunk())
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		written += int64(n)
+	}
+	if err := w.Flush(); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	if err := tmp.Close(); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	if err := os.Rename(tmp.Name(), dest); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return stream.SendAndClose(&proto.WriteFileResponse{BytesWritten: written})
 
 }

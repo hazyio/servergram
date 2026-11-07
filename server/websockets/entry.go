@@ -1,11 +1,15 @@
 package websockets
 
 import (
+	"github.com/danielgtaylor/huma/v2"
+	"gorm.io/gorm"
 	"hazyio.com/servergram/server/internal"
+	"hazyio.com/servergram/server/internal/sshmanager"
 )
 
-func RegisterWebSockets(server *internal.Server) {
+func RegisterWebSockets(api *huma.Group, database *gorm.DB, sshManager *sshmanager.SSHManager, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/ws", api, database, []string{"Services"}, sshManager, allowedOrigins, polls)
 
-	server.WebSocket("/services", handleServicesWebSocket,onServiceSocketStated)
+	server.WebSocket("/", handleServicesWebSocket, onServiceSocketStated)
 
 }

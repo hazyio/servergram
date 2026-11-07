@@ -49,3 +49,7 @@ func (s *FilesServer) PathProperties(_ context.Context, req *proto.PathPropertie
 func (s *FilesServer) ReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServer) error {
 	return handleReadFile(req, stream)
 }
+
+func (s *FilesServer) WriteFile(stream proto.Files_WriteFileServer) error {
+	return handleWriteFile(stream)
+}

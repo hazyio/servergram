@@ -38,7 +38,6 @@ type Server struct {
 	mux            *http.ServeMux
 	prefix         string
 	sshManager     *sshmanager.SSHManager
-	DataQueue      *DataQueue
 	Polls          *Polls
 	allowedOrigins []string
 }
@@ -92,6 +91,8 @@ func FromGrpcError(err error) error {
 	}
 }
 
+type bodyKey struct{}
+
 // NewGroup wraps mux with a Server whose queries use pool.
 func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, sshManager *sshmanager.SSHManager, allowedOrigins []string, polls *Polls) *Server {
 	group := huma.NewGroup(api, prefix)
@@ -104,20 +105,12 @@ func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, 
 		group:          group,
 		prefix:         prefix,
 		sshManager:     sshManager,
-		DataQueue:      NewDataQueue(),
 		Polls:          polls,
 		allowedOrigins: allowedOrigins,
 	}
 
 }
 
-type bodyKey struct{}
-
-func captureBody() func(huma.Context, func(huma.Context)) {
-	return func(hctx huma.Context, next func(huma.Context)) {
-		next(huma.WithValue(hctx, bodyKey{}, hctx.BodyReader()))
-	}
-}
 func opSlug(parts ...string) string {
 	s := strings.ToLower(strings.Join(parts, "-"))
 	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
@@ -242,29 +235,52 @@ func (s *Server) Download[I any](pattern string, next func(routeData RouteData[I
 
 	})
 }
-func (s *Server) Upload[I, O any](pattern string, next func(routeData RouteData[I], reader io.Reader) (*O, error), errs ...int) {
+func (s *Server) Upload[I, O any](pattern string,
+	maxBytes int64,
+	next func(rd RouteData[I], body io.Reader) (*O, error),
+	errs ...int) {
+	type bodyKey struct{}
 
+	// Runs before Huma parses input. Grabs the raw body without reading it.
+	captureBody := func(hctx huma.Context, nextMw func(huma.Context)) {
+		r, w := humago.Unwrap(hctx)
+
+		// Huma's MaxBodyBytes only applies when Huma reads the body, so cap it here.
+		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+
+		// The server's ReadTimeout would kill long uploads; clear the deadline.
+		_ = http.NewResponseController(w).SetReadDeadline(time.Time{})
+
+		nextMw(huma.WithValue(hctx, bodyKey{}, io.Reader(r.Body)))
+	}
 	huma.Register(s.group, huma.Operation{
 		OperationID:     "upload-" + opSlug(s.prefix, pattern),
 		Summary:         huma.GenerateSummary(http.MethodPost, pattern, new(O)),
 		Method:          http.MethodPost,
 		Path:            pattern,
-		MaxBodyBytes:    10 << 30, // 10 GiB
+		MaxBodyBytes:    maxBytes,
 		Errors:          errs,
-		Middlewares:     huma.Middlewares{captureBody()},
 		BodyReadTimeout: -1, // disables body read timeout
-		RequestBody: &huma.RequestBody{ // docs only, Huma won't parse it
-			Content: map[string]*huma.MediaType{"application/octet-stream": {}},
+		Middlewares:     huma.Middlewares{captureBody},
+		// Docs only: Huma won't parse this because I has no body field.
+		RequestBody: &huma.RequestBody{
+			Content: map[string]*huma.MediaType{
+				"application/octet-stream": {Schema: &huma.Schema{Type: "string", Format: "binary"}},
+			},
 		},
 	}, func(ctx context.Context, input *I) (*O, error) {
-		body := ctx.Value(bodyKey{}).(io.Reader)
-
-		return next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}, body)
+		body, ok := ctx.Value(bodyKey{}).(io.Reader)
+		if !ok {
+			return nil, huma.Error500InternalServerError("body unavailable")
+		}
+		return next(RouteData[I]{
+			Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager,
+		}, body)
 
 	})
 }
 
-func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[I]), runOnStart func(in RouteData[I]), errs ...int) {
+func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[I], dataQueue *DataQueue), runOnStart func(in RouteData[any], dataQueue *DataQueue), errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:     "websocket-" + opSlug(s.prefix, pattern),
 		Summary:         huma.GenerateSummary(http.MethodGet, pattern, struct{}{}),
@@ -288,7 +304,7 @@ func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[
 				}
 				defer conn.CloseNow()
 				conn.SetReadLimit(1 << 20)
-				dataQueue := s.DataQueue
+				dataQueue := NewDataQueue()
 				// watch for new messages in the data queue and send them over the WebSocket connection
 				poller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
 					messages, ok := dataQueue.Dequeue()
@@ -305,19 +321,29 @@ func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[
 					}
 				}))
 
-				rd := RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}
 				poller.Start(ctx)
+				defer dataQueue.Close()
 				defer poller.Stop()
 				// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
-				go runOnStart(rd)
+				go runOnStart(RouteData[any]{Input: &struct{}{}, Database: s.database, Context: ctx, SSHManager: s.sshManager}, dataQueue)
 				for {
+					var input I
+					if err := wsjson.Read(ctx, conn, &input); err != nil {
+						switch websocket.CloseStatus(err) {
+						case websocket.StatusNormalClosure, websocket.StatusGoingAway:
+						default:
+							slog.Error("ws read error", "error", err)
+						}
+						poller.Stop()
+						return
+					}
+					rd := RouteData[I]{Input: input, Database: s.database, Context: ctx, SSHManager: s.sshManager}
 					select {
 					case <-ctx.Done():
 						return
 					default:
-						next(rd)
+						next(rd, dataQueue)
 
-						return
 					}
 				}
 			},
@@ -379,7 +405,6 @@ func CorsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }

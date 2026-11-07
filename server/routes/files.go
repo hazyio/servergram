@@ -21,8 +21,8 @@ import (
 	"github.com/danielgtaylor/huma/v2/sse"
 )
 
-func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHManager) {
-	server := internal.NewGroup("/files", api, database, []string{"Files"}, ssh)
+func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHManager, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/files", api, database, []string{"Files"}, ssh, allowedOrigins, polls)
 
 	server.SSE("/list-in-server/{id}", http.StatusOK, listFilesInServer)
 	server.SSE("/watch-dir-in-server/{id}", http.StatusOK, watchDirectoryInServer)
@@ -34,7 +34,8 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server.Get("/get-path-properties-in-server/{id}", http.StatusOK, getPathPropertiesInServer)
 	server.SSE("/read-file-in-server/{id}", http.StatusOK, readFileInServer)
 	server.Download("/download-file-in-server/{id}", downloadFileInServer, http.StatusBadGateway)
-	server.Upload("/upload-file-to-server/{id}", uploadFileInServer, http.StatusBadGateway)
+	// set max bytes to 10 GiB
+	server.Upload("/upload-file-to-server/{id}", 10<<30, uploadFileInServer, http.StatusBadGateway)
 
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
@@ -362,7 +363,8 @@ func downloadFileInServer(data internal.RouteData[models.DownloadFileRequest]) (
 	}, nil
 }
 
-func uploadFileInServer(data internal.RouteData[models.DownloadFileRequest], reader io.Reader) (*EmptyRR, error) {
+func uploadFileInServer(data internal.RouteData[models.UploadFileRequest], reader io.Reader) (*EmptyRR, error) {
+	input := data.Input
 	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
 		slog.Error("Failed to get files connected for streaming", "error", err)
@@ -374,11 +376,39 @@ func uploadFileInServer(data internal.RouteData[models.DownloadFileRequest], rea
 		slog.Error("Failed to start upload stream", "error", err)
 		return nil, internal.InternalServerError
 	}
-	stream.Send(&proto.WriteFileRequest{
+	// First message: metadata
+	if err := stream.Send(&proto.WriteFileRequest{
 		Payload: &proto.WriteFileRequest_Meta{
-			Meta: &proto.WriteFileRequest_WriteFileMeta{Name: data.Input.Name, Path: data.Input.Path},
+			Meta: &proto.WriteFileRequest_WriteFileMeta{Name: input.Name, Path: input.Dir},
 		},
-	})
+	}); err != nil {
+		// io.EOF means the server already ended the stream; get the real status
+		_, rerr := stream.CloseAndRecv()
+		return nil, rerr
+	}
+	buf := make([]byte, 128*1024) // 128 KiB buffer
+	for {
+		n, rerr := reader.Read(buf)
+		if n > 0 {
+			if err := stream.Send(&proto.WriteFileRequest{
+				Payload: &proto.WriteFileRequest_Chunk{Chunk: buf[:n]},
+			}); err != nil {
+				break // stream is dead; CloseAndRecv below returns the real error
+			}
+		}
+		if rerr == io.EOF {
+			break
+		}
+		if rerr != nil {
+			return nil, rerr
+		}
+	}
 
+	_, err = stream.CloseAndRecv()
+	if err != nil {
+		slog.Error("Failed to complete file upload", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+	db.AddLog(db.LogActionCreate, fmt.Sprintf("Uploaded file \"%s\" to server \"%d\"", input.Name, input.ID), data.Database)
 	return &EmptyRR{}, nil
 }

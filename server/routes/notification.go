@@ -10,8 +10,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerNotificationRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/notification", api, database, []string{"Notifications"}, nil)
+func registerNotificationRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/notification", api, database, []string{"Notifications"}, nil, allowedOrigins, polls)
 	server.Get("/available", http.StatusOK, notificationAvailable)
 	server.Get("/list/unread", http.StatusOK, unreadNotifications)
 	server.Get("/list/read", http.StatusOK, readNotifications)

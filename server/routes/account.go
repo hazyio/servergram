@@ -15,8 +15,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerAccountRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/account", api, database, []string{"Accounts"}, nil)
+func registerAccountRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/account", api, database, []string{"Accounts"}, nil, allowedOrigins, polls)
 	server.Post("/login", http.StatusCreated, login)
 	// server.Delete("/logout", http.StatusOK, logout)
 

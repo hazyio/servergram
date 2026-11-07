@@ -11,8 +11,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerSSHRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/ssh-key", api, database, []string{"SSH"}, nil)
+func registerSSHRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/ssh-key", api, database, []string{"SSH"}, nil, allowedOrigins, polls)
 	server.Post("/add", http.StatusCreated, addSSHKey)
 	server.Get("/list", http.StatusOK, listSSHKeys)
 	server.Get("/view-key/{id}", http.StatusOK, viewSSHKey)

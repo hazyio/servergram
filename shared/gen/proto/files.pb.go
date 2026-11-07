@@ -984,7 +984,6 @@ func (x *ReadFileResponse) GetDone() bool {
 
 type WriteFileRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Data  []byte                 `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*WriteFileRequest_Meta
@@ -1022,13 +1021,6 @@ func (x *WriteFileRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WriteFileRequest.ProtoReflect.Descriptor instead.
 func (*WriteFileRequest) Descriptor() ([]byte, []int) {
 	return file_proto_files_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *WriteFileRequest) GetData() []byte {
-	if x != nil {
-		return x.Data
-	}
-	return nil
 }
 
 func (x *WriteFileRequest) GetPayload() isWriteFileRequest_Payload {
@@ -1074,7 +1066,7 @@ func (*WriteFileRequest_Chunk) isWriteFileRequest_Payload() {}
 
 type WriteFileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	BytesWritten  int64                  `protobuf:"varint,1,opt,name=bytes_written,json=bytesWritten,proto3" json:"bytes_written,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1109,18 +1101,17 @@ func (*WriteFileResponse) Descriptor() ([]byte, []int) {
 	return file_proto_files_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *WriteFileResponse) GetSuccess() bool {
+func (x *WriteFileResponse) GetBytesWritten() int64 {
 	if x != nil {
-		return x.Success
+		return x.BytesWritten
 	}
-	return false
+	return 0
 }
 
 type WriteFileRequest_WriteFileMeta struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1167,13 +1158,6 @@ func (x *WriteFileRequest_WriteFileMeta) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-func (x *WriteFileRequest_WriteFileMeta) GetOffset() int64 {
-	if x != nil {
-		return x.Offset
-	}
-	return 0
 }
 
 var File_proto_files_proto protoreflect.FileDescriptor
@@ -1238,18 +1222,16 @@ const file_proto_files_proto_rawDesc = "" +
 	"isDownload\":\n" +
 	"\x10ReadFileResponse\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\fR\x04data\x12\x12\n" +
-	"\x04done\x18\x03 \x01(\bR\x04done\"\xd7\x01\n" +
-	"\x10WriteFileRequest\x12\x12\n" +
-	"\x04data\x18\x04 \x01(\fR\x04data\x12;\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\"\xab\x01\n" +
+	"\x10WriteFileRequest\x12;\n" +
 	"\x04meta\x18\x01 \x01(\v2%.proto.WriteFileRequest.WriteFileMetaH\x00R\x04meta\x12\x16\n" +
-	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunk\x1aO\n" +
+	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunk\x1a7\n" +
 	"\rWriteFileMeta\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x03R\x06offsetB\t\n" +
-	"\apayload\"-\n" +
-	"\x11WriteFileResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess*:\n" +
+	"\x04name\x18\x02 \x01(\tR\x04nameB\t\n" +
+	"\apayload\"8\n" +
+	"\x11WriteFileResponse\x12#\n" +
+	"\rbytes_written\x18\x01 \x01(\x03R\fbytesWritten*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +

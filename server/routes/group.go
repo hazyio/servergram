@@ -12,8 +12,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerGroupRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/group", api, database, []string{"Groups"}, nil)
+func registerGroupRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/group", api, database, []string{"Groups"}, nil, allowedOrigins, polls)
 	server.Post("/create", http.StatusCreated, createNewGroup)
 	server.Get("/list", http.StatusOK, listGroups)
 	server.Delete("/delete/{id}", http.StatusOK, deleteGroup)

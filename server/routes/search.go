@@ -11,8 +11,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerSearchRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string) {
-	server := internal.NewGroup("/search", api, database, []string{"Search"}, nil, allowedOrigins, nil)
+func registerSearchRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/search", api, database, []string{"Search"}, nil, allowedOrigins, polls)
 	server.Get("/ssh", http.StatusOK, searchSSHKeys)
 	server.Get("/group", http.StatusOK, searchGroups)
 }

@@ -79,7 +79,9 @@ type DownloadFileRequest struct {
 }
 
 type UploadFileRequest struct {
-	ID      uint `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+	ID      uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+	Name    string `query:"name" required:"true" doc:"The name of the file to save as"`
+	Dir     string `query:"dir" required:"true" doc:"The directory to upload the file to"`
 	RawBody huma.MultipartFormFiles[struct {
 		File huma.FormFile `form:"file" required:"true"`
 	}]

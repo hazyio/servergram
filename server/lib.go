@@ -57,9 +57,9 @@ func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
 	ssh_manager := sshmanager.NewSSHManager()
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
-	raw_server := internal.NewRawServer(database, mux, env.AllowedOrigins, ssh_manager, polls)
 	api := humago.New(mux, config)
 	apiUmbrella := huma.NewGroup(api, "/api")
+	websocketGroup := huma.NewGroup(api, "")
 
 	loggingMW := internal.LoggingMiddleware(api)
 	sessionMW := internal.SessionMiddleware(database, api)
@@ -94,8 +94,8 @@ func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
 
 	})
 	// Register application routes and websockets
-	routes.RegisterRoutes(apiUmbrella, database, ssh_manager)
-	websockets.RegisterWebSockets(raw_server)
+	routes.RegisterRoutes(apiUmbrella, database, ssh_manager, env.AllowedOrigins, polls)
+	websockets.RegisterWebSockets(websocketGroup, database, ssh_manager, env.AllowedOrigins, polls)
 
 	// handle root and frontend route
 	mux.HandleFunc("/", handleRoot)

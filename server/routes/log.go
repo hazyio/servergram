@@ -12,8 +12,8 @@ import (
 	"hazyio.com/servergram/server/routes/models"
 )
 
-func registerLogRoutes(api *huma.Group, database *gorm.DB) {
-	server := internal.NewGroup("/logs", api, database, []string{"Logs"}, nil)
+func registerLogRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
+	server := internal.NewGroup("/logs", api, database, []string{"Logs"}, nil, allowedOrigins, polls)
 	server.Get("/list", http.StatusOK, listLogs)
 
 }

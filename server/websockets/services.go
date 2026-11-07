@@ -12,18 +12,16 @@ import (
 	"hazyio.com/servergram/server/websockets/models"
 )
 
-func onServiceSocketStated(input internal.RawServerRouteData[models.WebSocketMessage[models.WebSocketServiceMessage]]) {
+func onServiceSocketStated(input internal.RouteData[any], dataQueue *internal.DataQueue) {
 	manageSSHConnection := input.SSHManager
-	dataQueue := input.DataQueue
 	slog.Info("service socket started")
 	SendQueueAndConnected(dataQueue, manageSSHConnection)
 
 }
-func handleServicesWebSocket(input internal.RawServerRouteData[models.WebSocketMessage[models.WebSocketServiceMessage]]) {
+func handleServicesWebSocket(input internal.RouteData[models.WebSocketMessage[models.WebSocketServiceMessage]], dataQueue *internal.DataQueue) {
 	message := input.Input.Action
 	data := input.Input.Data
 	manageSSHConnection := input.SSHManager
-	dataQueue := input.DataQueue
 	slog.Info("handling service websocket message", "action", message)
 	switch message {
 	case models.WSServiceMessageConnectServer:

@@ -83,9 +83,10 @@ func validateEntryName(name string) error {
 	if len(name) > 255 {
 		return status.Errorf(codes.InvalidArgument, "file name %q is too long", name)
 	}
-	if strings.ContainsAny(name, `/\`) || strings.ContainsRune(name, '\x00') {
+	if strings.ContainsAny(name, `/\`) || strings.ContainsRune(name, '\x00') || strings.ContainsRune(name, ':') || strings.ContainsRune(name, '*') || strings.ContainsRune(name, '?') || strings.ContainsRune(name, '"') || strings.ContainsRune(name, '<') || strings.ContainsRune(name, '>') || strings.ContainsRune(name, '|') || strings.Contains(name, "..") {
 		return status.Errorf(codes.InvalidArgument, "invalid file name %q", name)
 	}
+
 	return nil
 }
 

@@ -1,99 +1,53 @@
-const icons = import.meta.glob("./assets/icons/*.svg", {
-  eager: true,
-  query: "?url",
-  import: "default",
-}) as Record<string, string>;
+import manifest from "material-icon-theme/dist/material-icons.json";
 
-const iconUrl = (name: string) => icons[`./assets/icons/${name}.svg`];
+interface Manifest {
+  iconDefinitions: Record<string, { iconPath: string }>;
+  file: string;
+  folder: string;
+  folderExpanded: string;
+  fileNames: Record<string, string>;
+  fileExtensions: Record<string, string>;
+  folderNames: Record<string, string>;
+  folderNamesExpanded: Record<string, string>;
+}
+const m = manifest as unknown as Manifest;
 
-const byExtension: Record<string, string> = {
-  js: "javascript",
-  mjs: "javascript",
-  ts: "typescript",
-  html: "html",
-  css: "css",
-  go: "go",
-  svelte: "svelte",
-  json: "json",
-  md: "markdown",
-  log: "log",
-  txt: "document",
-  yaml: "yaml",
-  yml: "yaml",
-  toml: "toml",
-  xml: "xml",
-  py: "python",
-  rs: "rust",
-  php: "php",
-  rb: "ruby",
-  java: "java",
-  c: "c",
-  cpp: "cpp",
-  cs: "csharp",
-  vue: "vue",
-  sh: "console",
-  ps1: "powershell",
-  pdf: "pdf",
-  png: "image",
-  jpg: "image",
-  jpeg: "image",
-  gif: "image",
-  svg: "image",
-  webp: "image",
-  mp4: "video",
-  mkv: "video",
-  mp3: "audio",
-  wav: "audio",
-  zip: "zip",
-  gz: "zip",
-  tar: "zip",
-  "7z": "zip",
-  pem: "certificate",
-  crt: "certificate",
-  key: "key",
-  lock: "lock",
-  sql: "database",
-  woff: "font",
-  woff2: "font",
-  ttf: "font",
-};
+const iconFiles = import.meta.glob(
+  "/node_modules/material-icon-theme/icons/*.svg",
+  { eager: true, query: "?url", import: "default" },
+) as Record<string, string>;
 
-const byFileName: Record<string, string> = {
-  ".env": "tune",
-  dockerfile: "docker",
-  license: "license",
-  "readme.md": "readme",
-  "go.mod": "go-mod",
-};
+// manifest value -> icon definition id -> svg filename -> bundled url
+function urlFor(id: string | undefined): string | undefined {
+  const def = id ? m.iconDefinitions[id] : undefined;
+  if (!def) return undefined;
+  const file = def.iconPath.split("/").pop()!;
+  return iconFiles[`/node_modules/material-icon-theme/icons/${file}`];
+}
 
-const byFolderName: Record<string, string> = {
-  src: "folder-src",
-  dist: "folder-dist",
-  logs: "folder-log",
-  log: "folder-log",
-  assets: "folder-resource",
-  images: "folder-images",
-  public: "folder-public",
-  config: "folder-config",
-  docs: "folder-docs",
-  test: "folder-test",
-  tests: "folder-test",
-  tmp: "folder-temp",
-  temp: "folder-temp",
-  node_modules: "folder-node",
-  ".git": "folder-git",
-};
-
-export function getFileIcon(name: string, isDir: boolean): string {
+export function getFileIcon(
+  name: string,
+  isDir: boolean,
+  open = false,
+): string {
   const lower = name.toLowerCase();
+
   if (isDir) {
-    return (
-      iconUrl(byFolderName[lower] ?? "folder-base") ?? iconUrl("folder-base")
-    );
+    const named = open
+      ? (m.folderNamesExpanded[lower] ?? m.folderNames[lower])
+      : m.folderNames[lower];
+    return urlFor(named) ?? urlFor(open ? m.folderExpanded : m.folder)!;
   }
-  const ext = lower.includes(".") ? lower.split(".").pop()! : "";
-  return (
-    iconUrl(byFileName[lower] ?? byExtension[ext] ?? "document") ??
-    iconUrl("document")
-  );
+
+  const byName = urlFor(m.fileNames[lower]);
+  if (byName) return byName;
+
+  // Longest extension first: "app.test.ts" -> "test.ts" -> "ts"
+  const parts = lower.split(".");
+  for (let i = 1; i < parts.length; i++) {
+    const url = urlFor(m.fileExtensions[parts.slice(i).join(".")]);
+    if (url) return url;
+  }
+
+  return urlFor(m.file)!;
 }

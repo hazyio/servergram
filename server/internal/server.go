@@ -358,7 +358,6 @@ func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(
 		req := http.Request{Header: http.Header{"Cookie": {ctx.Header("Cookie")}}}
 		c, err := req.Cookie("session_token")
 		if err != nil {
-
 			if isNavigating(ctx) {
 
 				return
@@ -379,7 +378,6 @@ func SessionMiddleware(database *gorm.DB, api huma.API) func(huma.Context, func(
 			huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-
 		next(ctx)
 	}
 

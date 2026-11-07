@@ -99,6 +99,7 @@
         class={`${selected.includes(row.original.name ?? "") ? "bg-accent hover:bg-accent/50" : ""} ${isDir(row.original) ? "cursor-pointer" : ""}`}
         onclick={() => {
           if (row.original.name) {
+            if (row.original.name === "..") return;
             if (!selected.includes(row.original.name)) {
               selected.push(row.original.name);
             } else {

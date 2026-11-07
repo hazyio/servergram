@@ -384,16 +384,21 @@ func uploadFileInServer(data internal.RouteData[models.UploadFileRequest], reade
 	}); err != nil {
 		// io.EOF means the server already ended the stream; get the real status
 		_, rerr := stream.CloseAndRecv()
+		slog.Error("Failed to send file metadata, server closed stream", "error", rerr)
 		return nil, rerr
 	}
 	buf := make([]byte, 128*1024) // 128 KiB buffer
 	for {
 		n, rerr := reader.Read(buf)
+
+		slog.Debug("Read from upload source", "size", n)
 		if n > 0 {
 			if err := stream.Send(&proto.WriteFileRequest{
 				Payload: &proto.WriteFileRequest_Chunk{Chunk: buf[:n]},
 			}); err != nil {
-				break // stream is dead; CloseAndRecv below returns the real error
+				// stream is dead; CloseAndRecv below returns the real error
+				slog.Error("Failed to send file chunk", "error", err)
+				break
 			}
 		}
 		if rerr == io.EOF {

@@ -21,6 +21,7 @@
     name: "",
   });
   let entryName = $state("");
+  let selectedFile = $state<File | null>(null);
 
   const entrySchema = z.object({
     name: z
@@ -30,6 +31,14 @@
       .max(500, "Name is too long")
       .regex(/^[\w .@-]+$/, "Use letters, numbers, spaces, . _ - @ only"),
   });
+  function handleFileChange(files: FileList | null) {
+    if (files?.length) {
+      selectedFile = files[0];
+      entryName = files[0].name;
+    } else {
+      selectedFile = null;
+    }
+  }
   async function handleSubmit() {
     formError.name = "";
 
@@ -40,37 +49,41 @@
       }
       return;
     }
+    if (!selectedFile) {
+      return;
+    }
+
     submitting = true;
     const { error } = await NewRequestClient().POST(
       "/api/files/upload-file-to-server/{id}",
       {
-        body: {
-          path: dir,
-          new_name: entryName,
-        },
         params: {
-          path: {
-            id: serverId,
-          },
+          path: { id: serverId },
+          query: { name: entryName, dir },
         },
+        body: selectedFile as unknown as string, // typed as string (format: binary) by the generated schema
+        bodySerializer: (b) => b as BodyInit, // send the File as-is, no JSON.stringify / FormData
+        headers: { "Content-Type": "application/octet-stream" },
       },
     );
-
     submitting = false;
+
     if (error) {
-      formError.name = unWrapErrorMessage(error, "Failed to rename entry");
+      formError.name = unWrapErrorMessage(error, "Failed to upload file");
       return;
     }
-    entryName = "";
+
+    close();
   }
   function close() {
     entryName = "";
+    selectedFile = null;
     formError.name = "";
     open = false;
   }
 </script>
 
-<Dialog.Root open={open}>
+<Dialog.Root {open}>
   <Dialog.Content
     showCloseButton={false}
     onEscapeKeydown={() => {
@@ -79,20 +92,35 @@
     onInteractOutside={(event) => event.preventDefault()}
   >
     <Dialog.Header>
-      <Dialog.Title>Rename Entry</Dialog.Title>
+      <Dialog.Title>Upload File</Dialog.Title>
     </Dialog.Header>
     <div>
       <form
-        id="create-emtry-form"
+        id="upload-file-form"
         onsubmit={handleSubmit}
         class="flex flex-col gap-4"
       >
+        <Field.Field data-invalid={!!formError.name}>
+          <Field.Label for="file">File</Field.Label>
+          <Input
+            id="file"
+            type="file"
+            disabled={submitting}
+            onchange={(event) => {
+              handleFileChange((event.target as HTMLInputElement).files);
+              formError.name = "";
+            }}
+          />
+          {#if formError.name}
+            <Field.Error>{formError.name}</Field.Error>
+          {/if}
+        </Field.Field>
         <Field.Field data-invalid={!!formError.name}>
           <Field.Label for="name">Name</Field.Label>
           <Input
             id="name"
             placeholder="Test"
-            disabled={submitting}
+            disabled={!selectedFile || submitting}
             type={"text"}
             bind:value={entryName}
             aria-invalid={formError.name ? "true" : "false"}
@@ -111,15 +139,15 @@
     <Dialog.Footer>
       <Button disabled={submitting} onclick={close}>Cancel</Button>
       <Button
-        disabled={submitting}
+        disabled={submitting || !selectedFile}
         onclick={() => {
           handleSubmit();
         }}
       >
         {#if submitting}
           <Loading loading />
-        {:else} 
-          Rename
+        {:else}
+          Upload
         {/if}
       </Button>
     </Dialog.Footer>

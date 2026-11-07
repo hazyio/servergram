@@ -27,61 +27,71 @@
   const icon = $derived(getFileIcon(name, isDir));
 </script>
 
-<ContextMenu.Root>
-  <ContextMenu.Trigger>
-    <div class="flex items-center gap-3 h-15 max-w-50">
-      <img src={icon} alt="" class="size-6 shrink-0" />
-      <span class="min-h-0 wrap-break-word"> {name}</span>
-    </div>
-  </ContextMenu.Trigger>
-  <ContextMenu.Content>
-    <ContextMenu.Group>
-      {#if isDir}
-        <ContextMenu.Item class="py-2 my-1">
-          <FolderOpen />
-          Open
-        </ContextMenu.Item>
-      {:else}
+{#if name === ".."}
+  <div class="flex items-center gap-3 h-15 max-w-50">
+    <img src={icon} alt="" class="size-6 shrink-0" />
+    <span class="min-h-0 wrap-break-word"> {name}</span>
+  </div>
+{:else}
+  <ContextMenu.Root>
+    <ContextMenu.Trigger>
+      <div class="flex items-center gap-3 h-15 max-w-50">
+        <img src={icon} alt="" class="size-6 shrink-0" />
+        <span class="min-h-0 wrap-break-word"> {name}</span>
+      </div>
+    </ContextMenu.Trigger>
+    <ContextMenu.Content>
+      <ContextMenu.Group>
+        {#if isDir}
+          <ContextMenu.Item class="py-2 my-1">
+            <FolderOpen />
+            Open
+          </ContextMenu.Item>
+        {:else}
+          <ContextMenu.Item
+            class="py-2 my-1"
+            onclick={() => onViewClicked({ name, isDir })}
+          >
+            <Eye />
+            View
+          </ContextMenu.Item>
+        {/if}
         <ContextMenu.Item
           class="py-2 my-1"
-          onclick={() => onViewClicked({ name, isDir })}
+          onclick={() => onRenameClicked({ name, isDir })}
         >
-          <Eye />
-          View
+          <PencilIcon />
+          Rename
         </ContextMenu.Item>
-      {/if}
-      <ContextMenu.Item
-        class="py-2 my-1"
-        onclick={() => onRenameClicked({ name, isDir })}
-      >
-        <PencilIcon />
-        Rename
-      </ContextMenu.Item>
 
-      {#if !isDir}
-        <ContextMenu.Item class="py-2 my-1" onclick={() => onDownloadClicked({ name, isDir })}>
-          <ArrowDownToLine />
-          Download
+        {#if !isDir}
+          <ContextMenu.Item
+            class="py-2 my-1"
+            onclick={() => onDownloadClicked({ name, isDir })}
+          >
+            <ArrowDownToLine />
+            Download
+          </ContextMenu.Item>
+        {/if}
+        <ContextMenu.Item
+          class="py-2 my-1"
+          onclick={() => onOpenPropertiesClicked({ name, isDir })}
+        >
+          <Info />
+          Properties
         </ContextMenu.Item>
-      {/if}
-      <ContextMenu.Item
-        class="py-2 my-1"
-        onclick={() => onOpenPropertiesClicked({ name, isDir })}
-      >
-        <Info />
-        Properties
-      </ContextMenu.Item>
-    </ContextMenu.Group>
-    <ContextMenu.Separator />
-    <ContextMenu.Group>
-      <ContextMenu.Item
-        onclick={() => onDelete({ name, isDir })}
-        variant="destructive"
-        class={`gap-2 w-full justify-start ${buttonVariants({ variant: "destructive" })}`}
-      >
-        <TrashIcon class="text-destructive! hover:text-destructive!" />
-        <span class="text-destructive!">Delete</span>
-      </ContextMenu.Item>
-    </ContextMenu.Group>
-  </ContextMenu.Content>
-</ContextMenu.Root>
+      </ContextMenu.Group>
+      <ContextMenu.Separator />
+      <ContextMenu.Group>
+        <ContextMenu.Item
+          onclick={() => onDelete({ name, isDir })}
+          variant="destructive"
+          class={`gap-2 w-full justify-start ${buttonVariants({ variant: "destructive" })}`}
+        >
+          <TrashIcon class="text-destructive! hover:text-destructive!" />
+          <span class="text-destructive!">Delete</span>
+        </ContextMenu.Item>
+      </ContextMenu.Group>
+    </ContextMenu.Content>
+  </ContextMenu.Root>
+{/if}

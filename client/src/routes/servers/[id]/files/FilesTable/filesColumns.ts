@@ -6,7 +6,6 @@ import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
 import type { DeleteEntryProps } from "../DeleteEntriesDialog.svelte";
 import FileName from "./FileName.svelte";
 
-
 export const isDir = (entry: FileEntry) => entry.kind === KIND_DIR;
 
 const columnHelper = createColumnHelper<DataTableFeatures, FileEntry>();

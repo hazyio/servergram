@@ -7,6 +7,9 @@
   import { untrack } from "svelte";
 
   import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
+  import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
+  import type { FileEntry } from "#lib/types/index.ts";
+  import { joinPath } from "#lib/utils.ts";
   import {
     ChevronLeft,
     ChevronRight,
@@ -23,19 +26,16 @@
   import DeleteEntriesDialog, {
     type DeleteEntryProps,
   } from "./DeleteEntriesDialog.svelte";
+  import EntryProperty from "./EntryProperty.svelte";
   import { isDir } from "./FilesTable/filesColumns";
   import FilesTable from "./FilesTable/FilesTable.svelte";
   import NewEntry, { type NewEntryType } from "./NewEntry.svelte";
+  import RenameEntry from "./RenameEntry.svelte";
   import SettingOption, {
     type SettingOptionProps,
   } from "./SettingOption.svelte";
-  import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import RenameEntry from "./RenameEntry.svelte";
-  import EntryProperty from "./EntryProperty.svelte";
+  import UploadFile from "./UploadFile.svelte";
   import ViewFile from "./ViewFile.svelte";
-  import type { FileEntry } from "#lib/types/index.ts";
-  import { joinPath } from "#lib/utils.ts";
-  import { NewRequestClient } from "#lib/api/request.ts";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -69,6 +69,7 @@
   let renameOldName = $state<null | string>(null);
   let openEntryProperties = $state<null | string>(null);
   let openViewFile = $state<null | string>(null);
+  let openFileUploadDialog = $state(false);
 
   function stop() {
     stopWatch();
@@ -103,6 +104,17 @@
       if (source !== eventSource) return;
       try {
         const chunk = JSON.parse((event as MessageEvent<string>).data) as Chunk;
+        if (files.length === 0 && dir !== "/" && dir !== "") {
+          files = [
+            {
+              kind: 1,
+              name: "..",
+              size: 0,
+              modified_unix_ns: Date.now() * 1e6,
+              mode: 0o755,
+            },
+          ];
+        }
         if (chunk.entries?.length) files = [...files, ...chunk.entries];
         if (chunk.resolved_path) {
           // update dir and last visited dir
@@ -303,7 +315,10 @@
     bind:askBeforeDelete={settings.askBeforeDelete}
   />
   <Button variant="outline" onclick={loadFiles}><RefreshCcw /></Button>
-  <Actions bind:entryType={newEntryType} />
+  <Actions
+    bind:entryType={newEntryType}
+    onUploadClicked={() => (openFileUploadDialog = true)}
+  />
 
   <Button
     variant={watching ? "default" : "outline"}
@@ -343,6 +358,11 @@
   onDownloadClicked={(name) => {
     triggerDownload(name);
   }}
+/>
+<UploadFile
+  serverId={Number(params.id)}
+  {dir}
+  bind:open={openFileUploadDialog}
 />
 
 {#if loading}
@@ -408,7 +428,10 @@
           <FolderIcon />
           New Directory
         </ContextMenu.Item>
-        <ContextMenu.Item class="py-2">
+        <ContextMenu.Item
+          class="py-2"
+          onclick={() => (openFileUploadDialog = true)}
+        >
           <Upload />
           Upload
         </ContextMenu.Item>

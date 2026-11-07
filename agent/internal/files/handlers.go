@@ -3,6 +3,7 @@ package files
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -36,17 +37,17 @@ func handleListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesSe
 	}
 	batch := make([]*proto.FileEntry, 0, 500)
 	for _, e := range entries {
-		if stripDirFromPath(req.Dir, e.Name())[0] == '.' && !req.IncludeHidden {
+		if stripDirFromPath(newPath, e.Name())[0] == '.' && !req.IncludeHidden {
 			continue
 		}
 		info, _ := e.Info()
 		batch = append(batch, toEntry(info))
 		if len(batch) == 500 {
-			stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: req.Dir})
+			stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath})
 			batch = batch[:0]
 		}
 	}
-	stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: req.Dir, Done: true})
+	stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath, Done: true})
 
 	return nil
 }
@@ -89,12 +90,12 @@ func handleRemoveDirectory(req *proto.RemoveDirectoryRequest) (*proto.SuccessRes
 			return nil, status.Errorf(codes.PermissionDenied, "cannot access directory %q", req.Path)
 		}
 		log.Printf("failed to access directory %q: %v", req.Path, err)
-		return nil, status.Error(codes.Internal, "unknown error")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to access directory %q: %v", req.Path, err))
 	}
 	if !info.IsDir() {
 		return nil, status.Errorf(codes.InvalidArgument, "path %q is not a directory", req.Path)
 	}
-	err = os.Remove(req.Path)
+	err = os.RemoveAll(newPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, status.Errorf(codes.NotFound, "directory %q not found", req.Path)
@@ -103,7 +104,7 @@ func handleRemoveDirectory(req *proto.RemoveDirectoryRequest) (*proto.SuccessRes
 			return nil, status.Errorf(codes.PermissionDenied, "cannot remove directory %q", req.Path)
 		}
 		log.Printf("failed to remove directory %q: %v", req.Path, err)
-		return nil, status.Error(codes.Internal, "unknown error")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to remove directory %q: %v", req.Path, err))
 	}
 
 	return &proto.SuccessResponse{Success: true}, nil

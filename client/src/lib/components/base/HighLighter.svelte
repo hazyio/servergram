@@ -1,14 +1,41 @@
 <script lang="ts">
+  import * as Select from "#lib/components/ui/select/index.js";
+
   import { createHighlighterCore, type HighlighterCore } from "shiki/core";
   import { createOnigurumaEngine } from "shiki/engine/oniguruma";
   import { bundledLanguagesInfo } from "shiki/langs";
+  import { bundledThemesInfo } from "shiki/themes";
 
   let { code, fileName = "" } = $props();
   let html = $state("");
+  let theme = $state("github-dark");
 
-  const theme = "github-dark";
+  const themes = [
+    { id: "github-dark", label: "GitHub Dark" },
+    { id: "github-light", label: "GitHub Light" },
+    { id: "one-dark-pro", label: "One Dark Pro" },
+    { id: "one-light", label: "One Light" },
+    { id: "dracula", label: "Dracula" },
+    { id: "nord", label: "Nord" },
+    { id: "catppuccin-mocha", label: "Catppuccin Mocha" },
+    { id: "catppuccin-latte", label: "Catppuccin Latte" },
+    { id: "solarized-dark", label: "Solarized Dark" },
+    { id: "solarized-light", label: "Solarized Light" },
+    { id: "vitesse-dark", label: "Vitesse Dark" },
+    { id: "vitesse-light", label: "Vitesse Light" },
+    { id: "tokyo-night", label: "Tokyo Night" },
+    { id: "rose-pine", label: "Rosé Pine" },
+    { id: "rose-pine-dawn", label: "Rosé Pine Dawn" },
+  ];
+
   const languageLoaders = new Map(
     bundledLanguagesInfo.map((language) => [language.id, language.import]),
+  );
+  const themeLoaders = new Map(
+    bundledThemesInfo.map((availableTheme) => [
+      availableTheme.id,
+      availableTheme.import,
+    ]),
   );
 
   // File extensions mapped to Shiki language ids.
@@ -154,6 +181,7 @@
 
   let highlighterPromise: Promise<HighlighterCore> | undefined;
   const loadedLanguages = new Set<string>();
+  const loadedThemes = new Set(["github-dark"]);
 
   function getHighlighter() {
     highlighterPromise ??= createHighlighterCore({
@@ -177,6 +205,16 @@
     loadedLanguages.add(language);
   }
 
+  async function ensureTheme(highlighter: HighlighterCore, themeName: string) {
+    if (loadedThemes.has(themeName)) return;
+
+    const loader = themeLoaders.get(themeName);
+    if (!loader) return;
+
+    await highlighter.loadTheme(loader);
+    loadedThemes.add(themeName);
+  }
+
   function escapeHtml(value: string) {
     return value
       .replaceAll("&", "&amp;")
@@ -189,25 +227,52 @@
   $effect(() => {
     const currentCode = code;
     const language = detectLanguage(fileName);
+    const currentTheme = theme;
     const currentRenderId = ++renderId;
 
     void (async () => {
       try {
         const highlighter = await getHighlighter();
-        await ensureLanguage(highlighter, language);
+        await Promise.all([
+          ensureLanguage(highlighter, language),
+          ensureTheme(highlighter, currentTheme),
+        ]);
         const result = highlighter.codeToHtml(currentCode, {
           lang: language,
-          theme,
+          theme: currentTheme,
         });
         if (currentRenderId === renderId) html = result;
       } catch (error) {
         console.error("Failed to highlight file", error);
         if (currentRenderId === renderId) {
-          html = `<pre class="shiki ${theme}">${escapeHtml(currentCode)}</pre>`;
+          html = `<pre class="shiki ${currentTheme}">${escapeHtml(currentCode)}</pre>`;
         }
       }
     })();
   });
 </script>
 
-{@html html}
+<div
+  class="relative [&_pre]:m-0 [&_pre]:min-h-50 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:p-4 [&_pre]:pt-12 [&_pre]:text-xs [&_pre]:leading-relaxed"
+>
+  <div class="absolute top-2 right-2 z-10">
+    <Select.Root type="single" bind:value={theme}>
+      <Select.Trigger
+        size="sm"
+        class="w-40 bg-background/80 backdrop-blur"
+        aria-label="Syntax highlighting theme"
+      >
+        <Select.Value />
+      </Select.Trigger>
+      <Select.Content>
+        {#each themes as option (option.id)}
+          <Select.Item value={option.id} label={option.label}>
+            {option.label}
+          </Select.Item>
+        {/each}
+      </Select.Content>
+    </Select.Root>
+  </div>
+
+  {@html html}
+</div>

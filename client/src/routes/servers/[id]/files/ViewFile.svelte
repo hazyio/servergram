@@ -9,7 +9,6 @@
   import type { components } from "#lib/types/request-schema.d.ts";
   import { joinPath } from "#lib/utils.ts";
   import { Download, Loader } from "@lucide/svelte";
-  import { codeToHtml } from "shiki";
 
   // Files larger than this are rejected by the agent instead of being streamed.
   const MAX_PREVIEW_BYTES = 5 * 1024 * 1024;
@@ -146,14 +145,6 @@
     content = "";
   }
 
-  async function highlightedContent(code: string) {
-    const html = await codeToHtml(code, {
-      lang: "shell",
-      theme: "github-dark",
-    });
-    return html;
-  }
-
   $effect(() => {
     if (entryName === null) return;
     loadFile();
@@ -200,10 +191,11 @@
       {:else if loading && !content}
         <Loading loading containerClass="h-full" />
       {:else}
-        <pre
-          class="min-h-[50vh] max-h-[60vh] overflow-auto whitespace-pre-wrap wrap-break-word rounded-md border bg-muted/40 text-xs leading-relaxed"><code
-            ><Highlighter code={content} fileName={entryName ?? ""} /></code
-          ></pre>
+        <div
+          class="max-h-[60vh] min-h-[50vh] overflow-auto rounded-md border text-xs leading-relaxed"
+        >
+          <Highlighter code={content} fileName={entryName ?? ""} />
+        </div>
       {/if}
     </div>
 

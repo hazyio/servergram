@@ -201,7 +201,7 @@
         <Loading loading containerClass="h-full" />
       {:else}
         <pre
-          class="min-h-[50vh] max-h-[60vh] overflow-auto whitespace-pre-wrap wrap-break-word rounded-md border bg-muted/40 p-4 text-xs leading-relaxed"><code
+          class="min-h-[50vh] max-h-[60vh] overflow-auto whitespace-pre-wrap wrap-break-word rounded-md border bg-muted/40 text-xs leading-relaxed"><code
             ><Highlighter code={content} fileName={entryName ?? ""} /></code
           ></pre>
       {/if}

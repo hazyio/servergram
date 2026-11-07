@@ -118,7 +118,7 @@
       >
         {#if submitting}
           <Loading loading />
-        {:else}
+        {:else} 
           Rename
         {/if}
       </Button>

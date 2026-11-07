@@ -21,10 +21,12 @@
     serverId,
     dir,
     entryName = $bindable(),
+    onDownloadClicked = $bindable(),
   }: {
     serverId: number;
     dir: string;
     entryName: null | string;
+    onDownloadClicked: (name: string) => void;
   } = $props();
   let loading = $state(false);
   let loaded = $state(false);
@@ -125,8 +127,12 @@
   }
 
   function download() {
-    if (!loaded) return;
-    // TODO: use a dedicated download endpoint for binary/large files.
+    if (!loaded || loadError) {
+      // trigger download link
+      onDownloadClicked(entryName ?? "");
+
+      return;
+    }
     const url = URL.createObjectURL(
       new Blob([content], { type: "text/plain" }),
     );
@@ -192,16 +198,20 @@
         <Loading loading containerClass="h-full" />
       {:else}
         <div
-          class="max-h-[60vh] min-h-[50vh] overflow-auto rounded-md border text-xs leading-relaxed"
+          class="max-h-[60vh] min-h-[50vh] overflow-y-auto overflow-x-hidden rounded-md border text-xs leading-relaxed"
         >
-          <Highlighter code={content} fileName={entryName ?? ""} />
+          <Highlighter
+            class="min-h-[50vh]"
+            code={content}
+            fileName={entryName ?? ""}
+          />
         </div>
       {/if}
     </div>
 
     <Dialog.Footer>
       <Button variant="outline" onclick={close}>Close</Button>
-      <Button disabled={loading || !content} onclick={download}>
+      <Button onclick={download}>
         <Download class="size-4" />
         Download
       </Button>

@@ -12,7 +12,7 @@ import (
 	"hazyio.com/servergram/server/websockets/models"
 )
 
-func onServiceSocketStated(input internal.OnStartedRawServerRouteData) {
+func onServiceSocketStated(input internal.RawServerRouteData[models.WebSocketMessage[models.WebSocketServiceMessage]]) {
 	manageSSHConnection := input.SSHManager
 	dataQueue := input.DataQueue
 	slog.Info("service socket started")

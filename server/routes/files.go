@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 	"hazyio.com/servergram/server/db"
@@ -31,6 +33,8 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server.Patch("/rename-path-in-server/{id}", http.StatusOK, renamePathInServer)
 	server.Get("/get-path-properties-in-server/{id}", http.StatusOK, getPathPropertiesInServer)
 	server.SSE("/read-file-in-server/{id}", http.StatusOK, readFileInServer)
+	server.Download("/download-file-in-server/{id}", downloadFileInServer, http.StatusBadGateway)
+	server.Upload("/upload-file-to-server/{id}", uploadFileInServer, http.StatusBadGateway)
 
 }
 func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
@@ -253,6 +257,7 @@ func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.
 		Path:         data.Input.Path,
 		Name:         data.Input.Name,
 		MaxBytesSize: data.Input.MaxBytesSize,
+		IsDownload:   false,
 	})
 	if err != nil {
 		slog.Error("Failed to read file", "error", err)
@@ -292,4 +297,88 @@ func readFileInServer(data internal.RouteData[models.ReadFileRequest], send sse.
 			}
 		}
 	}
+}
+func downloadFileInServer(data internal.RouteData[models.DownloadFileRequest]) (*huma.StreamResponse, error) {
+	getMetaResource, getMetaCtx, getMetaCancel, getMetaErr := getFilesConnected(context.Background(), data.SSHManager, data.Input.ID)
+	if getMetaErr != nil {
+		slog.Error("Failed to get files connected", "error", getMetaErr)
+		return nil, getMetaErr
+	}
+	defer getMetaCancel()
+
+	meta, err := getMetaResource.PathProperties(getMetaCtx, &proto.PathPropertiesRequest{
+		Path: data.Input.Path,
+		Name: data.Input.Name,
+	})
+	if err != nil {
+		slog.Error("Failed to get file properties", "error", err)
+		return nil, internal.Error502BadGateway
+	}
+
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("download file \"%s\" in server \"%d\"", data.Input.Name, data.Input.ID), data.Database)
+
+	return &huma.StreamResponse{
+		Body: func(hctx huma.Context) {
+
+			hctx.SetHeader("Content-Type", "application/octet-stream")
+			hctx.SetHeader("Content-Disposition",
+				mime.FormatMediaType("attachment", map[string]string{"filename": meta.Entry.Name}))
+			if meta.Entry.Size > 0 {
+				hctx.SetHeader("Content-Length", strconv.FormatInt(meta.Entry.Size, 10))
+			}
+
+			w := hctx.BodyWriter()
+			// the previous connect will be cancel, here we use the route context
+			resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+			if err != nil {
+				slog.Error("Failed to get files connected for streaming", "error", err)
+				panic(http.ErrAbortHandler) // headers already sent, so it stops
+			}
+			defer cancel()
+			stream, err := resource.ReadFile(ctx, &proto.ReadFileRequest{
+				Path:       data.Input.Path,
+				Name:       data.Input.Name,
+				IsDownload: true,
+			})
+			if err != nil {
+				slog.Error("Failed to start download stream", "error", err)
+				panic(http.ErrAbortHandler) // headers already sent, so it stops
+			}
+			for {
+				msg, err := stream.Recv()
+				if err == io.EOF {
+					return
+				}
+
+				if err != nil {
+					slog.Error("Failed to receive download chunk", "error", err)
+					panic(http.ErrAbortHandler) // headers already sent
+				}
+				if _, err := w.Write(msg.Data); err != nil {
+					return // client disconnected
+				}
+			}
+		},
+	}, nil
+}
+
+func uploadFileInServer(data internal.RouteData[models.DownloadFileRequest], reader io.Reader) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getFilesConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		slog.Error("Failed to get files connected for streaming", "error", err)
+		return nil, err
+	}
+	defer cancel()
+	stream, err := resource.WriteFile(ctx)
+	if err != nil {
+		slog.Error("Failed to start upload stream", "error", err)
+		return nil, internal.InternalServerError
+	}
+	stream.Send(&proto.WriteFileRequest{
+		Payload: &proto.WriteFileRequest_Meta{
+			Meta: &proto.WriteFileRequest_WriteFileMeta{Name: data.Input.Name, Path: data.Input.Path},
+		},
+	})
+
+	return &EmptyRR{}, nil
 }

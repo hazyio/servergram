@@ -867,6 +867,7 @@ type ReadFileRequest struct {
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	MaxBytesSize  int64                  `protobuf:"varint,3,opt,name=max_bytes_size,json=maxBytesSize,proto3" json:"max_bytes_size,omitempty"`
+	IsDownload    bool                   `protobuf:"varint,4,opt,name=is_download,json=isDownload,proto3" json:"is_download,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -922,6 +923,13 @@ func (x *ReadFileRequest) GetMaxBytesSize() int64 {
 	return 0
 }
 
+func (x *ReadFileRequest) GetIsDownload() bool {
+	if x != nil {
+		return x.IsDownload
+	}
+	return false
+}
+
 type ReadFileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
@@ -972,6 +980,200 @@ func (x *ReadFileResponse) GetDone() bool {
 		return x.Done
 	}
 	return false
+}
+
+type WriteFileRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Data  []byte                 `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*WriteFileRequest_Meta
+	//	*WriteFileRequest_Chunk
+	Payload       isWriteFileRequest_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WriteFileRequest) Reset() {
+	*x = WriteFileRequest{}
+	mi := &file_proto_files_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WriteFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WriteFileRequest) ProtoMessage() {}
+
+func (x *WriteFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WriteFileRequest.ProtoReflect.Descriptor instead.
+func (*WriteFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *WriteFileRequest) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *WriteFileRequest) GetPayload() isWriteFileRequest_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *WriteFileRequest) GetMeta() *WriteFileRequest_WriteFileMeta {
+	if x != nil {
+		if x, ok := x.Payload.(*WriteFileRequest_Meta); ok {
+			return x.Meta
+		}
+	}
+	return nil
+}
+
+func (x *WriteFileRequest) GetChunk() []byte {
+	if x != nil {
+		if x, ok := x.Payload.(*WriteFileRequest_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+type isWriteFileRequest_Payload interface {
+	isWriteFileRequest_Payload()
+}
+
+type WriteFileRequest_Meta struct {
+	Meta *WriteFileRequest_WriteFileMeta `protobuf:"bytes,1,opt,name=meta,proto3,oneof"` // send once, as the first message
+}
+
+type WriteFileRequest_Chunk struct {
+	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"` // then many of these
+}
+
+func (*WriteFileRequest_Meta) isWriteFileRequest_Payload() {}
+
+func (*WriteFileRequest_Chunk) isWriteFileRequest_Payload() {}
+
+type WriteFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WriteFileResponse) Reset() {
+	*x = WriteFileResponse{}
+	mi := &file_proto_files_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WriteFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WriteFileResponse) ProtoMessage() {}
+
+func (x *WriteFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WriteFileResponse.ProtoReflect.Descriptor instead.
+func (*WriteFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *WriteFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type WriteFileRequest_WriteFileMeta struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WriteFileRequest_WriteFileMeta) Reset() {
+	*x = WriteFileRequest_WriteFileMeta{}
+	mi := &file_proto_files_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WriteFileRequest_WriteFileMeta) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WriteFileRequest_WriteFileMeta) ProtoMessage() {}
+
+func (x *WriteFileRequest_WriteFileMeta) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_files_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WriteFileRequest_WriteFileMeta.ProtoReflect.Descriptor instead.
+func (*WriteFileRequest_WriteFileMeta) Descriptor() ([]byte, []int) {
+	return file_proto_files_proto_rawDescGZIP(), []int{15, 0}
+}
+
+func (x *WriteFileRequest_WriteFileMeta) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *WriteFileRequest_WriteFileMeta) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WriteFileRequest_WriteFileMeta) GetOffset() int64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 var File_proto_files_proto protoreflect.FileDescriptor
@@ -1027,14 +1229,27 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"@\n" +
 	"\x16PathPropertiesResponse\x12&\n" +
-	"\x05entry\x18\x01 \x01(\v2\x10.proto.FileEntryR\x05entry\"_\n" +
+	"\x05entry\x18\x01 \x01(\v2\x10.proto.FileEntryR\x05entry\"\x80\x01\n" +
 	"\x0fReadFileRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12$\n" +
-	"\x0emax_bytes_size\x18\x03 \x01(\x03R\fmaxBytesSize\":\n" +
+	"\x0emax_bytes_size\x18\x03 \x01(\x03R\fmaxBytesSize\x12\x1f\n" +
+	"\vis_download\x18\x04 \x01(\bR\n" +
+	"isDownload\":\n" +
 	"\x10ReadFileResponse\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\fR\x04data\x12\x12\n" +
-	"\x04done\x18\x03 \x01(\bR\x04done*:\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\"\xd7\x01\n" +
+	"\x10WriteFileRequest\x12\x12\n" +
+	"\x04data\x18\x04 \x01(\fR\x04data\x12;\n" +
+	"\x04meta\x18\x01 \x01(\v2%.proto.WriteFileRequest.WriteFileMetaH\x00R\x04meta\x12\x16\n" +
+	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunk\x1aO\n" +
+	"\rWriteFileMeta\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x03R\x06offsetB\t\n" +
+	"\apayload\"-\n" +
+	"\x11WriteFileResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess*:\n" +
 	"\rFileEntryKind\x12\b\n" +
 	"\x04FILE\x10\x00\x12\a\n" +
 	"\x03DIR\x10\x01\x12\v\n" +
@@ -1043,7 +1258,7 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x12WatchDirectoryKind\x12\f\n" +
 	"\bMODIFIED\x10\x00\x12\v\n" +
 	"\aCREATED\x10\x01\x12\v\n" +
-	"\aDELETED\x10\x022\x81\x05\n" +
+	"\aDELETED\x10\x022\xc3\x05\n" +
 	"\x05Files\x12E\n" +
 	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01\x12H\n" +
 	"\x0fCreateDirectory\x12\x1d.proto.CreateDirectoryRequest\x1a\x16.proto.SuccessResponse\x12H\n" +
@@ -1056,7 +1271,8 @@ const file_proto_files_proto_rawDesc = "" +
 	"\n" +
 	"RenamePath\x12\x18.proto.RenamePathRequest\x1a\x16.proto.SuccessResponse\x12M\n" +
 	"\x0ePathProperties\x12\x1c.proto.PathPropertiesRequest\x1a\x1d.proto.PathPropertiesResponse\x12=\n" +
-	"\bReadFile\x12\x16.proto.ReadFileRequest\x1a\x17.proto.ReadFileResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\bReadFile\x12\x16.proto.ReadFileRequest\x1a\x17.proto.ReadFileResponse0\x01\x12@\n" +
+	"\tWriteFile\x12\x17.proto.WriteFileRequest\x1a\x18.proto.WriteFileResponse(\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_files_proto_rawDescOnce sync.Once
@@ -1071,25 +1287,28 @@ func file_proto_files_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_files_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_files_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_files_proto_goTypes = []any{
-	(FileEntryKind)(0),             // 0: proto.FileEntryKind
-	(WatchDirectoryKind)(0),        // 1: proto.WatchDirectoryKind
-	(*FileEntry)(nil),              // 2: proto.FileEntry
-	(*ListFilesChunkResponse)(nil), // 3: proto.ListFilesChunkResponse
-	(*ListFilesRequest)(nil),       // 4: proto.ListFilesRequest
-	(*CreateDirectoryRequest)(nil), // 5: proto.CreateDirectoryRequest
-	(*SuccessResponse)(nil),        // 6: proto.SuccessResponse
-	(*RemoveDirectoryRequest)(nil), // 7: proto.RemoveDirectoryRequest
-	(*WatchDirectoryRequest)(nil),  // 8: proto.WatchDirectoryRequest
-	(*WatchDirectoryResponse)(nil), // 9: proto.WatchDirectoryResponse
-	(*CreateFileRequest)(nil),      // 10: proto.CreateFileRequest
-	(*RemoveFileRequest)(nil),      // 11: proto.RemoveFileRequest
-	(*RenamePathRequest)(nil),      // 12: proto.RenamePathRequest
-	(*PathPropertiesRequest)(nil),  // 13: proto.PathPropertiesRequest
-	(*PathPropertiesResponse)(nil), // 14: proto.PathPropertiesResponse
-	(*ReadFileRequest)(nil),        // 15: proto.ReadFileRequest
-	(*ReadFileResponse)(nil),       // 16: proto.ReadFileResponse
+	(FileEntryKind)(0),                     // 0: proto.FileEntryKind
+	(WatchDirectoryKind)(0),                // 1: proto.WatchDirectoryKind
+	(*FileEntry)(nil),                      // 2: proto.FileEntry
+	(*ListFilesChunkResponse)(nil),         // 3: proto.ListFilesChunkResponse
+	(*ListFilesRequest)(nil),               // 4: proto.ListFilesRequest
+	(*CreateDirectoryRequest)(nil),         // 5: proto.CreateDirectoryRequest
+	(*SuccessResponse)(nil),                // 6: proto.SuccessResponse
+	(*RemoveDirectoryRequest)(nil),         // 7: proto.RemoveDirectoryRequest
+	(*WatchDirectoryRequest)(nil),          // 8: proto.WatchDirectoryRequest
+	(*WatchDirectoryResponse)(nil),         // 9: proto.WatchDirectoryResponse
+	(*CreateFileRequest)(nil),              // 10: proto.CreateFileRequest
+	(*RemoveFileRequest)(nil),              // 11: proto.RemoveFileRequest
+	(*RenamePathRequest)(nil),              // 12: proto.RenamePathRequest
+	(*PathPropertiesRequest)(nil),          // 13: proto.PathPropertiesRequest
+	(*PathPropertiesResponse)(nil),         // 14: proto.PathPropertiesResponse
+	(*ReadFileRequest)(nil),                // 15: proto.ReadFileRequest
+	(*ReadFileResponse)(nil),               // 16: proto.ReadFileResponse
+	(*WriteFileRequest)(nil),               // 17: proto.WriteFileRequest
+	(*WriteFileResponse)(nil),              // 18: proto.WriteFileResponse
+	(*WriteFileRequest_WriteFileMeta)(nil), // 19: proto.WriteFileRequest.WriteFileMeta
 }
 var file_proto_files_proto_depIdxs = []int32{
 	0,  // 0: proto.FileEntry.kind:type_name -> proto.FileEntryKind
@@ -1097,29 +1316,32 @@ var file_proto_files_proto_depIdxs = []int32{
 	1,  // 2: proto.WatchDirectoryResponse.kind:type_name -> proto.WatchDirectoryKind
 	2,  // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
 	2,  // 4: proto.PathPropertiesResponse.entry:type_name -> proto.FileEntry
-	4,  // 5: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	5,  // 6: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
-	7,  // 7: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
-	10, // 8: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
-	11, // 9: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
-	8,  // 10: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
-	12, // 11: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
-	13, // 12: proto.Files.PathProperties:input_type -> proto.PathPropertiesRequest
-	15, // 13: proto.Files.ReadFile:input_type -> proto.ReadFileRequest
-	3,  // 14: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	6,  // 15: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
-	6,  // 16: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
-	6,  // 17: proto.Files.CreateFile:output_type -> proto.SuccessResponse
-	6,  // 18: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
-	9,  // 19: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
-	6,  // 20: proto.Files.RenamePath:output_type -> proto.SuccessResponse
-	14, // 21: proto.Files.PathProperties:output_type -> proto.PathPropertiesResponse
-	16, // 22: proto.Files.ReadFile:output_type -> proto.ReadFileResponse
-	14, // [14:23] is the sub-list for method output_type
-	5,  // [5:14] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	19, // 5: proto.WriteFileRequest.meta:type_name -> proto.WriteFileRequest.WriteFileMeta
+	4,  // 6: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
+	5,  // 7: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7,  // 8: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	10, // 9: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
+	11, // 10: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
+	8,  // 11: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	12, // 12: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
+	13, // 13: proto.Files.PathProperties:input_type -> proto.PathPropertiesRequest
+	15, // 14: proto.Files.ReadFile:input_type -> proto.ReadFileRequest
+	17, // 15: proto.Files.WriteFile:input_type -> proto.WriteFileRequest
+	3,  // 16: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6,  // 17: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
+	6,  // 18: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
+	6,  // 19: proto.Files.CreateFile:output_type -> proto.SuccessResponse
+	6,  // 20: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
+	9,  // 21: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	6,  // 22: proto.Files.RenamePath:output_type -> proto.SuccessResponse
+	14, // 23: proto.Files.PathProperties:output_type -> proto.PathPropertiesResponse
+	16, // 24: proto.Files.ReadFile:output_type -> proto.ReadFileResponse
+	18, // 25: proto.Files.WriteFile:output_type -> proto.WriteFileResponse
+	16, // [16:26] is the sub-list for method output_type
+	6,  // [6:16] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_proto_files_proto_init() }
@@ -1127,13 +1349,17 @@ func file_proto_files_proto_init() {
 	if File_proto_files_proto != nil {
 		return
 	}
+	file_proto_files_proto_msgTypes[15].OneofWrappers = []any{
+		(*WriteFileRequest_Meta)(nil),
+		(*WriteFileRequest_Chunk)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_files_proto_rawDesc), len(file_proto_files_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

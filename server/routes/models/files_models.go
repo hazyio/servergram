@@ -1,6 +1,9 @@
 package models
 
-import "hazyio.com/servergram/shared/gen/proto"
+import (
+	"github.com/danielgtaylor/huma/v2"
+	"hazyio.com/servergram/shared/gen/proto"
+)
 
 type FileListRequest struct {
 	ID            uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
@@ -68,4 +71,16 @@ type ReadFileRequest struct {
 	Name         string `query:"name" required:"true" doc:"The name of the file to read"`
 	MaxBytesSize int64  `query:"max_bytes_size" required:"true" doc:"The maximum number of bytes to read from the file"`
 	ID           uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+}
+type DownloadFileRequest struct {
+	Path string `query:"path" required:"true" doc:"The path of the file to read"`
+	Name string `query:"name" required:"true" doc:"The name of the file to read"`
+	ID   uint   `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+}
+
+type UploadFileRequest struct {
+	ID      uint `path:"id" minimum:"1" required:"true" doc:"The ID of the server"`
+	RawBody huma.MultipartFormFiles[struct {
+		File huma.FormFile `form:"file" required:"true"`
+	}]
 }

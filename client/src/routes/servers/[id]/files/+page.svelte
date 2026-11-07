@@ -35,6 +35,7 @@
   import ViewFile from "./ViewFile.svelte";
   import type { FileEntry } from "#lib/types/index.ts";
   import { joinPath } from "#lib/utils.ts";
+  import { NewRequestClient } from "#lib/api/request.ts";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
   type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
@@ -254,6 +255,14 @@
     }
   }
 
+  function triggerDownload(name: string) {
+    const qs = new URLSearchParams({ name, path: dir });
+    window.open(
+      `/api/files/download-file-in-server/${params.id}?${qs}`,
+      "_blank",
+    );
+  }
+
   $effect(() => {
     void settings.showHidden;
     untrack(loadFiles);
@@ -327,7 +336,14 @@
   bind:entryName={openEntryProperties}
   {dir}
 />
-<ViewFile serverId={Number(params.id)} bind:entryName={openViewFile} {dir} />
+<ViewFile
+  serverId={Number(params.id)}
+  bind:entryName={openViewFile}
+  {dir}
+  onDownloadClicked={(name) => {
+    triggerDownload(name);
+  }}
+/>
 
 {#if loading}
   <Loading loading class="mt-20 w-12 h-12" />
@@ -361,6 +377,9 @@
           }}
           onViewClicked={(entry) => {
             openViewFile = entry.name;
+          }}
+          onDownloadClicked={({ name }) => {
+            triggerDownload(name);
           }}
         />
       </div>

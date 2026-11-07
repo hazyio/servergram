@@ -2,11 +2,16 @@ package internal
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/coder/websocket"
+	"github.com/coder/websocket/wsjson"
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humago"
 	"github.com/danielgtaylor/huma/v2/sse"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,11 +33,14 @@ type Middleware func(http.Handler) http.Handler
 
 // Server registers routes on a ServeMux and exposes the database queries to them.
 type Server struct {
-	database   *gorm.DB
-	group      *huma.Group
-	mux        *http.ServeMux
-	prefix     string
-	sshManager *sshmanager.SSHManager
+	database       *gorm.DB
+	group          *huma.Group
+	mux            *http.ServeMux
+	prefix         string
+	sshManager     *sshmanager.SSHManager
+	DataQueue      *DataQueue
+	Polls          *Polls
+	allowedOrigins []string
 }
 
 type SSEError struct {
@@ -85,21 +93,31 @@ func FromGrpcError(err error) error {
 }
 
 // NewGroup wraps mux with a Server whose queries use pool.
-func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, sshManager *sshmanager.SSHManager) *Server {
+func NewGroup(prefix string, api *huma.Group, database *gorm.DB, tags []string, sshManager *sshmanager.SSHManager, allowedOrigins []string, polls *Polls) *Server {
 	group := huma.NewGroup(api, prefix)
 	group.UseSimpleModifier(func(op *huma.Operation) {
 		op.Tags = tags
 	})
 
 	return &Server{
-		database:   database,
-		group:      group,
-		prefix:     prefix,
-		sshManager: sshManager,
+		database:       database,
+		group:          group,
+		prefix:         prefix,
+		sshManager:     sshManager,
+		DataQueue:      NewDataQueue(),
+		Polls:          polls,
+		allowedOrigins: allowedOrigins,
 	}
 
 }
 
+type bodyKey struct{}
+
+func captureBody() func(huma.Context, func(huma.Context)) {
+	return func(hctx huma.Context, next func(huma.Context)) {
+		next(huma.WithValue(hctx, bodyKey{}, hctx.BodyReader()))
+	}
+}
 func opSlug(parts ...string) string {
 	s := strings.ToLower(strings.Join(parts, "-"))
 	s = strings.NewReplacer("/", "-", "{", "", "}", "").Replace(s)
@@ -201,6 +219,110 @@ func (s *Server) SSE[I, O any](pattern string, status int, next func(routeData R
 		"error": SSEError{},
 	}, func(ctx context.Context, input *I, send sse.Sender) {
 		next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}, send)
+	})
+}
+func (s *Server) Download[I any](pattern string, next func(routeData RouteData[I]) (*huma.StreamResponse, error), errs ...int) {
+
+	huma.Register(s.group, huma.Operation{
+		OperationID: "download-" + opSlug(s.prefix, pattern),
+		Summary:     huma.GenerateSummary(http.MethodGet, pattern, struct{}{}),
+		Method:      http.MethodGet,
+		Path:        pattern,
+		Errors:      errs,
+		Responses: map[string]*huma.Response{
+			"200": {
+				Description: "File content",
+				Content: map[string]*huma.MediaType{
+					"application/octet-stream": {},
+				},
+			},
+		},
+	}, func(ctx context.Context, input *I) (*huma.StreamResponse, error) {
+		return next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager})
+
+	})
+}
+func (s *Server) Upload[I, O any](pattern string, next func(routeData RouteData[I], reader io.Reader) (*O, error), errs ...int) {
+
+	huma.Register(s.group, huma.Operation{
+		OperationID:     "upload-" + opSlug(s.prefix, pattern),
+		Summary:         huma.GenerateSummary(http.MethodPost, pattern, new(O)),
+		Method:          http.MethodPost,
+		Path:            pattern,
+		MaxBodyBytes:    10 << 30, // 10 GiB
+		Errors:          errs,
+		Middlewares:     huma.Middlewares{captureBody()},
+		BodyReadTimeout: -1, // disables body read timeout
+		RequestBody: &huma.RequestBody{ // docs only, Huma won't parse it
+			Content: map[string]*huma.MediaType{"application/octet-stream": {}},
+		},
+	}, func(ctx context.Context, input *I) (*O, error) {
+		body := ctx.Value(bodyKey{}).(io.Reader)
+
+		return next(RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}, body)
+
+	})
+}
+
+func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[I]), runOnStart func(in RouteData[I]), errs ...int) {
+	huma.Register(s.group, huma.Operation{
+		OperationID:     "websocket-" + opSlug(s.prefix, pattern),
+		Summary:         huma.GenerateSummary(http.MethodGet, pattern, struct{}{}),
+		Method:          http.MethodGet,
+		Path:            pattern,
+		Errors:          errs,
+		BodyReadTimeout: -1,
+		Responses: map[string]*huma.Response{
+			"101": {Description: "Switching Protocols"},
+		},
+	}, func(ctx context.Context, input *I) (*huma.StreamResponse, error) {
+		return &huma.StreamResponse{
+			Body: func(hctx huma.Context) {
+				r, w := humago.Unwrap(hctx)
+
+				conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+					OriginPatterns: s.allowedOrigins,
+				})
+				if err != nil {
+					return // Accept already wrote the error response
+				}
+				defer conn.CloseNow()
+				conn.SetReadLimit(1 << 20)
+				dataQueue := s.DataQueue
+				// watch for new messages in the data queue and send them over the WebSocket connection
+				poller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
+					messages, ok := dataQueue.Dequeue()
+					if !ok {
+						return
+					}
+					if messages == nil && dataQueue.Closed {
+						// If there are no more messages and the queue is closed, close the connection.
+						conn.Close(websocket.StatusNormalClosure, "no more messages, closing connection")
+						return
+					}
+					for _, message := range messages {
+						wsjson.Write(ctx, conn, message)
+					}
+				}))
+
+				rd := RouteData[I]{Input: *input, Database: s.database, Context: ctx, SSHManager: s.sshManager}
+				poller.Start(ctx)
+				defer poller.Stop()
+				// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
+				go runOnStart(rd)
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						next(rd)
+
+						return
+					}
+				}
+			},
+		}, nil
+
 	})
 }
 

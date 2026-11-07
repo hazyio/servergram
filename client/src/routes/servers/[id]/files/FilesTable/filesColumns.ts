@@ -16,6 +16,7 @@ export const getColumns = (
   onRenameClicked: (entry: DeleteEntryProps) => void,
   onOpenPropertiesClicked: (entry: DeleteEntryProps) => void,
   onViewClicked: (entry: DeleteEntryProps) => void,
+  onDownloadClicked: (entry: DeleteEntryProps) => void,
 ) =>
   columnHelper.columns([
     columnHelper.accessor((row) => row.name ?? "", {
@@ -33,6 +34,7 @@ export const getColumns = (
           onRenameClicked: onRenameClicked,
           onOpenPropertiesClicked: onOpenPropertiesClicked,
           onViewClicked: onViewClicked,
+          onDownloadClicked: onDownloadClicked,
         }),
     }),
     columnHelper.accessor((row) => row.size ?? 0, {

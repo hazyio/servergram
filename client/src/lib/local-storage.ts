@@ -1,7 +1,11 @@
-type LocalStorageKeys = "theme" | "file-explorer-settings";
+type LocalStorageKeys =
+  | "theme"
+  | "file-explorer-settings"
+  | "file-viewer-theme";
 const LocalStorageKeys = {
   theme: "theme",
   "file-explorer-settings": "file-explorer-settings",
+  "file-viewer-theme": "file-viewer-theme",
 };
 export function useLocalStorage() {
   return {

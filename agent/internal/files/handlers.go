@@ -356,31 +356,35 @@ func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServe
 		return err
 	}
 	if file.IsDir() {
+
 		return status.Errorf(codes.InvalidArgument, "path '%q' is of type directory, a file was expected ", req.Path)
 	}
-	if file.Size() > req.MaxBytesSize {
-		// Do not stream files larger than the requested max size.
-		return status.Errorf(codes.OutOfRange, "File cannot be read, too large, download %q", req.Name)
+
+	if !req.IsDownload && file.Size() > req.MaxBytesSize {
+		// Do not stream files larger than the requested max size, disregard if IsDownload is true
+		return status.Errorf(codes.OutOfRange, "File cannot be read, too large, set IsDownload=true to download %q", req.Name)
 	}
 
 	openFile, err := os.Open(filePath)
-
 	if err != nil {
 		return err
 
 	}
 	defer openFile.Close()
-	isText, err := common.IsReadableText(openFile)
+	if !req.IsDownload {
+		// if download is not requested, verify it's readable text
+		isText, err := common.IsReadableText(openFile)
 
-	if err != nil {
-		return err
-	}
-	if !isText {
-		return status.Errorf(codes.FailedPrecondition, "file %q is not readable text, download instead", req.Name)
-	}
-	if _, err := openFile.Seek(0, io.SeekStart); err != nil {
-		// reset pointer, IsReadableText moved it.
-		return status.Error(codes.Internal, "seek failed")
+		if err != nil {
+			return err
+		}
+		if !isText {
+			return status.Errorf(codes.FailedPrecondition, "file %q is not readable text, set IsDownload=true instead to download file", req.Name)
+		}
+		if _, err := openFile.Seek(0, io.SeekStart); err != nil {
+			// reset pointer, IsReadableText moved it.
+			return status.Error(codes.Internal, "seek failed")
+		}
 	}
 
 	buf := make([]byte, 64*1024)
@@ -394,7 +398,7 @@ func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServe
 				return err
 			}
 			if errors.Is(err, io.EOF) {
-				// send done
+				// send done and close stream
 				stream.Send(&proto.ReadFileResponse{Done: true})
 				return nil
 			}

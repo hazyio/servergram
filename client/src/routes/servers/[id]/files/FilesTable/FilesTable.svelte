@@ -16,6 +16,7 @@
     onRenameClicked = $bindable(),
     onOpenPropertiesClicked = $bindable(),
     onViewClicked = $bindable(),
+    onDownloadClicked = $bindable(),
   }: {
     files: FileEntry[];
     search?: string;
@@ -26,6 +27,7 @@
     onRenameClicked: (entry: DeleteEntryProps) => void;
     onOpenPropertiesClicked: (entry: DeleteEntryProps) => void;
     onViewClicked: (entry: DeleteEntryProps) => void;
+    onDownloadClicked: (entry: DeleteEntryProps) => void;
   } = $props();
   let selected = $state<string[]>([]);
 
@@ -46,6 +48,7 @@
     onRenameClicked,
     onOpenPropertiesClicked,
     onViewClicked,
+    onDownloadClicked,
   );
   const table = createTable({
     features: dataTableFeatures,

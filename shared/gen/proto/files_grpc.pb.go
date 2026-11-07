@@ -28,6 +28,7 @@ const (
 	Files_RenamePath_FullMethodName      = "/proto.Files/RenamePath"
 	Files_PathProperties_FullMethodName  = "/proto.Files/PathProperties"
 	Files_ReadFile_FullMethodName        = "/proto.Files/ReadFile"
+	Files_WriteFile_FullMethodName       = "/proto.Files/WriteFile"
 )
 
 // FilesClient is the client API for Files service.
@@ -43,6 +44,7 @@ type FilesClient interface {
 	RenamePath(ctx context.Context, in *RenamePathRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 	PathProperties(ctx context.Context, in *PathPropertiesRequest, opts ...grpc.CallOption) (*PathPropertiesResponse, error)
 	ReadFile(ctx context.Context, in *ReadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ReadFileResponse], error)
+	WriteFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse], error)
 }
 
 type filesClient struct {
@@ -170,6 +172,19 @@ func (c *filesClient) ReadFile(ctx context.Context, in *ReadFileRequest, opts ..
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_ReadFileClient = grpc.ServerStreamingClient[ReadFileResponse]
 
+func (c *filesClient) WriteFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[3], Files_WriteFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WriteFileRequest, WriteFileResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_WriteFileClient = grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse]
+
 // FilesServer is the server API for Files service.
 // All implementations must embed UnimplementedFilesServer
 // for forward compatibility.
@@ -183,6 +198,7 @@ type FilesServer interface {
 	RenamePath(context.Context, *RenamePathRequest) (*SuccessResponse, error)
 	PathProperties(context.Context, *PathPropertiesRequest) (*PathPropertiesResponse, error)
 	ReadFile(*ReadFileRequest, grpc.ServerStreamingServer[ReadFileResponse]) error
+	WriteFile(grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]) error
 	mustEmbedUnimplementedFilesServer()
 }
 
@@ -219,6 +235,9 @@ func (UnimplementedFilesServer) PathProperties(context.Context, *PathPropertiesR
 }
 func (UnimplementedFilesServer) ReadFile(*ReadFileRequest, grpc.ServerStreamingServer[ReadFileResponse]) error {
 	return status.Error(codes.Unimplemented, "method ReadFile not implemented")
+}
+func (UnimplementedFilesServer) WriteFile(grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]) error {
+	return status.Error(codes.Unimplemented, "method WriteFile not implemented")
 }
 func (UnimplementedFilesServer) mustEmbedUnimplementedFilesServer() {}
 func (UnimplementedFilesServer) testEmbeddedByValue()               {}
@@ -382,6 +401,13 @@ func _Files_ReadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Files_ReadFileServer = grpc.ServerStreamingServer[ReadFileResponse]
 
+func _Files_WriteFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FilesServer).WriteFile(&grpc.GenericServerStream[WriteFileRequest, WriteFileResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Files_WriteFileServer = grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]
+
 // Files_ServiceDesc is the grpc.ServiceDesc for Files service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -429,6 +455,11 @@ var Files_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "ReadFile",
 			Handler:       _Files_ReadFile_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "WriteFile",
+			Handler:       _Files_WriteFile_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/files.proto",

@@ -82,11 +82,30 @@ message ReadFileRequest {
   string path = 1;
   string name = 2;
   int64 max_bytes_size = 3;
+  bool is_download = 4;
 }
 message ReadFileResponse {
   bytes data = 2;
   bool done = 3;
 }
+
+message WriteFileRequest {
+  message WriteFileMeta {
+    string path = 1;
+    string name = 2;
+    int64 offset = 3;
+  }
+  bytes data = 4;
+  oneof payload {
+    WriteFileMeta meta = 1; // send once, as the first message
+    bytes chunk = 2; // then many of these
+  }
+}
+
+message WriteFileResponse {
+  bool success = 1;
+}
+
 service Files {
   rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
   rpc CreateDirectory(CreateDirectoryRequest) returns (SuccessResponse);
@@ -97,4 +116,5 @@ service Files {
   rpc RenamePath(RenamePathRequest) returns (SuccessResponse);
   rpc PathProperties(PathPropertiesRequest) returns (PathPropertiesResponse);
   rpc ReadFile(ReadFileRequest) returns (stream ReadFileResponse);
+  rpc WriteFile(stream WriteFileRequest) returns (WriteFileResponse);
 }

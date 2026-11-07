@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/download-file-in-server/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get download file in server by ID */
+        get: operations["download-files--download-file-in-server-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/get-path-properties-in-server/{id}": {
         parameters: {
             query?: never;
@@ -976,6 +993,61 @@ export interface operations {
             };
             /** @description Error */
             default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "download-files--download-file-in-server-id": {
+        parameters: {
+            query: {
+                /** @description The path of the file to read */
+                path: string;
+                /** @description The name of the file to read */
+                name: string;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description File content */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": unknown;
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

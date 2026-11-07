@@ -1,16 +1,28 @@
 <script lang="ts">
   import * as Select from "#lib/components/ui/select/index.js";
 
+  import { useLocalStorage } from "#lib/local-storage.ts";
+  import { darkModernTheme } from "#lib/themes/dark-modern.ts";
   import { createHighlighterCore, type HighlighterCore } from "shiki/core";
   import { createOnigurumaEngine } from "shiki/engine/oniguruma";
   import { bundledLanguagesInfo } from "shiki/langs";
   import { bundledThemesInfo } from "shiki/themes";
 
-  let { code, fileName = "" } = $props();
+  let {
+    code,
+    fileName = "",
+    class: className = "",
+  }: { code: string; fileName?: string; class?: string } = $props();
+  const DEFAULT_THEME = "dark-modern";
+  // The previous default was persisted automatically on mount, so treat it as
+  // unset and let existing sessions pick up the new default once.
+  const LEGACY_DEFAULT_THEME = "github-dark";
+
   let html = $state("");
-  let theme = $state("github-dark");
+  let theme = $state(DEFAULT_THEME);
 
   const themes = [
+    { id: "dark-modern", label: "Dark Modern" },
     { id: "github-dark", label: "GitHub Dark" },
     { id: "github-light", label: "GitHub Light" },
     { id: "one-dark-pro", label: "One Dark Pro" },
@@ -27,6 +39,8 @@
     { id: "rose-pine", label: "Rosé Pine" },
     { id: "rose-pine-dawn", label: "Rosé Pine Dawn" },
   ];
+
+  const storage = useLocalStorage();
 
   const languageLoaders = new Map(
     bundledLanguagesInfo.map((language) => [language.id, language.import]),
@@ -181,11 +195,11 @@
 
   let highlighterPromise: Promise<HighlighterCore> | undefined;
   const loadedLanguages = new Set<string>();
-  const loadedThemes = new Set(["github-dark"]);
+  const loadedThemes = new Set([DEFAULT_THEME]);
 
   function getHighlighter() {
     highlighterPromise ??= createHighlighterCore({
-      themes: [import("shiki/themes/github-dark.mjs")],
+      themes: [darkModernTheme],
       langs: [],
       engine: createOnigurumaEngine(import("shiki/wasm")),
     });
@@ -222,6 +236,24 @@
       .replaceAll(">", "&gt;");
   }
 
+  let themeLoaded = false;
+
+  $effect(() => {
+    if (themeLoaded) return;
+    themeLoaded = true;
+
+    const savedTheme = storage.get<string>("file-viewer-theme", DEFAULT_THEME);
+    const initialTheme =
+      savedTheme === LEGACY_DEFAULT_THEME ? DEFAULT_THEME : savedTheme;
+    if (themes.some((option) => option.id === initialTheme)) {
+      theme = initialTheme;
+    }
+  });
+
+  $effect(() => {
+    storage.save("file-viewer-theme", theme);
+  });
+
   let renderId = 0;
 
   $effect(() => {
@@ -253,13 +285,13 @@
 </script>
 
 <div
-  class="relative [&_pre]:m-0 [&_pre]:min-h-50 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:p-4 [&_pre]:pt-12 [&_pre]:text-xs [&_pre]:leading-relaxed"
+  class={`relative min-w-0 ${className} [&_pre]:m-0 [&_pre]:min-h-[inherit] [&_pre]:w-full [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_pre]:p-4 [&_pre]:pt-12 [&_pre]:text-xs [&_pre]:leading-relaxed`}
 >
   <div class="absolute top-2 right-2 z-10">
     <Select.Root type="single" bind:value={theme}>
       <Select.Trigger
         size="sm"
-        class="w-40 bg-background/80 backdrop-blur"
+        class="w-40 border bg-popover! text-popover-foreground! shadow-md"
         aria-label="Syntax highlighting theme"
       >
         <Select.Value />

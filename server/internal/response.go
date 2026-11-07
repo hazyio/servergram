@@ -24,6 +24,7 @@ var (
 	ErrConflict         = errors.New("conflict")
 	InternalServerError = errors.New("internal server error")
 	BadRequest          = errors.New("bad request")
+	Error502BadGateway  = errors.New("bad gateway")
 )
 
 func NewResponse[T any](body T) *JsonResponse[T] {

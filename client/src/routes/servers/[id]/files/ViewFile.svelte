@@ -4,10 +4,12 @@
 
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
+  import Highlighter from "#lib/components/base/HighLighter.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import type { components } from "#lib/types/request-schema.d.ts";
   import { joinPath } from "#lib/utils.ts";
   import { Download, Loader } from "@lucide/svelte";
+  import { codeToHtml } from "shiki";
 
   // Files larger than this are rejected by the agent instead of being streamed.
   const MAX_PREVIEW_BYTES = 5 * 1024 * 1024;
@@ -144,6 +146,14 @@
     content = "";
   }
 
+  async function highlightedContent(code: string) {
+    const html = await codeToHtml(code, {
+      lang: "shell",
+      theme: "github-dark",
+    });
+    return html;
+  }
+
   $effect(() => {
     if (entryName === null) return;
     loadFile();
@@ -192,7 +202,7 @@
       {:else}
         <pre
           class="min-h-[50vh] max-h-[60vh] overflow-auto whitespace-pre-wrap wrap-break-word rounded-md border bg-muted/40 p-4 text-xs leading-relaxed"><code
-            >{content}</code
+            ><Highlighter code={content} fileName={entryName ?? ""} /></code
           ></pre>
       {/if}
     </div>

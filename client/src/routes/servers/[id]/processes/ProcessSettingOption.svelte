@@ -1,9 +1,11 @@
 <script lang="ts" module>
   export type ProcessColumns =
     "cmd" | "user" | "cpu" | "memory" | "state" | "uptime";
+  export type ProcessGroupBy = "parent" | "name" | "command";
+  export type ProcessGrouping = "none" | ProcessGroupBy;
   export interface ProcessSettingsOptionProps {
     columns: Record<ProcessColumns, boolean>;
-    groupByParent: boolean;
+    groupBy: ProcessGrouping;
   }
 </script>
 
@@ -28,12 +30,29 @@
     uptime: true,
     user: true,
   });
-  let groupByParent = $state(true);
+  let groupBy = $state<ProcessGrouping>("parent");
+
+  const groupOptions: { value: ProcessGrouping; label: string }[] = [
+    { value: "none", label: "None" },
+    { value: "parent", label: "Parent id" },
+    { value: "name", label: "Name" },
+    { value: "command", label: "Command" },
+  ];
+
+  $effect(() => {
+    // Grouping by command needs the command column to be fetched.
+    if (!columns.cmd && groupBy === "command") {
+      groupBy = "parent";
+    }
+  });
 
   function save() {
+    if (!columns.cmd && groupBy === "command") {
+      groupBy = "parent";
+    }
     const settings: ProcessSettingsOptionProps = {
       columns,
-      groupByParent,
+      groupBy,
     };
     useLocalStorage().save<ProcessSettingsOptionProps>(
       "process-explorer-settings",
@@ -42,19 +61,22 @@
     onSave(JSON.parse(JSON.stringify(settings)));
   }
   onMount(() => {
-    const saved = useLocalStorage().get<ProcessSettingsOptionProps>(
-      "process-explorer-settings",
-      {
-        columns,
-        groupByParent,
-      },
-    );
+    const saved = useLocalStorage().get<
+      ProcessSettingsOptionProps & { groupByParent?: boolean }
+    >("process-explorer-settings", {
+      columns,
+      groupBy,
+    });
     columns = { ...columns, ...saved.columns };
-    groupByParent = saved.groupByParent ?? true;
+    groupBy =
+      saved.groupBy ?? (saved.groupByParent === false ? "none" : "parent");
+    if (!columns.cmd && groupBy === "command") {
+      groupBy = "parent";
+    }
     untrack(() =>
       onSave({
         columns: JSON.parse(JSON.stringify(columns)),
-        groupByParent,
+        groupBy,
       }),
     );
   });
@@ -92,17 +114,28 @@
     />
     <div class="mt-4">
       <Field.Group class="max-w-sm">
-        <h4 class="text-sm font-medium">Grouping</h4>
-        <Field.Field orientation="horizontal">
-          <Checkbox
-            id="process-group-by-parent"
-            name="process-group-by-parent"
-            bind:checked={groupByParent}
-          />
-          <Field.Label for="process-group-by-parent"
-            >Group by parent id</Field.Label
-          >
-        </Field.Field>
+        <h4 class="text-sm font-medium">Group by</h4>
+        {#each groupOptions as option (option.value)}
+          <Field.Field orientation="horizontal">
+            <input
+              type="radio"
+              id={`process-group-by-${option.value}`}
+              name="process-group-by"
+              value={option.value}
+              bind:group={groupBy}
+              disabled={option.value === "command" && !columns.cmd}
+              class="size-4 shrink-0 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <Field.Label
+              for={`process-group-by-${option.value}`}
+              class={option.value === "command" && !columns.cmd
+                ? "opacity-50"
+                : ""}
+            >
+              {option.label}
+            </Field.Label>
+          </Field.Field>
+        {/each}
       </Field.Group>
     </div>
     <Separator

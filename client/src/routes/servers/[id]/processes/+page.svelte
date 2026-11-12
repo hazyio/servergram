@@ -16,6 +16,7 @@
   } from "./ProcessesTable/processesColumns";
   import ProcessSettingOption, {
     type ProcessColumns,
+    type ProcessGrouping,
   } from "./ProcessSettingOption.svelte";
 
   type WatchProcessesResponse =
@@ -47,7 +48,7 @@
     uptime: true,
     user: true,
   });
-  let groupByParent = $state(true);
+  let groupBy = $state<ProcessGrouping>("parent");
 
   function getSelectedColumns(): number[] {
     const selected = (
@@ -147,7 +148,7 @@
   <ProcessSettingOption
     onSave={(settings) => {
       columnsToShow = settings.columns;
-      groupByParent = settings.groupByParent;
+      groupBy = settings.groupBy;
     }}
   />
   <Sort
@@ -168,7 +169,7 @@
     <ProcessesTable
       {processes}
       {search}
-      {groupByParent}
+      {groupBy}
       visibleColumns={columnsToShow}
     />
   </div>

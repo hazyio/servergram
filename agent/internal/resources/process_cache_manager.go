@@ -7,6 +7,7 @@ type ProcessCacheData struct {
 	Username string
 	Command  string
 	Ppid     int32
+	Uptime   int64
 }
 type ProcessCacheManager struct {
 	lock  sync.Mutex

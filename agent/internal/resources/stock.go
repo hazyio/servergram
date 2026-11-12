@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"slices"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
@@ -149,6 +150,7 @@ func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProce
 			item.Username = cachedItem.Username
 			item.Command = cachedItem.Command
 			item.Ppid = cachedItem.Ppid
+			item.Uptime = uint64(time.Since(time.UnixMilli(cachedItem.Uptime)).Seconds())
 		} else {
 			name := common.UnWrapLogErr(p.NameWithContext(ctx))
 			if name == nil {
@@ -177,6 +179,15 @@ func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProce
 				}
 				item.Command = *cmd
 			}
+			uptime := int64(0)
+			if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_UPTIME) {
+				created, err := p.CreateTimeWithContext(ctx) // int64, milliseconds since Unix epoch
+				if err == nil {
+					uptime = created
+					item.Uptime = uint64(time.Since(time.UnixMilli(created)).Seconds())
+				}
+
+			}
 
 			// add item to cache
 			processCache.Set(p.Pid, ProcessCacheData{
@@ -184,6 +195,7 @@ func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProce
 				Username: item.Username,
 				Command:  item.Command,
 				Ppid:     item.Ppid,
+				Uptime:   uptime,
 			})
 		}
 		if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_STATE) {
@@ -191,18 +203,20 @@ func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProce
 			if st == nil || len(*st) == 0 {
 				continue
 			}
-			status := (*st)[0]
-			switch status {
-			case "S":
+			switch (*st)[0] {
+			case process.Running:
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_RUNNING
+			case process.Sleep:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_SLEEPING
-			case "T":
+			case process.Stop:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_STOPPED
-			case "Z":
+			case process.Zombie:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_ZOMBIE
-			case "I":
+			case process.Idle:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_IDLE
-			case "D":
+			case process.Wait, process.Blocked:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_WAITING
+
 			default:
 				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_OTHER
 			}

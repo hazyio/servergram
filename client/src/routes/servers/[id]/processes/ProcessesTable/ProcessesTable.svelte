@@ -1,22 +1,28 @@
 <script lang="ts">
   import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import * as Table from "#lib/components/ui/table/index.js";
+  import { formatBytes } from "#lib/utils.ts";
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
   import { SvelteSet } from "svelte/reactivity";
-  import { getColumns, type ProcessItem } from "./processesColumns";
+  import {
+    formatUptime,
+    getColumns,
+    type ProcessItem,
+  } from "./processesColumns";
+  import type { ProcessGrouping } from "../ProcessSettingOption.svelte";
 
   let {
     processes,
     visibleColumns,
     search = "",
-    groupByParent = true,
+    groupBy = "parent",
   }: {
     processes: ProcessItem[];
     visibleColumns: Record<string, boolean>;
     search?: string;
-    groupByParent?: boolean;
+    groupBy?: ProcessGrouping;
   } = $props();
   const columns = getColumns();
   const table = createTable({
@@ -28,42 +34,140 @@
     columns,
   });
 
-  const collapsedGroups = new SvelteSet<number>();
+  const collapsedGroups = new SvelteSet<string>();
 
   const groups = $derived.by(() => {
-    if (!groupByParent) return null;
+    const grouping = groupBy;
+    if (grouping === "none") return null;
 
     const rows = table.getRowModel().rows;
     const processByPid = new Map(
       rows.map((row) => [row.original.pid, row.original]),
     );
-    const groupsByParent = new Map<
-      number,
-      { ppid: number; parent: ProcessItem | undefined; rows: typeof rows }
+    const groupsByKey = new Map<
+      string,
+      {
+        key: string;
+        ppid: number | null;
+        parent: ProcessItem | undefined;
+        label: string;
+        rows: typeof rows;
+        cpu: number;
+        memory: number;
+        uptime: number;
+      }
     >();
 
     for (const row of rows) {
-      const ppid = row.original.ppid;
-      let group = groupsByParent.get(ppid);
+      const process = row.original;
+      let key: string;
+      let ppid: number | null = null;
+      let parent: ProcessItem | undefined;
+      let label: string;
+
+      switch (grouping) {
+        case "parent": {
+          ppid = process.ppid;
+          parent = processByPid.get(ppid);
+          key = `parent:${ppid}`;
+          label = parent?.name || `Parent PID ${ppid}`;
+          break;
+        }
+        case "name": {
+          key = `name:${process.name}`;
+          label = process.name || "-";
+          break;
+        }
+        case "command": {
+          key = `command:${process.command}`;
+          label = process.command || "-";
+          break;
+        }
+      }
+
+      let group = groupsByKey.get(key);
       if (!group) {
-        group = { ppid, parent: processByPid.get(ppid), rows: [] };
-        groupsByParent.set(ppid, group);
+        group = {
+          key,
+          ppid,
+          parent,
+          label,
+          rows: [],
+          cpu: 0,
+          memory: 0,
+          uptime: 0,
+        };
+        groupsByKey.set(key, group);
       }
       group.rows.push(row);
+      group.cpu += process.cpu_usage;
+      group.memory += process.memory_usage;
+      group.uptime = Math.max(group.uptime, process.uptime);
     }
 
-    // Groups keep the order of their first row in the sorted row model, so
-    // sorting reorders groups as well as the rows inside each group.
-    return [...groupsByParent.values()];
+    const groups = [...groupsByKey.values()];
+
+    // Sort groups by their cumulative CPU/memory or longest uptime when one of
+    // those columns is the primary sort. Other sorts keep the order of their
+    // first sorted row.
+    const primarySort = table.atoms.sorting?.get()?.[0];
+    if (
+      primarySort &&
+      (primarySort.id === "cpu" ||
+        primarySort.id === "memory" ||
+        primarySort.id === "uptime")
+    ) {
+      const key = primarySort.id;
+      const direction = primarySort.desc ? -1 : 1;
+      groups.sort((a, b) => (a[key] - b[key]) * direction);
+    }
+
+    return groups;
+  });
+
+  const groupHeaderLayout = $derived.by(() => {
+    const columnIds = table.getVisibleLeafColumns().map((column) => column.id);
+    const isAggregate = (id: string): id is "cpu" | "memory" | "uptime" =>
+      id === "cpu" || id === "memory" || id === "uptime";
+    const firstAggregateIndex = columnIds.findIndex(isAggregate);
+
+    const segments: Array<
+      | { kind: "label" | "spacer"; colspan: number }
+      | { kind: "cpu" | "memory" | "uptime"; colspan: 1 }
+    > = [];
+
+    const labelEnd =
+      firstAggregateIndex === -1 ? columnIds.length : firstAggregateIndex;
+    if (labelEnd > 0) {
+      segments.push({ kind: "label", colspan: labelEnd });
+    }
+
+    let spacerColspan = 0;
+    for (const id of columnIds.slice(labelEnd)) {
+      if (isAggregate(id)) {
+        if (spacerColspan > 0) {
+          segments.push({ kind: "spacer", colspan: spacerColspan });
+          spacerColspan = 0;
+        }
+        segments.push({ kind: id, colspan: 1 });
+      } else {
+        spacerColspan++;
+      }
+    }
+    if (spacerColspan > 0) {
+      segments.push({ kind: "spacer", colspan: spacerColspan });
+    }
+
+    return segments;
   });
 
   const visibleColumnCount = $derived(table.getVisibleLeafColumns().length);
 
-  function toggleGroup(ppid: number) {
-    if (collapsedGroups.has(ppid)) {
-      collapsedGroups.delete(ppid);
+  function toggleGroup(key: string) {
+    if (collapsedGroups.has(key)) {
+      collapsedGroups.delete(key);
     } else {
-      collapsedGroups.add(ppid);
+      collapsedGroups.add(key);
     }
   }
 
@@ -94,38 +198,66 @@
   </Table.Header>
   <Table.Body>
     {#if groups}
-      {#each groups as group (group.ppid)}
+      {#each groups as group (group.key)}
         <Table.Row class="border-t bg-muted/40 hover:bg-muted/40">
-          <Table.Cell colspan={visibleColumnCount} class="p-0">
-            <button
-              type="button"
-              class="flex w-full items-center gap-2 px-1 py-3 text-left text-sm md:px-4"
-              aria-expanded={!collapsedGroups.has(group.ppid)}
-              onclick={() => toggleGroup(group.ppid)}
-            >
-              {#if collapsedGroups.has(group.ppid)}
-                <ChevronRightIcon class="size-4 shrink-0" />
-              {:else}
-                <ChevronDownIcon class="size-4 shrink-0" />
-              {/if}
-              <span class="font-medium">
-                {#if group.parent}
-                  {group.parent.name}
-                  <span class="font-normal text-muted-foreground"
-                    >(PID {group.ppid})</span
+          {#each groupHeaderLayout as segment, index (index)}
+            {#if segment.kind === "label"}
+              <Table.Cell colspan={segment.colspan} class="p-0">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-2 px-1 py-3 text-left text-sm md:px-4"
+                  aria-expanded={!collapsedGroups.has(group.key)}
+                  onclick={() => toggleGroup(group.key)}
+                >
+                  {#if collapsedGroups.has(group.key)}
+                    <ChevronRightIcon class="size-4 shrink-0" />
+                  {:else}
+                    <ChevronDownIcon class="size-4 shrink-0" />
+                  {/if}
+                  <span
+                    class="min-w-0 truncate font-medium"
+                    title={group.label}
                   >
-                {:else}
-                  Parent PID {group.ppid}
-                {/if}
-              </span>
-              <span class="ms-auto text-xs text-muted-foreground">
-                {group.rows.length}
-                {group.rows.length === 1 ? "process" : "processes"}
-              </span>
-            </button>
-          </Table.Cell>
+                    {group.label}
+                    {#if groupBy === "parent" && group.parent}
+                      <span class="font-normal text-muted-foreground"
+                        >(PID {group.ppid})</span
+                      >
+                    {/if}
+                  </span>
+                  <span class="ms-auto text-xs text-muted-foreground">
+                    {group.rows.length}
+                    {group.rows.length === 1 ? "process" : "processes"}
+                  </span>
+                </button>
+              </Table.Cell>
+            {:else if segment.kind === "cpu"}
+              <Table.Cell
+                class="px-4 py-3 text-sm font-medium tabular-nums"
+                title="Cumulative CPU usage"
+              >
+                {group.cpu.toFixed(1)}%
+              </Table.Cell>
+            {:else if segment.kind === "memory"}
+              <Table.Cell
+                class="px-4 py-3 text-sm font-medium tabular-nums"
+                title="Cumulative memory usage"
+              >
+                {formatBytes(group.memory)}
+              </Table.Cell>
+            {:else if segment.kind === "uptime"}
+              <Table.Cell
+                class="px-4 py-3 text-sm font-medium tabular-nums"
+                title="Longest uptime in group"
+              >
+                {formatUptime(group.uptime)}
+              </Table.Cell>
+            {:else}
+              <Table.Cell colspan={segment.colspan}></Table.Cell>
+            {/if}
+          {/each}
         </Table.Row>
-        {#if !collapsedGroups.has(group.ppid)}
+        {#if !collapsedGroups.has(group.key)}
           {#each group.rows as row (row.id)}
             <Table.Row>
               {#each row.getVisibleCells() as cell, index (cell.id)}

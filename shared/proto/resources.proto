@@ -1,9 +1,10 @@
 syntax = "proto3";
 
 package proto;
-option go_package = "hazyio.com/servergram/shared/proto;proto";
+
 import "google/protobuf/empty.proto";
 
+option go_package = "hazyio.com/servergram/shared/proto;proto";
 
 message ServerUsageItem {
   uint64 usage = 1;
@@ -26,7 +27,6 @@ message GetServerResourcesResponse {
   ServerUsageItem disk = 3;
   ServerUsageItem swap = 4;
 }
-
 
 message GetServerInfoResponse {
   string os = 1;
@@ -56,11 +56,49 @@ message TopProcessRequest {
   TopProcessSortBy sort_by = 1;
   uint32 limit = 2;
   uint32 interval_ms = 3;
+}
 
+message WatchProcessesRequest {
+  uint32 interval_ms = 2;
+  enum WatchProcessesColumns {
+    WATCH_PROCESSES_COLUMNS_UNSPECIFIED = 0;
+    WATCH_PROCESSES_COLUMNS_MEMORY = 1;
+    WATCH_PROCESSES_COLUMNS_COMMAND = 2;
+    WATCH_PROCESSES_COLUMNS_USER = 3;
+    WATCH_PROCESSES_COLUMNS_CPU = 4;
+    WATCH_PROCESSES_COLUMNS_STATE = 5;
+    WATCH_PROCESSES_COLUMNS_UPTIME = 6;
+  }
+  repeated WatchProcessesColumns columns = 3;
+}
+message WatchProcessesResponse {
+  enum WatchProcessesStatus {
+    WATCH_PROCESSES_STATUS_UNSPECIFIED = 0;
+    WATCH_PROCESSES_STATUS_SLEEPING = 1;
+    WATCH_PROCESSES_STATUS_STOPPED = 2;
+    WATCH_PROCESSES_STATUS_ZOMBIE = 3;
+    WATCH_PROCESSES_STATUS_IDLE = 4;
+    WATCH_PROCESSES_STATUS_WAITING = 5;
+    WATCH_PROCESSES_STATUS_RUNNING = 6;
+    WATCH_PROCESSES_STATUS_OTHER = 7;
+  }
+  message Item {
+    int32 ppid = 1;
+    int32 pid = 2;
+    string name = 3;
+    double cpu_usage = 4;
+    uint64 memory_usage = 5;
+    string command = 6;
+    string username = 7;
+    WatchProcessesStatus status = 8;
+    uint64 uptime = 9;
+  }
+  repeated Item items = 1;
 }
 
 service ServerResources {
   rpc Get(GetServerResourcesRequest) returns (stream GetServerResourcesResponse);
   rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
   rpc TopProcesses(TopProcessRequest) returns (stream TopProcessResponse);
+  rpc WatchProcesses(WatchProcessesRequest) returns (stream WatchProcessesResponse);
 }

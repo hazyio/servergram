@@ -16,7 +16,7 @@ const appPaths = {
     add: "/servers/add",
     overview: (id: number) => `/servers/${id}/overview`,
     files: (id: number) => `/servers/${id}/files`,
-    process: (id: number) => `/servers/${id}/process`,
+    processes: (id: number) => `/servers/${id}/processes`,
     docker: (id: number) => `/servers/${id}/docker`,
     cron: (id: number) => `/servers/${id}/cron`,
   },

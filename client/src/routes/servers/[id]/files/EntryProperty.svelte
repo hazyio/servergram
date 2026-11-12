@@ -64,12 +64,17 @@
   });
 </script>
 
-<Dialog.Root open={!!entryName}>
-  <Dialog.Content
-    showCloseButton={false}
-    onEscapeKeydown={(event) => event.preventDefault()}
-    onInteractOutside={(event) => event.preventDefault()}
-  >
+<Dialog.Root
+  open={!!entryName}
+  onOpenChange={(open) => {
+    if (!open) {
+      entryName = null;
+      loaded = false;
+      loadError = null;
+    }
+  }}
+>
+  <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title>
         {#if loading || entry === null}

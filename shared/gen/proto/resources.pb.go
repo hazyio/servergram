@@ -68,6 +68,131 @@ func (TopProcessSortBy) EnumDescriptor() ([]byte, []int) {
 	return file_proto_resources_proto_rawDescGZIP(), []int{0}
 }
 
+type WatchProcessesRequest_WatchProcessesColumns int32
+
+const (
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_UNSPECIFIED WatchProcessesRequest_WatchProcessesColumns = 0
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_MEMORY      WatchProcessesRequest_WatchProcessesColumns = 1
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_COMMAND     WatchProcessesRequest_WatchProcessesColumns = 2
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_USER        WatchProcessesRequest_WatchProcessesColumns = 3
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_CPU         WatchProcessesRequest_WatchProcessesColumns = 4
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_STATE       WatchProcessesRequest_WatchProcessesColumns = 5
+	WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_UPTIME      WatchProcessesRequest_WatchProcessesColumns = 6
+)
+
+// Enum value maps for WatchProcessesRequest_WatchProcessesColumns.
+var (
+	WatchProcessesRequest_WatchProcessesColumns_name = map[int32]string{
+		0: "WATCH_PROCESSES_COLUMNS_UNSPECIFIED",
+		1: "WATCH_PROCESSES_COLUMNS_MEMORY",
+		2: "WATCH_PROCESSES_COLUMNS_COMMAND",
+		3: "WATCH_PROCESSES_COLUMNS_USER",
+		4: "WATCH_PROCESSES_COLUMNS_CPU",
+		5: "WATCH_PROCESSES_COLUMNS_STATE",
+		6: "WATCH_PROCESSES_COLUMNS_UPTIME",
+	}
+	WatchProcessesRequest_WatchProcessesColumns_value = map[string]int32{
+		"WATCH_PROCESSES_COLUMNS_UNSPECIFIED": 0,
+		"WATCH_PROCESSES_COLUMNS_MEMORY":      1,
+		"WATCH_PROCESSES_COLUMNS_COMMAND":     2,
+		"WATCH_PROCESSES_COLUMNS_USER":        3,
+		"WATCH_PROCESSES_COLUMNS_CPU":         4,
+		"WATCH_PROCESSES_COLUMNS_STATE":       5,
+		"WATCH_PROCESSES_COLUMNS_UPTIME":      6,
+	}
+)
+
+func (x WatchProcessesRequest_WatchProcessesColumns) Enum() *WatchProcessesRequest_WatchProcessesColumns {
+	p := new(WatchProcessesRequest_WatchProcessesColumns)
+	*p = x
+	return p
+}
+
+func (x WatchProcessesRequest_WatchProcessesColumns) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WatchProcessesRequest_WatchProcessesColumns) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_resources_proto_enumTypes[1].Descriptor()
+}
+
+func (WatchProcessesRequest_WatchProcessesColumns) Type() protoreflect.EnumType {
+	return &file_proto_resources_proto_enumTypes[1]
+}
+
+func (x WatchProcessesRequest_WatchProcessesColumns) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WatchProcessesRequest_WatchProcessesColumns.Descriptor instead.
+func (WatchProcessesRequest_WatchProcessesColumns) EnumDescriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{7, 0}
+}
+
+type WatchProcessesResponse_WatchProcessesStatus int32
+
+const (
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_UNSPECIFIED WatchProcessesResponse_WatchProcessesStatus = 0
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_SLEEPING    WatchProcessesResponse_WatchProcessesStatus = 1
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_STOPPED     WatchProcessesResponse_WatchProcessesStatus = 2
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_ZOMBIE      WatchProcessesResponse_WatchProcessesStatus = 3
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_IDLE        WatchProcessesResponse_WatchProcessesStatus = 4
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_WAITING     WatchProcessesResponse_WatchProcessesStatus = 5
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_RUNNING     WatchProcessesResponse_WatchProcessesStatus = 6
+	WatchProcessesResponse_WATCH_PROCESSES_STATUS_OTHER       WatchProcessesResponse_WatchProcessesStatus = 7
+)
+
+// Enum value maps for WatchProcessesResponse_WatchProcessesStatus.
+var (
+	WatchProcessesResponse_WatchProcessesStatus_name = map[int32]string{
+		0: "WATCH_PROCESSES_STATUS_UNSPECIFIED",
+		1: "WATCH_PROCESSES_STATUS_SLEEPING",
+		2: "WATCH_PROCESSES_STATUS_STOPPED",
+		3: "WATCH_PROCESSES_STATUS_ZOMBIE",
+		4: "WATCH_PROCESSES_STATUS_IDLE",
+		5: "WATCH_PROCESSES_STATUS_WAITING",
+		6: "WATCH_PROCESSES_STATUS_RUNNING",
+		7: "WATCH_PROCESSES_STATUS_OTHER",
+	}
+	WatchProcessesResponse_WatchProcessesStatus_value = map[string]int32{
+		"WATCH_PROCESSES_STATUS_UNSPECIFIED": 0,
+		"WATCH_PROCESSES_STATUS_SLEEPING":    1,
+		"WATCH_PROCESSES_STATUS_STOPPED":     2,
+		"WATCH_PROCESSES_STATUS_ZOMBIE":      3,
+		"WATCH_PROCESSES_STATUS_IDLE":        4,
+		"WATCH_PROCESSES_STATUS_WAITING":     5,
+		"WATCH_PROCESSES_STATUS_RUNNING":     6,
+		"WATCH_PROCESSES_STATUS_OTHER":       7,
+	}
+)
+
+func (x WatchProcessesResponse_WatchProcessesStatus) Enum() *WatchProcessesResponse_WatchProcessesStatus {
+	p := new(WatchProcessesResponse_WatchProcessesStatus)
+	*p = x
+	return p
+}
+
+func (x WatchProcessesResponse_WatchProcessesStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WatchProcessesResponse_WatchProcessesStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_resources_proto_enumTypes[2].Descriptor()
+}
+
+func (WatchProcessesResponse_WatchProcessesStatus) Type() protoreflect.EnumType {
+	return &file_proto_resources_proto_enumTypes[2]
+}
+
+func (x WatchProcessesResponse_WatchProcessesStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WatchProcessesResponse_WatchProcessesStatus.Descriptor instead.
+func (WatchProcessesResponse_WatchProcessesStatus) EnumDescriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{8, 0}
+}
+
 type ServerUsageItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Usage         uint64                 `protobuf:"varint,1,opt,name=usage,proto3" json:"usage,omitempty"`
@@ -512,6 +637,102 @@ func (x *TopProcessRequest) GetIntervalMs() uint32 {
 	return 0
 }
 
+type WatchProcessesRequest struct {
+	state         protoimpl.MessageState                        `protogen:"open.v1"`
+	IntervalMs    uint32                                        `protobuf:"varint,2,opt,name=interval_ms,json=intervalMs,proto3" json:"interval_ms,omitempty"`
+	Columns       []WatchProcessesRequest_WatchProcessesColumns `protobuf:"varint,3,rep,packed,name=columns,proto3,enum=proto.WatchProcessesRequest_WatchProcessesColumns" json:"columns,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchProcessesRequest) Reset() {
+	*x = WatchProcessesRequest{}
+	mi := &file_proto_resources_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchProcessesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchProcessesRequest) ProtoMessage() {}
+
+func (x *WatchProcessesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchProcessesRequest.ProtoReflect.Descriptor instead.
+func (*WatchProcessesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *WatchProcessesRequest) GetIntervalMs() uint32 {
+	if x != nil {
+		return x.IntervalMs
+	}
+	return 0
+}
+
+func (x *WatchProcessesRequest) GetColumns() []WatchProcessesRequest_WatchProcessesColumns {
+	if x != nil {
+		return x.Columns
+	}
+	return nil
+}
+
+type WatchProcessesResponse struct {
+	state         protoimpl.MessageState         `protogen:"open.v1"`
+	Items         []*WatchProcessesResponse_Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchProcessesResponse) Reset() {
+	*x = WatchProcessesResponse{}
+	mi := &file_proto_resources_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchProcessesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchProcessesResponse) ProtoMessage() {}
+
+func (x *WatchProcessesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchProcessesResponse.ProtoReflect.Descriptor instead.
+func (*WatchProcessesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *WatchProcessesResponse) GetItems() []*WatchProcessesResponse_Item {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 type TopProcessResponse_Item struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Pid           int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
@@ -524,7 +745,7 @@ type TopProcessResponse_Item struct {
 
 func (x *TopProcessResponse_Item) Reset() {
 	*x = TopProcessResponse_Item{}
-	mi := &file_proto_resources_proto_msgTypes[7]
+	mi := &file_proto_resources_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -536,7 +757,7 @@ func (x *TopProcessResponse_Item) String() string {
 func (*TopProcessResponse_Item) ProtoMessage() {}
 
 func (x *TopProcessResponse_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_resources_proto_msgTypes[7]
+	mi := &file_proto_resources_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -576,6 +797,114 @@ func (x *TopProcessResponse_Item) GetCpuUsage() float64 {
 func (x *TopProcessResponse_Item) GetMemoryUsage() uint64 {
 	if x != nil {
 		return x.MemoryUsage
+	}
+	return 0
+}
+
+type WatchProcessesResponse_Item struct {
+	state         protoimpl.MessageState                      `protogen:"open.v1"`
+	Ppid          int32                                       `protobuf:"varint,1,opt,name=ppid,proto3" json:"ppid,omitempty"`
+	Pid           int32                                       `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
+	Name          string                                      `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	CpuUsage      float64                                     `protobuf:"fixed64,4,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`
+	MemoryUsage   uint64                                      `protobuf:"varint,5,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
+	Command       string                                      `protobuf:"bytes,6,opt,name=command,proto3" json:"command,omitempty"`
+	Username      string                                      `protobuf:"bytes,7,opt,name=username,proto3" json:"username,omitempty"`
+	Status        WatchProcessesResponse_WatchProcessesStatus `protobuf:"varint,8,opt,name=status,proto3,enum=proto.WatchProcessesResponse_WatchProcessesStatus" json:"status,omitempty"`
+	Uptime        uint64                                      `protobuf:"varint,9,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchProcessesResponse_Item) Reset() {
+	*x = WatchProcessesResponse_Item{}
+	mi := &file_proto_resources_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchProcessesResponse_Item) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchProcessesResponse_Item) ProtoMessage() {}
+
+func (x *WatchProcessesResponse_Item) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchProcessesResponse_Item.ProtoReflect.Descriptor instead.
+func (*WatchProcessesResponse_Item) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{8, 0}
+}
+
+func (x *WatchProcessesResponse_Item) GetPpid() int32 {
+	if x != nil {
+		return x.Ppid
+	}
+	return 0
+}
+
+func (x *WatchProcessesResponse_Item) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *WatchProcessesResponse_Item) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WatchProcessesResponse_Item) GetCpuUsage() float64 {
+	if x != nil {
+		return x.CpuUsage
+	}
+	return 0
+}
+
+func (x *WatchProcessesResponse_Item) GetMemoryUsage() uint64 {
+	if x != nil {
+		return x.MemoryUsage
+	}
+	return 0
+}
+
+func (x *WatchProcessesResponse_Item) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
+func (x *WatchProcessesResponse_Item) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *WatchProcessesResponse_Item) GetStatus() WatchProcessesResponse_WatchProcessesStatus {
+	if x != nil {
+		return x.Status
+	}
+	return WatchProcessesResponse_WATCH_PROCESSES_STATUS_UNSPECIFIED
+}
+
+func (x *WatchProcessesResponse_Item) GetUptime() uint64 {
+	if x != nil {
+		return x.Uptime
 	}
 	return 0
 }
@@ -623,14 +952,48 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\asort_by\x18\x01 \x01(\x0e2\x17.proto.TopProcessSortByR\x06sortBy\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\rR\x05limit\x12\x1f\n" +
 	"\vinterval_ms\x18\x03 \x01(\rR\n" +
-	"intervalMs*3\n" +
+	"intervalMs\"\x9c\x03\n" +
+	"\x15WatchProcessesRequest\x12\x1f\n" +
+	"\vinterval_ms\x18\x02 \x01(\rR\n" +
+	"intervalMs\x12L\n" +
+	"\acolumns\x18\x03 \x03(\x0e22.proto.WatchProcessesRequest.WatchProcessesColumnsR\acolumns\"\x93\x02\n" +
+	"\x15WatchProcessesColumns\x12'\n" +
+	"#WATCH_PROCESSES_COLUMNS_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1eWATCH_PROCESSES_COLUMNS_MEMORY\x10\x01\x12#\n" +
+	"\x1fWATCH_PROCESSES_COLUMNS_COMMAND\x10\x02\x12 \n" +
+	"\x1cWATCH_PROCESSES_COLUMNS_USER\x10\x03\x12\x1f\n" +
+	"\x1bWATCH_PROCESSES_COLUMNS_CPU\x10\x04\x12!\n" +
+	"\x1dWATCH_PROCESSES_COLUMNS_STATE\x10\x05\x12\"\n" +
+	"\x1eWATCH_PROCESSES_COLUMNS_UPTIME\x10\x06\"\xa7\x05\n" +
+	"\x16WatchProcessesResponse\x128\n" +
+	"\x05items\x18\x01 \x03(\v2\".proto.WatchProcessesResponse.ItemR\x05items\x1a\x9a\x02\n" +
+	"\x04Item\x12\x12\n" +
+	"\x04ppid\x18\x01 \x01(\x05R\x04ppid\x12\x10\n" +
+	"\x03pid\x18\x02 \x01(\x05R\x03pid\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1b\n" +
+	"\tcpu_usage\x18\x04 \x01(\x01R\bcpuUsage\x12!\n" +
+	"\fmemory_usage\x18\x05 \x01(\x04R\vmemoryUsage\x12\x18\n" +
+	"\acommand\x18\x06 \x01(\tR\acommand\x12\x1a\n" +
+	"\busername\x18\a \x01(\tR\busername\x12J\n" +
+	"\x06status\x18\b \x01(\x0e22.proto.WatchProcessesResponse.WatchProcessesStatusR\x06status\x12\x16\n" +
+	"\x06uptime\x18\t \x01(\x04R\x06uptime\"\xb5\x02\n" +
+	"\x14WatchProcessesStatus\x12&\n" +
+	"\"WATCH_PROCESSES_STATUS_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fWATCH_PROCESSES_STATUS_SLEEPING\x10\x01\x12\"\n" +
+	"\x1eWATCH_PROCESSES_STATUS_STOPPED\x10\x02\x12!\n" +
+	"\x1dWATCH_PROCESSES_STATUS_ZOMBIE\x10\x03\x12\x1f\n" +
+	"\x1bWATCH_PROCESSES_STATUS_IDLE\x10\x04\x12\"\n" +
+	"\x1eWATCH_PROCESSES_STATUS_WAITING\x10\x05\x12\"\n" +
+	"\x1eWATCH_PROCESSES_STATUS_RUNNING\x10\x06\x12 \n" +
+	"\x1cWATCH_PROCESSES_STATUS_OTHER\x10\a*3\n" +
 	"\x10TopProcessSortBy\x12\r\n" +
 	"\tCPU_USAGE\x10\x00\x12\x10\n" +
-	"\fMEMORY_USAGE\x10\x012\xe4\x01\n" +
+	"\fMEMORY_USAGE\x10\x012\xb5\x02\n" +
 	"\x0fServerResources\x12L\n" +
 	"\x03Get\x12 .proto.GetServerResourcesRequest\x1a!.proto.GetServerResourcesResponse0\x01\x12<\n" +
 	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponse\x12E\n" +
-	"\fTopProcesses\x12\x18.proto.TopProcessRequest\x1a\x19.proto.TopProcessResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\fTopProcesses\x12\x18.proto.TopProcessRequest\x1a\x19.proto.TopProcessResponse0\x01\x12O\n" +
+	"\x0eWatchProcesses\x12\x1c.proto.WatchProcessesRequest\x1a\x1d.proto.WatchProcessesResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_resources_proto_rawDescOnce sync.Once
@@ -644,38 +1007,48 @@ func file_proto_resources_proto_rawDescGZIP() []byte {
 	return file_proto_resources_proto_rawDescData
 }
 
-var file_proto_resources_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_resources_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_resources_proto_goTypes = []any{
-	(TopProcessSortBy)(0),              // 0: proto.TopProcessSortBy
-	(*ServerUsageItem)(nil),            // 1: proto.ServerUsageItem
-	(*ServerCPUUsage)(nil),             // 2: proto.ServerCPUUsage
-	(*GetServerResourcesRequest)(nil),  // 3: proto.GetServerResourcesRequest
-	(*GetServerResourcesResponse)(nil), // 4: proto.GetServerResourcesResponse
-	(*GetServerInfoResponse)(nil),      // 5: proto.GetServerInfoResponse
-	(*TopProcessResponse)(nil),         // 6: proto.TopProcessResponse
-	(*TopProcessRequest)(nil),          // 7: proto.TopProcessRequest
-	(*TopProcessResponse_Item)(nil),    // 8: proto.TopProcessResponse.Item
-	(*emptypb.Empty)(nil),              // 9: google.protobuf.Empty
+	(TopProcessSortBy)(0),                            // 0: proto.TopProcessSortBy
+	(WatchProcessesRequest_WatchProcessesColumns)(0), // 1: proto.WatchProcessesRequest.WatchProcessesColumns
+	(WatchProcessesResponse_WatchProcessesStatus)(0), // 2: proto.WatchProcessesResponse.WatchProcessesStatus
+	(*ServerUsageItem)(nil),                          // 3: proto.ServerUsageItem
+	(*ServerCPUUsage)(nil),                           // 4: proto.ServerCPUUsage
+	(*GetServerResourcesRequest)(nil),                // 5: proto.GetServerResourcesRequest
+	(*GetServerResourcesResponse)(nil),               // 6: proto.GetServerResourcesResponse
+	(*GetServerInfoResponse)(nil),                    // 7: proto.GetServerInfoResponse
+	(*TopProcessResponse)(nil),                       // 8: proto.TopProcessResponse
+	(*TopProcessRequest)(nil),                        // 9: proto.TopProcessRequest
+	(*WatchProcessesRequest)(nil),                    // 10: proto.WatchProcessesRequest
+	(*WatchProcessesResponse)(nil),                   // 11: proto.WatchProcessesResponse
+	(*TopProcessResponse_Item)(nil),                  // 12: proto.TopProcessResponse.Item
+	(*WatchProcessesResponse_Item)(nil),              // 13: proto.WatchProcessesResponse.Item
+	(*emptypb.Empty)(nil),                            // 14: google.protobuf.Empty
 }
 var file_proto_resources_proto_depIdxs = []int32{
-	2, // 0: proto.GetServerResourcesResponse.cpu:type_name -> proto.ServerCPUUsage
-	1, // 1: proto.GetServerResourcesResponse.memory:type_name -> proto.ServerUsageItem
-	1, // 2: proto.GetServerResourcesResponse.disk:type_name -> proto.ServerUsageItem
-	1, // 3: proto.GetServerResourcesResponse.swap:type_name -> proto.ServerUsageItem
-	8, // 4: proto.TopProcessResponse.items:type_name -> proto.TopProcessResponse.Item
-	0, // 5: proto.TopProcessRequest.sort_by:type_name -> proto.TopProcessSortBy
-	3, // 6: proto.ServerResources.Get:input_type -> proto.GetServerResourcesRequest
-	9, // 7: proto.ServerResources.Info:input_type -> google.protobuf.Empty
-	7, // 8: proto.ServerResources.TopProcesses:input_type -> proto.TopProcessRequest
-	4, // 9: proto.ServerResources.Get:output_type -> proto.GetServerResourcesResponse
-	5, // 10: proto.ServerResources.Info:output_type -> proto.GetServerInfoResponse
-	6, // 11: proto.ServerResources.TopProcesses:output_type -> proto.TopProcessResponse
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4,  // 0: proto.GetServerResourcesResponse.cpu:type_name -> proto.ServerCPUUsage
+	3,  // 1: proto.GetServerResourcesResponse.memory:type_name -> proto.ServerUsageItem
+	3,  // 2: proto.GetServerResourcesResponse.disk:type_name -> proto.ServerUsageItem
+	3,  // 3: proto.GetServerResourcesResponse.swap:type_name -> proto.ServerUsageItem
+	12, // 4: proto.TopProcessResponse.items:type_name -> proto.TopProcessResponse.Item
+	0,  // 5: proto.TopProcessRequest.sort_by:type_name -> proto.TopProcessSortBy
+	1,  // 6: proto.WatchProcessesRequest.columns:type_name -> proto.WatchProcessesRequest.WatchProcessesColumns
+	13, // 7: proto.WatchProcessesResponse.items:type_name -> proto.WatchProcessesResponse.Item
+	2,  // 8: proto.WatchProcessesResponse.Item.status:type_name -> proto.WatchProcessesResponse.WatchProcessesStatus
+	5,  // 9: proto.ServerResources.Get:input_type -> proto.GetServerResourcesRequest
+	14, // 10: proto.ServerResources.Info:input_type -> google.protobuf.Empty
+	9,  // 11: proto.ServerResources.TopProcesses:input_type -> proto.TopProcessRequest
+	10, // 12: proto.ServerResources.WatchProcesses:input_type -> proto.WatchProcessesRequest
+	6,  // 13: proto.ServerResources.Get:output_type -> proto.GetServerResourcesResponse
+	7,  // 14: proto.ServerResources.Info:output_type -> proto.GetServerInfoResponse
+	8,  // 15: proto.ServerResources.TopProcesses:output_type -> proto.TopProcessResponse
+	11, // 16: proto.ServerResources.WatchProcesses:output_type -> proto.WatchProcessesResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_proto_resources_proto_init() }
@@ -688,8 +1061,8 @@ func file_proto_resources_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_resources_proto_rawDesc), len(file_proto_resources_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   8,
+			NumEnums:      3,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

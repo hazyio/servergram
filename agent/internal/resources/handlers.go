@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"log"
+	"sync/atomic"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -104,6 +105,55 @@ func topProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_Top
 		case <-stream.Context().Done():
 			return nil // client cancelled
 		case <-t.C:
+			if err := workFunc(stream); err != nil {
+				return err
+			}
+		}
+	}
+
+}
+
+func watchProcesses(req *proto.WatchProcessesRequest, stream proto.ServerResources_WatchProcessesServer) error {
+	computeDuration := max(time.Duration(req.GetIntervalMs())*time.Millisecond,
+		time.Second) // clamp: don't let a client ask for 1ms
+
+	t := time.NewTicker(computeDuration)
+	defer t.Stop()
+	ctx := stream.Context()
+	var running atomic.Bool
+	processCache := NewProcessCacheManager()
+	columns := req.GetColumns()
+	if len(columns) == 0 {
+		columns = make([]proto.WatchProcessesRequest_WatchProcessesColumns, 0)
+	}
+	workFunc := func(stream proto.ServerResources_WatchProcessesServer) error {
+		if running.Load() {
+			return nil
+		}
+		running.Store(true)
+		defer running.Store(false)
+		timeOutCtx, cancel := context.WithTimeout(ctx, 2*computeDuration) // last for twice the duration
+		defer cancel()
+
+		items, err := readProcesses(processCache, columns, timeOutCtx)
+		if err != nil {
+			// do not close the stream on timeout or errors
+			log.Println("Failed to read processes", "error", err)
+			return nil
+		}
+		stream.Send(&proto.WatchProcessesResponse{
+			Items: items,
+		})
+		return nil
+	}
+	// Do the first work immediately, then start the ticker for subsequent work
+	workFunc(stream)
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil // client cancelled
+		case <-t.C:
+
 			if err := workFunc(stream); err != nil {
 				return err
 			}

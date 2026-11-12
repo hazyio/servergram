@@ -30,6 +30,17 @@
       url: appPaths.servers.overview(connectedServerInfo.id),
     },
   ]);
+  const severOverviewBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+    {
+      title: "Overview",
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+  ]);
   const severFilesBreadcrumbs = $derived([
     ...serverBreadcrumbs,
     {
@@ -60,13 +71,7 @@
           url: appPaths.servers.add,
         },
       ],
-      [
-        ...serverBreadcrumbs,
-        {
-          title: "Add New Server",
-          url: appPaths.servers.add,
-        },
-      ],
+      severOverviewBreadcrumbs,
       severPageBreadcrumbs,
       severFilesBreadcrumbs,
     ]}

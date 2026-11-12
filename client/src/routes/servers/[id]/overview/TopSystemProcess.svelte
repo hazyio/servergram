@@ -155,7 +155,7 @@
     {/if}
   </CardContent>
   <CardFooter class="justify-end">
-    <a href={appPaths.servers.process(id)}>
+    <a href={appPaths.servers.processes(id)}>
       <Button variant="outline">See All</Button>
     </a>
   </CardFooter>

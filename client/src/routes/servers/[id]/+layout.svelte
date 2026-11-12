@@ -25,7 +25,7 @@
   items={[
     { label: "Overview", href: appPaths.servers.overview(Number(params.id)) },
     { label: "Files", href: appPaths.servers.files(Number(params.id)) },
-    { label: "Process", href: appPaths.servers.process(Number(params.id)) },
+    { label: "Processes", href: appPaths.servers.processes(Number(params.id)) },
     { label: "Docker", href: appPaths.servers.docker(Number(params.id)) },
     { label: "Cron", href: appPaths.servers.cron(Number(params.id)) },
   ]}

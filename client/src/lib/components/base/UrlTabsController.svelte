@@ -6,7 +6,7 @@
   }: {
     items: { label: string; href: string }[];
   } = $props();
-  let url = page.url.pathname;
+  let url = $derived(page.url.pathname);
 </script>
 
 <div class="p-1 bg-muted/60 flex justify-between px-3">

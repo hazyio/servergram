@@ -20,9 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ServerResources_Get_FullMethodName          = "/proto.ServerResources/Get"
-	ServerResources_Info_FullMethodName         = "/proto.ServerResources/Info"
-	ServerResources_TopProcesses_FullMethodName = "/proto.ServerResources/TopProcesses"
+	ServerResources_Get_FullMethodName            = "/proto.ServerResources/Get"
+	ServerResources_Info_FullMethodName           = "/proto.ServerResources/Info"
+	ServerResources_TopProcesses_FullMethodName   = "/proto.ServerResources/TopProcesses"
+	ServerResources_WatchProcesses_FullMethodName = "/proto.ServerResources/WatchProcesses"
 )
 
 // ServerResourcesClient is the client API for ServerResources service.
@@ -32,6 +33,7 @@ type ServerResourcesClient interface {
 	Get(ctx context.Context, in *GetServerResourcesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetServerResourcesResponse], error)
 	Info(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetServerInfoResponse, error)
 	TopProcesses(ctx context.Context, in *TopProcessRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TopProcessResponse], error)
+	WatchProcesses(ctx context.Context, in *WatchProcessesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchProcessesResponse], error)
 }
 
 type serverResourcesClient struct {
@@ -90,6 +92,25 @@ func (c *serverResourcesClient) TopProcesses(ctx context.Context, in *TopProcess
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ServerResources_TopProcessesClient = grpc.ServerStreamingClient[TopProcessResponse]
 
+func (c *serverResourcesClient) WatchProcesses(ctx context.Context, in *WatchProcessesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchProcessesResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ServerResources_ServiceDesc.Streams[2], ServerResources_WatchProcesses_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchProcessesRequest, WatchProcessesResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_WatchProcessesClient = grpc.ServerStreamingClient[WatchProcessesResponse]
+
 // ServerResourcesServer is the server API for ServerResources service.
 // All implementations must embed UnimplementedServerResourcesServer
 // for forward compatibility.
@@ -97,6 +118,7 @@ type ServerResourcesServer interface {
 	Get(*GetServerResourcesRequest, grpc.ServerStreamingServer[GetServerResourcesResponse]) error
 	Info(context.Context, *emptypb.Empty) (*GetServerInfoResponse, error)
 	TopProcesses(*TopProcessRequest, grpc.ServerStreamingServer[TopProcessResponse]) error
+	WatchProcesses(*WatchProcessesRequest, grpc.ServerStreamingServer[WatchProcessesResponse]) error
 	mustEmbedUnimplementedServerResourcesServer()
 }
 
@@ -115,6 +137,9 @@ func (UnimplementedServerResourcesServer) Info(context.Context, *emptypb.Empty) 
 }
 func (UnimplementedServerResourcesServer) TopProcesses(*TopProcessRequest, grpc.ServerStreamingServer[TopProcessResponse]) error {
 	return status.Error(codes.Unimplemented, "method TopProcesses not implemented")
+}
+func (UnimplementedServerResourcesServer) WatchProcesses(*WatchProcessesRequest, grpc.ServerStreamingServer[WatchProcessesResponse]) error {
+	return status.Error(codes.Unimplemented, "method WatchProcesses not implemented")
 }
 func (UnimplementedServerResourcesServer) mustEmbedUnimplementedServerResourcesServer() {}
 func (UnimplementedServerResourcesServer) testEmbeddedByValue()                         {}
@@ -177,6 +202,17 @@ func _ServerResources_TopProcesses_Handler(srv interface{}, stream grpc.ServerSt
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ServerResources_TopProcessesServer = grpc.ServerStreamingServer[TopProcessResponse]
 
+func _ServerResources_WatchProcesses_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchProcessesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ServerResourcesServer).WatchProcesses(m, &grpc.GenericServerStream[WatchProcessesRequest, WatchProcessesResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ServerResources_WatchProcessesServer = grpc.ServerStreamingServer[WatchProcessesResponse]
+
 // ServerResources_ServiceDesc is the grpc.ServiceDesc for ServerResources service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -198,6 +234,11 @@ var ServerResources_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "TopProcesses",
 			Handler:       _ServerResources_TopProcesses_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchProcesses",
+			Handler:       _ServerResources_WatchProcesses_Handler,
 			ServerStreams: true,
 		},
 	},

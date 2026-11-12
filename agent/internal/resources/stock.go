@@ -10,6 +10,7 @@ import (
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/process"
 
+	"hazyio.com/servergram/agent/internal/common"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
@@ -129,4 +130,95 @@ func getTopProcessesByMemory(ctx context.Context, limit int) (*proto.TopProcessR
 	return &proto.TopProcessResponse{
 		Items: processes.Items[:limit],
 	}, nil
+}
+
+func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProcessesRequest_WatchProcessesColumns, ctx context.Context) ([]*proto.WatchProcessesResponse_Item, error) {
+	ps, err := process.ProcessesWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*proto.WatchProcessesResponse_Item, 0, len(ps))
+	runningPid := make([]int32, 0, len(ps))
+	for _, p := range ps {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		item := &proto.WatchProcessesResponse_Item{Pid: p.Pid}
+		if cachedItem, ok := processCache.Get(p.Pid); ok {
+			item.Name = cachedItem.Name
+			item.Username = cachedItem.Username
+			item.Command = cachedItem.Command
+			item.Ppid = cachedItem.Ppid
+		} else {
+			name := common.UnWrapLogErr(p.NameWithContext(ctx))
+			if name == nil {
+				continue
+			}
+			item.Name = *name
+			ppid := common.UnWrapLogErr(p.PpidWithContext(ctx))
+			if ppid == nil {
+				continue
+			}
+			item.Ppid = *ppid
+
+			if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_USER) {
+				userName := common.UnWrapLogErr(p.UsernameWithContext(ctx))
+				if userName == nil {
+					continue
+				}
+				item.Username = *userName
+
+			}
+
+			if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_COMMAND) {
+				cmd := common.UnWrapLogErr(p.CmdlineWithContext(ctx))
+				if cmd == nil {
+					continue
+				}
+				item.Command = *cmd
+			}
+
+			// add item to cache
+			processCache.Set(p.Pid, ProcessCacheData{
+				Name:     item.Name,
+				Username: item.Username,
+				Command:  item.Command,
+				Ppid:     item.Ppid,
+			})
+		}
+		if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_STATE) {
+			st := common.UnWrapLogErr(p.StatusWithContext(ctx))
+			if st == nil || len(*st) == 0 {
+				continue
+			}
+			status := (*st)[0]
+			switch status {
+			case "S":
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_SLEEPING
+			case "T":
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_STOPPED
+			case "Z":
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_ZOMBIE
+			case "I":
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_IDLE
+			case "D":
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_WAITING
+			default:
+				item.Status = proto.WatchProcessesResponse_WATCH_PROCESSES_STATUS_OTHER
+			}
+		}
+
+		if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_MEMORY) {
+			mem, _ := p.MemoryInfoWithContext(ctx)
+			if mem != nil {
+				item.MemoryUsage = mem.RSS
+			}
+		}
+		items = append(items, item)
+		runningPid = append(runningPid, p.Pid)
+
+	}
+	processCache.RemoveAllBut(runningPid)
+
+	return items, nil
 }

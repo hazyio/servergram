@@ -49,8 +49,9 @@ type UpdateServerFingerPrintRequest struct {
 }
 
 type WatchServerResourceRequest struct {
-	IntervalMs int  `query:"interval" default:"1000" minimum:"1000" maximum:"60000" doc:"Update interval in ms"`
-	ID         uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	IntervalMs int                                                 `query:"interval" default:"1000" minimum:"1000" maximum:"60000" doc:"Update interval in ms"`
+	ID         uint                                                `path:"id" minimum:"1" doc:"The ID of the server"`
+	Columns    []proto.WatchProcessesRequest_WatchProcessesColumns `query:"columns" required:"true" doc:"The columns to include in the resource watch, comma-separated 1: memory, 2: command, 3: user, 4: cpu, 5: state, 6: uptime"`
 }
 
 type WatchTopProcessesRequest struct {

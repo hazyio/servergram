@@ -2,18 +2,24 @@
   import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
   import * as Table from "#lib/components/ui/table/index.js";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
-  import { getColumns } from "./filesColumns";
+  import { getColumns, type ProcessItem } from "./processesColumns";
 
   let {
+    processes,
     visibleColumns,
     search = "",
-  }: { visibleColumns: Record<string, boolean>; search?: string } = $props();
+  }: {
+    processes: ProcessItem[];
+    visibleColumns: Record<string, boolean>;
+    search?: string;
+  } = $props();
   const columns = getColumns();
   const table = createTable({
     features: dataTableFeatures,
     get data() {
-      return [];
+      return processes;
     },
+    getRowId: (process) => String(process.pid),
     columns,
   });
 
@@ -44,11 +50,7 @@
   </Table.Header>
   <Table.Body>
     {#each table.getRowModel().rows as row (row.id)}
-      <Table.Row
-        class={`cursor-pointer`}
-        onclick={() => {}}
-        ondblclick={() => {}}
-      >
+      <Table.Row>
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell class=" p-0 px-4">
             <FlexRender {cell} />

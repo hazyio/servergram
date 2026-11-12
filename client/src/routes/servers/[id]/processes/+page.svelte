@@ -1,16 +1,41 @@
 <script lang="ts">
+  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
+  import Loading from "#lib/components/base/loading.svelte";
   import Sort from "#lib/components/base/sort.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import Input from "#lib/components/ui/input/input.svelte";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
+  import type { components } from "#lib/types/request-schema.d.ts";
   import { RefreshCcw } from "@lucide/svelte";
+  import { untrack } from "svelte";
   import type { PageProps } from "./$types";
   import ProcessesTable from "./ProcessesTable/ProcessesTable.svelte";
+  import {
+    toProcessItem,
+    type ProcessItem,
+  } from "./ProcessesTable/processesColumns";
   import ProcessSettingOption, {
-    type ProcessColumns
+    type ProcessColumns,
   } from "./ProcessSettingOption.svelte";
+
+  type WatchProcessesResponse =
+    components["schemas"]["WatchProcessesResponse"];
+
+  const processColumnValues: Record<ProcessColumns, number> = {
+    memory: 1,
+    cmd: 2,
+    user: 3,
+    cpu: 4,
+    state: 5,
+    uptime: 6,
+  };
+
   let search = $state("");
   let refreshFrequencySeconds = $state(1);
+  let processes = $state<ProcessItem[]>([]);
+  let loading = $state(true);
+  let loadError = $state<string | null>(null);
+  let eventSource: EventSource | undefined;
 
   let { params }: PageProps = $props();
 
@@ -22,17 +47,92 @@
     uptime: true,
     user: true,
   });
+
+  function getSelectedColumns(): number[] {
+    const selected = (
+      Object.keys(processColumnValues) as ProcessColumns[]
+    )
+      .filter((column) => columnsToShow[column])
+      .map((column) => processColumnValues[column]);
+
+    // The API requires at least one column; pid and name are always returned.
+    return selected.length > 0
+      ? selected
+      : [processColumnValues.cmd];
+  }
+
+  function stop() {
+    eventSource?.close();
+    eventSource = undefined;
+  }
+
   function startProcessWatch() {
     stop();
+    loading = true;
+    loadError = null;
+    processes = [];
+
+    const query = new URLSearchParams({
+      interval: String(refreshFrequencySeconds * 1000),
+      columns: getSelectedColumns().join(","),
+    });
+    const source = new EventSource(
+      `/api/server/watch-processes/${params.id}?${query}`,
+      { withCredentials: true },
+    );
+    eventSource = source;
+
+    source.addEventListener("data", (event) => {
+      if (source !== eventSource) return;
+      try {
+        const response = JSON.parse(
+          (event as MessageEvent<string>).data,
+        ) as WatchProcessesResponse;
+        processes = (response.items ?? []).map(toProcessItem);
+        loading = false;
+        loadError = null;
+      } catch {
+        loading = false;
+        loadError = "Failed to parse process data";
+      }
+    });
+
+    source.addEventListener("error", (event) => {
+      if (source !== eventSource || !(event instanceof MessageEvent)) return;
+      try {
+        const response = JSON.parse(event.data) as { message?: string };
+        loadError = response.message ?? "Failed to load processes";
+      } catch {
+        loadError = "Failed to load processes";
+      }
+      stop();
+      loading = false;
+    });
+
+    source.onerror = () => {
+      if (source !== eventSource || source.readyState !== EventSource.CLOSED) {
+        return;
+      }
+      stop();
+      loading = false;
+      loadError ??= "Process stream closed";
+    };
   }
-  function stop() {}
+
+  $effect(() => {
+    // Restart the stream when the refresh interval or visible columns change.
+    void refreshFrequencySeconds;
+    void columnsToShow;
+    untrack(startProcessWatch);
+    return stop;
+  });
 </script>
 
 <svelte:head>
   <title>{severPageInfo.name} Processes | ServerGram</title>
   <meta
     name="description"
-    content="View the details of a server, including its hostname, SSH username, port, group, and SSH key."
+    content="View and search running processes on a server, including CPU, memory, state, and uptime."
   />
 </svelte:head>
 <div class="flex gap-2">
@@ -44,22 +144,25 @@
     bind:value={search}
   />
   <ProcessSettingOption
-    onSave={(c) => {
-      console.log("saved")
-      columnsToShow = c;
-      startProcessWatch();
+    onSave={(columns) => {
+      columnsToShow = columns;
     }}
   />
   <Sort
     items={[1, 3, 5, 10, 20, 30, 40, 50]}
     bind:value={refreshFrequencySeconds}
     capitalize={false}
-    onChange={startProcessWatch}
     prepend="s"
   />
   <Button variant="outline" onclick={startProcessWatch}><RefreshCcw /></Button>
 </div>
 
-<div class="p-2">
-      <ProcessesTable {search} visibleColumns={columnsToShow} />
-</div>
+{#if loading}
+  <Loading loading class="mt-20 w-12 h-12" />
+{:else if loadError}
+  <ErrorSection message={loadError} onRetry={startProcessWatch} class="my-7" />
+{:else}
+  <div class="p-2">
+    <ProcessesTable {processes} {search} visibleColumns={columnsToShow} />
+  </div>
+{/if}

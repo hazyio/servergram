@@ -35,7 +35,6 @@
         columns,
       },
     );
-    console.log(columns);
     onSave(JSON.parse(JSON.stringify(columns)));
   }
   onMount(() => {

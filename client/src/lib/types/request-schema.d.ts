@@ -480,6 +480,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/server/watch-processes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch processes by ID */
+        get: operations["sse-server--watch-processes-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/server/watch-resources/{id}": {
         parameters: {
             query?: never;
@@ -927,6 +944,26 @@ export interface components {
             kind?: number;
             path?: string;
         };
+        WatchProcessesResponse: {
+            items?: components["schemas"]["WatchProcessesResponse_Item"][] | null;
+        };
+        WatchProcessesResponse_Item: {
+            command?: string;
+            /** Format: double */
+            cpu_usage?: number;
+            /** Format: int64 */
+            memory_usage?: number;
+            name?: string;
+            /** Format: int32 */
+            pid?: number;
+            /** Format: int32 */
+            ppid?: number;
+            /** Format: int32 */
+            status?: number;
+            /** Format: int64 */
+            uptime?: number;
+            username?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -1368,10 +1405,6 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/octet-stream": string;
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                };
             };
         };
         responses: {
@@ -1745,9 +1778,9 @@ export interface operations {
     };
     "get-search--group": {
         parameters: {
-            query: {
+            query?: {
                 /** @description The search query */
-                query: string;
+                query?: string;
             };
             header?: never;
             path?: never;
@@ -1777,9 +1810,9 @@ export interface operations {
     };
     "get-search--ssh": {
         parameters: {
-            query: {
+            query?: {
                 /** @description The search query */
-                query: string;
+                query?: string;
             };
             header?: never;
             path?: never;
@@ -2007,6 +2040,83 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "sse-server--watch-processes-id": {
+        parameters: {
+            query: {
+                /** @description Update interval in ms */
+                interval?: number;
+                /** @description The columns to include in the process watch, comma-separated 1: memory, 2: command, 3: user, 4: cpu, 5: state, 6: uptime */
+                columns: number[] | null;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the server */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["WatchProcessesResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
             };
             /** @description Not Found */
             404: {

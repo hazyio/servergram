@@ -26,6 +26,7 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
 
 	server.Get("/info/{id}", http.StatusOK, getServerInfo, http.StatusInternalServerError, http.StatusNotFound)
+	server.SSE("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSE("/watch-processes/{id}", http.StatusOK, watchServerProcesses, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSE("/watch-top-process/{id}", http.StatusOK, watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
 
@@ -203,7 +204,39 @@ func getServerInfo(data internal.RouteData[PathIdRequest]) (*models.ServerInfoRe
 	}, nil
 }
 
-func watchServerProcesses(data internal.RouteData[models.WatchServerResourceRequest], send sse.Sender) *proto.GetServerResourcesResponse {
+func watchServerResource(data internal.RouteData[models.WatchServerResourceRequest], send sse.Sender) *proto.GetServerResourcesResponse {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		slog.Error("Failed to get server connected", "error", err)
+		_ = send.Data(internal.NewSSEError(http.StatusInternalServerError, err.Error()))
+		return nil
+	}
+	defer cancel()
+	stream, err := resource.Get(ctx, &proto.GetServerResourcesRequest{
+		IntervalMs: uint32(data.Input.IntervalMs),
+	})
+	if err != nil {
+		internal.SendSSEError(send, err)
+		return nil
+	}
+	for {
+		chunk, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			slog.Info("Server resources stream ended")
+			return nil
+		}
+		if err != nil {
+			internal.SendSSEError(send, err)
+			return nil
+		}
+		if err := send.Data(chunk); err != nil {
+			return nil
+		}
+	}
+}
+
+func watchServerProcesses(data internal.RouteData[models.WatchProcessesRequest], send sse.Sender) *proto.WatchProcessesResponse {
 	id := data.Input.ID
 	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
 	if err != nil {

@@ -47,6 +47,7 @@
     uptime: true,
     user: true,
   });
+  let groupByParent = $state(true);
 
   function getSelectedColumns(): number[] {
     const selected = (
@@ -144,8 +145,9 @@
     bind:value={search}
   />
   <ProcessSettingOption
-    onSave={(columns) => {
-      columnsToShow = columns;
+    onSave={(settings) => {
+      columnsToShow = settings.columns;
+      groupByParent = settings.groupByParent;
     }}
   />
   <Sort
@@ -163,6 +165,11 @@
   <ErrorSection message={loadError} onRetry={startProcessWatch} class="my-7" />
 {:else}
   <div class="p-2">
-    <ProcessesTable {processes} {search} visibleColumns={columnsToShow} />
+    <ProcessesTable
+      {processes}
+      {search}
+      {groupByParent}
+      visibleColumns={columnsToShow}
+    />
   </div>
 {/if}

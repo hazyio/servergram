@@ -3,6 +3,7 @@
     "cmd" | "user" | "cpu" | "memory" | "state" | "uptime";
   export interface ProcessSettingsOptionProps {
     columns: Record<ProcessColumns, boolean>;
+    groupByParent: boolean;
   }
 </script>
 
@@ -16,7 +17,7 @@
   import { onMount, untrack } from "svelte";
   import { Separator } from "#lib/components/ui/separator/index.js";
   interface ProcessSettingsProps {
-    onSave: (columns: Record<ProcessColumns, boolean>) => void;
+    onSave: (settings: ProcessSettingsOptionProps) => void;
   }
   let { onSave }: ProcessSettingsProps = $props();
   let columns = $state<Record<ProcessColumns, boolean>>({
@@ -27,25 +28,35 @@
     uptime: true,
     user: true,
   });
+  let groupByParent = $state(true);
 
   function save() {
+    const settings: ProcessSettingsOptionProps = {
+      columns,
+      groupByParent,
+    };
     useLocalStorage().save<ProcessSettingsOptionProps>(
       "process-explorer-settings",
-      {
-        columns,
-      },
+      settings,
     );
-    onSave(JSON.parse(JSON.stringify(columns)));
+    onSave(JSON.parse(JSON.stringify(settings)));
   }
   onMount(() => {
     const saved = useLocalStorage().get<ProcessSettingsOptionProps>(
       "process-explorer-settings",
       {
-        columns: columns,
+        columns,
+        groupByParent,
       },
     );
-    columns = saved.columns;
-    untrack(() => onSave(saved.columns));
+    columns = { ...columns, ...saved.columns };
+    groupByParent = saved.groupByParent ?? true;
+    untrack(() =>
+      onSave({
+        columns: JSON.parse(JSON.stringify(columns)),
+        groupByParent,
+      }),
+    );
   });
 </script>
 
@@ -73,6 +84,25 @@
             >
           </Field.Field>
         {/each}
+      </Field.Group>
+    </div>
+    <Separator
+      orientation="horizontal"
+      class="mt-4 me-2 data-vertical:h-4 data-vertical:self-auto"
+    />
+    <div class="mt-4">
+      <Field.Group class="max-w-sm">
+        <h4 class="text-sm font-medium">Grouping</h4>
+        <Field.Field orientation="horizontal">
+          <Checkbox
+            id="process-group-by-parent"
+            name="process-group-by-parent"
+            bind:checked={groupByParent}
+          />
+          <Field.Label for="process-group-by-parent"
+            >Group by parent id</Field.Label
+          >
+        </Field.Field>
       </Field.Group>
     </div>
     <Separator

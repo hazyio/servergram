@@ -91,18 +91,16 @@ export const getColumns = () =>
     columnHelper.accessor("name", {
       header: sortableHeader("Name"),
       filterFn: (row, _columnId, filterValue) => {
-        const query = String(filterValue ?? "").trim().toLowerCase();
+        const query = String(filterValue ?? "")
+          .trim()
+          .toLowerCase();
         if (!query) return true;
         return `${row.original.name} ${row.original.command}`
           .toLowerCase()
           .includes(query);
       },
     }),
-    columnHelper.accessor("command", {
-      id: "cmd",
-      header: sortableHeader("Command"),
-      cell: (info) => info.getValue() || "-",
-    }),
+
     columnHelper.accessor("username", {
       id: "user",
       header: sortableHeader("User"),
@@ -126,5 +124,10 @@ export const getColumns = () =>
     columnHelper.accessor("uptime", {
       header: sortableHeader("Uptime"),
       cell: (info) => formatUptime(info.getValue()),
+    }),
+    columnHelper.accessor("command", {
+      id: "cmd",
+      header: sortableHeader("Command"),
+      cell: (info) => info.getValue() || "-",
     }),
   ]);

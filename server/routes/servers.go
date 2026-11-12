@@ -247,7 +247,7 @@ func watchServerProcesses(data internal.RouteData[models.WatchProcessesRequest],
 	defer cancel()
 	stream, err := resource.WatchProcesses(ctx, &proto.WatchProcessesRequest{
 		Columns:    data.Input.Columns,
-		IntervalMs: uint32(data.Input.IntervalMs), 
+		IntervalMs: uint32(data.Input.IntervalMs),
 	})
 	if err != nil {
 		internal.SendSSEError(send, err)

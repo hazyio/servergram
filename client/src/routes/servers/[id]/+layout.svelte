@@ -11,9 +11,15 @@
   import type { LayoutProps } from "./$types";
 
   let { params, children }: LayoutProps = $props();
-  let server = $derived.by(() => {
-    return ConnectedServices.findServer(Number(params.id));
-  });
+  let serverId = $derived(Number(params.id));
+  let server = $derived(ConnectedServices.findServer(serverId));
+  let tabs = $derived([
+    { label: "Overview", href: appPaths.servers.overview(serverId) },
+    { label: "Files", href: appPaths.servers.files(serverId) },
+    { label: "Processes", href: appPaths.servers.processes(serverId) },
+    { label: "Docker", href: appPaths.servers.docker(serverId) },
+    { label: "Cron", href: appPaths.servers.cron(serverId) },
+  ]);
   $effect(() => {
     if (server) {
       updatePageServerInfo(server.id, server.name);
@@ -21,15 +27,7 @@
   });
 </script>
 
-<UrlTabsController
-  items={[
-    { label: "Overview", href: appPaths.servers.overview(Number(params.id)) },
-    { label: "Files", href: appPaths.servers.files(Number(params.id)) },
-    { label: "Processes", href: appPaths.servers.processes(Number(params.id)) },
-    { label: "Docker", href: appPaths.servers.docker(Number(params.id)) },
-    { label: "Cron", href: appPaths.servers.cron(Number(params.id)) },
-  ]}
-/>
+<UrlTabsController items={tabs} />
 <div class="p-2">
   {#if servicesState.connecting || servicesState.gettingConnected || (server && server.status === "connecting")}
     <Loading loading containerClass="mt-20" />
@@ -40,10 +38,7 @@
       class="mt-20"
       retryText="Connect"
       onRetry={() => {
-        ConnectedServices.startServerConnection(
-          Number(params.id),
-          `Server ${params.id}`,
-        );
+        ConnectedServices.startServerConnection(serverId, `Server ${serverId}`);
       }}
     />
   {:else}

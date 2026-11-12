@@ -3,6 +3,7 @@ import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte
 import type { components } from "#lib/types/request-schema.d.ts";
 import { formatBytes } from "#lib/utils.ts";
 import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
+import ProcessName from "./ProcessName.svelte";
 
 export type ProcessItem = {
   pid: number;
@@ -83,7 +84,7 @@ const sortableHeader =
       onclick: column.getToggleSortingHandler(),
     });
 
-export const getColumns = () =>
+export const getColumns = (serverId: number) =>
   columnHelper.columns([
     columnHelper.accessor("pid", {
       header: sortableHeader("Pid"),
@@ -99,6 +100,12 @@ export const getColumns = () =>
           .toLowerCase()
           .includes(query);
       },
+      cell: (info) =>
+        renderComponent(ProcessName, {
+          name: info.getValue(),
+          pid: info.row.original.pid,
+          serverId,
+        }),
     }),
 
     columnHelper.accessor("username", {

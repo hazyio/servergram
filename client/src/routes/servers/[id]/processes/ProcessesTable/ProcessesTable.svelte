@@ -6,6 +6,7 @@
   import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
   import { FlexRender, createTable } from "@tanstack/svelte-table";
   import { SvelteSet } from "svelte/reactivity";
+  import { untrack } from "svelte";
   import {
     formatUptime,
     getColumns,
@@ -16,15 +17,17 @@
   let {
     processes,
     visibleColumns,
+    serverId,
     search = "",
     groupBy = "parent",
   }: {
     processes: ProcessItem[];
     visibleColumns: Record<string, boolean>;
+    serverId: number;
     search?: string;
     groupBy?: ProcessGrouping;
   } = $props();
-  const columns = getColumns();
+  const columns = untrack(() => getColumns(serverId));
   const table = createTable({
     features: dataTableFeatures,
     get data() {

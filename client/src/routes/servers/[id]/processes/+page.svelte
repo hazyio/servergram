@@ -170,6 +170,7 @@
       {processes}
       {search}
       {groupBy}
+      serverId={Number(params.id)}
       visibleColumns={columnsToShow}
     />
   </div>

@@ -52,6 +52,17 @@
       url: appPaths.servers.files(connectedServerInfo.id),
     },
   ]);
+  const severProcessesBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+    {
+      title: "Processes",
+      url: appPaths.servers.processes(connectedServerInfo.id),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -74,6 +85,7 @@
       severOverviewBreadcrumbs,
       severPageBreadcrumbs,
       severFilesBreadcrumbs,
+      severProcessesBreadcrumbs,
     ]}
     sideBarItems={[
       {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"embed"
 	"encoding/json"
@@ -34,9 +35,8 @@ import (
 //go:embed all:dist
 var distFS embed.FS
 
-func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
+func NewRouter(_ context.Context, database *gorm.DB, polls *internal.Polls) *http.Server {
 	env := internal.LoadEnv()
-
 	cert, err := tls.LoadX509KeyPair(env.SSLPublicKey, env.SSLPrivateKey)
 	if err != nil {
 		log.Fatal(err)
@@ -105,6 +105,7 @@ func NewRouter(database *gorm.DB, polls *internal.Polls) *http.Server {
 	_ = os.WriteFile("../openapi.json", b, 0644)
 	return srv
 }
+
 
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here

@@ -25,7 +25,7 @@ func startServer() {
 	// ensure all polls are stopped when the server shuts down
 	defer polls.StopAll()
 
-	router := NewRouter(database, polls)
+	router := NewRouter(ctx, database, polls)
 	slog.Info("Starting server at https://localhost:" + env.ServerPort)
 	// tls certificate and key are provided by the server configuration, so empty strings are passed here
 	go func() {

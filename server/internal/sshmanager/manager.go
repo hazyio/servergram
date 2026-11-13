@@ -56,6 +56,7 @@ func (m *SSHManager) Dequeue(id uint) {
 }
 func (m *SSHManager) Disconnect(id uint) error {
 	m.mu.Lock()
+
 	connection, ok := m.connected[id]
 	if !ok {
 		m.mu.Unlock()
@@ -65,6 +66,7 @@ func (m *SSHManager) Disconnect(id uint) error {
 		m.mu.Unlock()
 		return err
 	}
+	
 	delete(m.connected, id)
 	m.mu.Unlock()
 	slog.Info("SSH connection closed", "server_id", id)
@@ -109,12 +111,13 @@ func (m *SSHManager) GetAllConnected() []SSHConnectedListData {
 func (m *SSHManager) ConnectNewUnEncrypted(server *db.Server) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	connection, err := newUnEncryptedConnection(server)
+	connection, err := newUnEncryptedConnection(server, func(err error) {
+		m.Disconnect(server.ID)
+	})
 	if err != nil {
 		return err
 	}
 	m.connected[server.ID] = connection
-	
 	// remove from queuedIds after connecting
 	delete(m.queued, server.ID)
 	slog.Info("SSH connection established", "server_id", server.ID, "server_name", server.Name)

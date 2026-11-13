@@ -19,7 +19,15 @@ type Agent struct {
 
 // }
 func NewAgent(conn *grpc.ClientConn) *Agent {
-	return &Agent{Conn: conn, Timeout: 30 * time.Second}
+	return &Agent{Conn: conn, Timeout: 10 * time.Second}
+}
+
+
+func (c *Agent) Close() error {
+	if c == nil || c.Conn == nil {
+		return nil
+	}
+	return c.Conn.Close()
 }
 
 func (c *Agent) UpdateTimeout(seconds uint8) {

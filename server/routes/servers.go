@@ -305,6 +305,7 @@ func forceStopProcess(data internal.RouteData[models.StopProcessRequest]) (*Empt
 	}
 	return &EmptyRR{}, nil
 }
+
 func signalProcess(data internal.RouteData[models.SignalProcessRequest]) (*EmptyRR, error) {
 	id := data.Input.ID
 	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
@@ -319,5 +320,6 @@ func signalProcess(data internal.RouteData[models.SignalProcessRequest]) (*Empty
 	if err != nil {
 		return nil, err
 	}
+
 	return &EmptyRR{}, nil
 }

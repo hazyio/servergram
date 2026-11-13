@@ -33,6 +33,6 @@ func (s *ResourcesServer) ForceStopProcess(_ context.Context, req *proto.ForceSt
 	return forceStopProcess(req)
 }
 
-func (s *ResourcesServer) SendSignal(_ context.Context, req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, error) {
+func (s *ResourcesServer) SignalProcess(_ context.Context, req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, error) {
 	return sendSignal(req)
 }

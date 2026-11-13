@@ -17,6 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"hazyio.com/servergram/server/agents"
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal/common"
@@ -33,7 +34,7 @@ type SSHConnectedData struct {
 	Home   string
 }
 
-func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
+func newUnEncryptedConnection(server *db.Server, onAgentExit func(error)) (*SSHConnectedData, error) {
 	ctx := context.Background()
 	signer, err := ssh.ParsePrivateKey([]byte(server.SSHKey.Key))
 	if err != nil {
@@ -82,7 +83,7 @@ func newUnEncryptedConnection(server *db.Server) (*SSHConnectedData, error) {
 		return nil, err
 	}
 
-	agentConn, err := startAgentConnection(ctx, client, remotePath)
+	agentConn, err := startAgentConnection(ctx, client, remotePath, onAgentExit)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +102,24 @@ func (c *SSHConnectedData) IsAlive() bool {
 		_, _, err := client.SendRequest("keepalive@openssh.com", true, nil)
 		return nil, err
 	}, func(any) { client.Close() })
-	return err == nil
+
+	if err != nil {
+		slog.Error("Keepalive request failed", "id", c.Id, "error", err)
+		return false
+	}
+
+	if c.Agent == nil {
+		slog.Error("Agent connection is nil", "id", c.Id)
+		return false
+	}
+	return true
 }
 func (c *SSHConnectedData) Disconnect() error {
 	if c.client != nil {
 		if !c.IsAlive() {
 			return nil
 		}
+		// agent dies as soon as the client closes, no need to close agent separately
 		return c.client.Close()
 	}
 	return nil
@@ -167,7 +179,7 @@ func uploadAgent(home string, c *ssh.Client, bin []byte) (string, error) {
 	}
 	return agentPath, nil
 }
-func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string) (*grpc.ClientConn, error) {
+func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string, onExit func(error)) (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 	slog.Info("Starting agent connection", "remotePath", remotePath)
@@ -191,9 +203,9 @@ func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string)
 			return session.Close()
 		})
 
-		slog.Info("Agent connection established")
+		slog.Info("Starting Agent connection")
 		var used atomic.Bool
-		return grpc.NewClient("passthrough:///agent",
+		cc, err := grpc.NewClient("passthrough:///agent",
 			grpc.WithTransportCredentials(insecure.NewCredentials()), // SSH already encrypts and authenticates
 			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 				if used.Swap(true) {
@@ -202,7 +214,29 @@ func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string)
 				}
 				return conn, nil
 			}),
+			grpc.WithKeepaliveParams(keepalive.ClientParameters{
+				Time:                15 * time.Second,
+				Timeout:             3 * time.Second,
+				PermitWithoutStream: true,
+			}),
 		)
+		go func() {
+			err := session.Wait() // blocks until the remote process exits
+			var exitErr *ssh.ExitError
+			switch {
+			case errors.As(err, &exitErr):
+				slog.Warn("agent exited", "status", exitErr.ExitStatus(), "signal", exitErr.Signal())
+			case err != nil:
+				slog.Warn("agent session ended", "err", err)
+			default:
+				slog.Info("agent exited cleanly")
+			}
+			cc.Close()
+			if onExit != nil {
+				onExit(err)
+			}
+		}()
+		return cc, err
 	}, func(conn *grpc.ClientConn) {
 		conn.Close()
 		session.Close() // kills the remote process's stdin/channel
@@ -271,7 +305,7 @@ func getOSAndArch(ctx context.Context, c *ssh.Client) (db.OS, db.Arch, error) {
 }
 
 func getRemoteHome(ctx context.Context, c *ssh.Client) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	session, err := c.NewSession()
 	if err != nil {

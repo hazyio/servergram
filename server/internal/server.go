@@ -46,6 +46,11 @@ type SSEError struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
+type WebSocketRunAlwaysData struct {
+	Duration time.Duration
+	Fun      WebSocketFunctionType
+}
+type WebSocketFunctionType func(in RouteData[any], dataQueue *DataQueue)
 
 func NewSSEError(status int, message string) SSEError {
 	return SSEError{Status: status, Message: message}
@@ -280,7 +285,7 @@ func (s *Server) Upload[I, O any](pattern string,
 	})
 }
 
-func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[I], dataQueue *DataQueue), runOnStart func(in RouteData[any], dataQueue *DataQueue), errs ...int) {
+func (s *Server) WebSocket[I any](pattern string, next func(in RouteData[I], dataQueue *DataQueue), runOnStart WebSocketFunctionType, runAlways WebSocketRunAlwaysData, errs ...int) {
 	huma.Register(s.group, huma.Operation{
 		OperationID:     "websocket-" + opSlug(s.prefix, pattern),
 		Summary:         huma.GenerateSummary(http.MethodGet, pattern, struct{}{}),
@@ -306,7 +311,7 @@ func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[
 				conn.SetReadLimit(1 << 20)
 				dataQueue := NewDataQueue()
 				// watch for new messages in the data queue and send them over the WebSocket connection
-				poller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
+				messagePoller := s.Polls.AddPoll(NewPoller(time.Second, func(ctx context.Context) {
 					messages, ok := dataQueue.Dequeue()
 					if !ok {
 						return
@@ -320,10 +325,21 @@ func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[
 						wsjson.Write(ctx, conn, message)
 					}
 				}))
+				
+				if runAlways.Duration > 0 {
 
-				poller.Start(ctx)
+					alwaysPoller := s.Polls.AddPoll(NewPoller(runAlways.Duration, func(ctx context.Context) {
+						runAlways.Fun(RouteData[any]{Input: &struct{}{}, Database: s.database, Context: ctx, SSHManager: s.sshManager}, dataQueue)
+					}))
+					alwaysPoller.Start(ctx)
+					defer alwaysPoller.Stop()
+
+				}
+				messagePoller.Start(ctx)
+
 				defer dataQueue.Close()
-				defer poller.Stop()
+				defer messagePoller.Stop()
+
 				// Run the function provided in runOnStart with the OnStartedRawServerRouteData.
 				go runOnStart(RouteData[any]{Input: &struct{}{}, Database: s.database, Context: ctx, SSHManager: s.sshManager}, dataQueue)
 				for {
@@ -334,7 +350,7 @@ func (s *Server) WebSocket[I any](pattern string, next func(routeData RouteData[
 						default:
 							slog.Error("ws read error", "error", err)
 						}
-						poller.Stop()
+						messagePoller.Stop()
 						return
 					}
 					rd := RouteData[I]{Input: input, Database: s.database, Context: ctx, SSHManager: s.sshManager}

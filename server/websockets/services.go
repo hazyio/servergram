@@ -16,8 +16,8 @@ func onServiceSocketStated(input internal.RouteData[any], dataQueue *internal.Da
 	manageSSHConnection := input.SSHManager
 	slog.Info("service socket started")
 	SendQueueAndConnected(dataQueue, manageSSHConnection)
-
 }
+
 func handleServicesWebSocket(input internal.RouteData[models.WebSocketMessage[models.WebSocketServiceMessage]], dataQueue *internal.DataQueue) {
 	message := input.Input.Action
 	data := input.Input.Data
@@ -55,7 +55,6 @@ func handleServicesWebSocket(input internal.RouteData[models.WebSocketMessage[mo
 	default:
 		slog.Error("unknown message action", "action", message)
 		dataQueue.Enqueue(models.NewErrorServiceWSMessage("unknown message action: " + string(message)))
-
 	}
 }
 func handleServerDisconnect(sshManager *sshmanager.SSHManager, msg models.WSServiceDisconnectServerData, dataQueue *internal.DataQueue) {

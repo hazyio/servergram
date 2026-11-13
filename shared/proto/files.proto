@@ -104,7 +104,8 @@ message WriteFileResponse {
   int64 bytes_written = 1;
 }
 
-service Files {
+
+service FilesService {
   rpc ListFiles(ListFilesRequest) returns (stream ListFilesChunkResponse);
   rpc CreateDirectory(CreateDirectoryRequest) returns (SuccessResponse);
   rpc RemoveDirectory(RemoveDirectoryRequest) returns (SuccessResponse);

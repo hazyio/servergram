@@ -95,10 +95,47 @@ message WatchProcessesResponse {
   }
   repeated Item items = 1;
 }
+message StopProcessRequest {
+  int32 pid = 1;
+}
+message StopProcessResponse {
+  bool success = 1;
+}
+message ForceStopProcessRequest {
+  int32 pid = 1;
+}
+message ForceStopProcessResponse {
+  bool success = 1;
+}
+message SignalProcessRequest {
+  enum SignalProcessRequestSignals {
+    SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED = 0;
+    SIGNAL_PROCESS_REQUEST_SIGNALS_HUP = 1; // reload config
+    SIGNAL_PROCESS_REQUEST_SIGNALS_INT = 2; // like Ctrl+C
+    SIGNAL_PROCESS_REQUEST_SIGNALS_KILL = 3; // uncatchable
+    SIGNAL_PROCESS_REQUEST_SIGNALS_TERM = 4; // graceful stop
+    SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT = 5; // quit + core dump
+    SIGNAL_PROCESS_REQUEST_SIGNALS_USR1 = 6; // app-defined
+    SIGNAL_PROCESS_REQUEST_SIGNALS_USR2 = 7; // app-defined
+    SIGNAL_PROCESS_REQUEST_SIGNALS_STOP = 8; // pause, uncatchable
+    SIGNAL_PROCESS_REQUEST_SIGNALS_CONT = 9; // resume
+    SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP = 10; // pause, catchable (Ctrl+Z)
+    SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM = 11;
+    SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT = 12; // abort
+  }
+  int32 pid = 1;
+  SignalProcessRequestSignals signal = 2;
+}
+message SignalProcessResponse {
+  bool success = 1;
+}
 
-service ServerResources {
+service ResourcesService {
   rpc Get(GetServerResourcesRequest) returns (stream GetServerResourcesResponse);
   rpc Info(google.protobuf.Empty) returns (GetServerInfoResponse);
   rpc TopProcesses(TopProcessRequest) returns (stream TopProcessResponse);
   rpc WatchProcesses(WatchProcessesRequest) returns (stream WatchProcessesResponse);
+  rpc StopProcess(StopProcessRequest) returns (StopProcessResponse);
+  rpc ForceStopProcess(ForceStopProcessRequest) returns (ForceStopProcessResponse);
+  rpc SignalProcess(SignalProcessRequest) returns (SignalProcessResponse);
 }

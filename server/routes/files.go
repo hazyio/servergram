@@ -38,7 +38,7 @@ func registerFilesRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSH
 	server.Upload("/upload-file-to-server/{id}", 10<<30, uploadFileInServer, http.StatusBadGateway)
 
 }
-func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesClient, context.Context, context.CancelFunc, error) {
+func getFilesConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.FilesServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
 		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
 	}

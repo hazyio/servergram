@@ -18,7 +18,7 @@ import (
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
-func handleListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesServer) error {
+func handleListFiles(req *proto.ListFilesRequest, stream proto.FilesService_ListFilesServer) error {
 
 	newPath, err := validateAndCleanPath(req.Dir)
 	if err != nil {
@@ -110,7 +110,7 @@ func handleRemoveDirectory(req *proto.RemoveDirectoryRequest) (*proto.SuccessRes
 	return &proto.SuccessResponse{Success: true}, nil
 }
 
-func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_WatchDirectoryServer) error {
+func handleWatchDirectory(req *proto.WatchDirectoryRequest, stream proto.FilesService_WatchDirectoryServer) error {
 	newPath, err := validateAndCleanPath(req.Path)
 	if err != nil {
 		return err
@@ -340,7 +340,7 @@ func handleRenamePath(req *proto.RenamePathRequest) (*proto.SuccessResponse, err
 
 }
 
-func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServer) error {
+func handleReadFile(req *proto.ReadFileRequest, stream proto.FilesService_ReadFileServer) error {
 
 	newPath, err := validateAndCleanPath(req.Path)
 
@@ -415,7 +415,7 @@ func handleReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServe
 
 }
 
-func handleWriteFile(stream proto.Files_WriteFileServer) error {
+func handleWriteFile(stream proto.FilesService_WriteFileServer) error {
 	// First message must be metadata
 	first, err := stream.Recv()
 	if err != nil {

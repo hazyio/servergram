@@ -8,10 +8,10 @@ import (
 )
 
 type FilesServer struct {
-	proto.UnimplementedFilesServer
+	proto.UnimplementedFilesServiceServer
 }
 
-func (s *FilesServer) ListFiles(req *proto.ListFilesRequest, stream proto.Files_ListFilesServer) error {
+func (s *FilesServer) ListFiles(req *proto.ListFilesRequest, stream proto.FilesService_ListFilesServer) error {
 	dir := req.Dir
 	if dir == "" {
 		homeDir, err := os.UserHomeDir()
@@ -30,7 +30,7 @@ func (s *FilesServer) CreateDirectory(_ context.Context, req *proto.CreateDirect
 func (s *FilesServer) RemoveDirectory(_ context.Context, req *proto.RemoveDirectoryRequest) (*proto.SuccessResponse, error) {
 	return handleRemoveDirectory(req)
 }
-func (s *FilesServer) WatchDirectory(req *proto.WatchDirectoryRequest, stream proto.Files_WatchDirectoryServer) error {
+func (s *FilesServer) WatchDirectory(req *proto.WatchDirectoryRequest, stream proto.FilesService_WatchDirectoryServer) error {
 	return handleWatchDirectory(req, stream)
 }
 func (s *FilesServer) CreateFile(_ context.Context, req *proto.CreateFileRequest) (*proto.SuccessResponse, error) {
@@ -46,10 +46,10 @@ func (s *FilesServer) PathProperties(_ context.Context, req *proto.PathPropertie
 	return handlePathProperties(req)
 }
 
-func (s *FilesServer) ReadFile(req *proto.ReadFileRequest, stream proto.Files_ReadFileServer) error {
+func (s *FilesServer) ReadFile(req *proto.ReadFileRequest, stream proto.FilesService_ReadFileServer) error {
 	return handleReadFile(req, stream)
 }
 
-func (s *FilesServer) WriteFile(stream proto.Files_WriteFileServer) error {
+func (s *FilesServer) WriteFile(stream proto.FilesService_WriteFileServer) error {
 	return handleWriteFile(stream)
 }

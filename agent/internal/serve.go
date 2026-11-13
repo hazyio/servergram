@@ -18,8 +18,8 @@ func Serve() {
 	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
 	log.Println("starting agent connection")
 	srv := grpc.NewServer()
-	pb.RegisterFilesServer(srv, &files.FilesServer{})
-	pb.RegisterServerResourcesServer(srv, &resources.ResourcesServer{})
+	pb.RegisterFilesServiceServer(srv, &files.FilesServer{})
+	pb.RegisterResourcesServiceServer(srv, &resources.ResourcesServer{})
 
 	lis := &oneConnListener{ch: make(chan net.Conn, 1), done: make(chan struct{})}
 	log.Println("agent ready")

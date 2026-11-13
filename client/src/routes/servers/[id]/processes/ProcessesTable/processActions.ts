@@ -1,31 +1,53 @@
+import { NewRequestClient } from "#lib/api/request.ts";
+
+export type ProcessActionKind = "stop" | "force-stop" | "signal";
+
 export type ProcessAction = {
   label: string;
   signal: string;
+  sigNum: number;
+  kind: ProcessActionKind;
   variant?: "default" | "destructive";
 };
 
 export const stopProcessAction: ProcessAction = {
   label: "Stop",
   signal: "SIGTERM",
+  sigNum: 15,
+  kind: "stop",
 };
 
 export const forceStopProcessAction: ProcessAction = {
   label: "Force stop",
   signal: "SIGKILL",
+  sigNum: 9,
+  kind: "force-stop",
   variant: "destructive",
 };
 
 export const processSignalActions: ProcessAction[] = [
-  { label: "Terminate", signal: "SIGTERM" },
-  { label: "Kill", signal: "SIGKILL", variant: "destructive" },
-  { label: "Interrupt", signal: "SIGINT" },
-  { label: "Hang up", signal: "SIGHUP" },
-  { label: "Quit", signal: "SIGQUIT" },
-  { label: "Pause", signal: "SIGSTOP" },
-  { label: "Continue", signal: "SIGCONT" },
-  { label: "User 1", signal: "SIGUSR1" },
-  { label: "User 2", signal: "SIGUSR2" },
-  { label: "Abort", signal: "SIGABRT", variant: "destructive" },
+  { label: "Terminate", signal: "SIGTERM", sigNum: 15, kind: "signal" },
+  {
+    label: "Kill",
+    signal: "SIGKILL",
+    sigNum: 9,
+    kind: "signal",
+    variant: "destructive",
+  },
+  { label: "Interrupt", signal: "SIGINT", sigNum: 2, kind: "signal" },
+  { label: "Hang up", signal: "SIGHUP", sigNum: 1, kind: "signal" },
+  { label: "Quit", signal: "SIGQUIT", sigNum: 3, kind: "signal" },
+  { label: "Pause", signal: "SIGSTOP", sigNum: 19, kind: "signal" },
+  { label: "Continue", signal: "SIGCONT", sigNum: 18, kind: "signal" },
+  { label: "User 1", signal: "SIGUSR1", sigNum: 10, kind: "signal" },
+  { label: "User 2", signal: "SIGUSR2", sigNum: 12, kind: "signal" },
+  {
+    label: "Abort",
+    signal: "SIGABRT",
+    sigNum: 6,
+    kind: "signal",
+    variant: "destructive",
+  },
 ];
 
 export type ProcessActionError = {
@@ -38,27 +60,43 @@ export type ProcessActionError = {
 export type ProcessActionRequest = {
   serverId: number;
   pid: number;
-  signal: string;
+  action: ProcessAction;
 };
 
 export type ProcessActionResult = {
   error?: ProcessActionError;
 };
 
-/**
- * Stub for the process-signal API.
- *
- * Replace this with the real request once the backend exposes a
- * process-signal endpoint, for example:
- *
- *   return await NewRequestClient().POST("/api/server/send-signal/{id}", {
- *     params: { path: { id: serverId } },
- *     body: { pid, signal },
- *   });
- */
 export async function sendProcessSignal(
-  _request: ProcessActionRequest,
+  request: ProcessActionRequest,
 ): Promise<ProcessActionResult> {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  return {};
+  const client = NewRequestClient();
+  const params = { path: { id: request.serverId } };
+
+  switch (request.action.kind) {
+    case "stop": {
+      const { error } = await client.POST("/api/server/{id}/stop-process/", {
+        params,
+        body: { pid: request.pid },
+      });
+      return { error };
+    }
+    case "force-stop": {
+      const { error } = await client.POST(
+        "/api/server/{id}/force-stop-process/",
+        {
+          params,
+          body: { pid: request.pid },
+        },
+      );
+      return { error };
+    }
+    case "signal": {
+      const { error } = await client.POST("/api/server/{id}/signal-process/", {
+        params,
+        body: { pid: request.pid, sig_num: request.action.sigNum },
+      });
+      return { error };
+    }
+  }
 }

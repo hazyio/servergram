@@ -29,6 +29,9 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server.SSE("/watch-resources/{id}", http.StatusOK, watchServerResource, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSE("/watch-processes/{id}", http.StatusOK, watchServerProcesses, http.StatusInternalServerError, http.StatusNotFound)
 	server.SSE("/watch-top-process/{id}", http.StatusOK, watchTopProcesses, http.StatusInternalServerError, http.StatusNotFound)
+	server.Post("/{id}/stop-process/", http.StatusOK, stopProcess, http.StatusInternalServerError, http.StatusNotFound)
+	server.Post("/{id}/force-stop-process/", http.StatusOK, forceStopProcess, http.StatusInternalServerError, http.StatusNotFound)
+	server.Post("/{id}/signal-process/", http.StatusOK, signalProcess, http.StatusInternalServerError, http.StatusNotFound)
 
 }
 
@@ -138,7 +141,7 @@ func updateServerFingerPrint(data internal.RouteData[models.UpdateServerFingerPr
 	db.AddLog(db.LogActionUpdate, "Updated host fingerprint for server "+server.Name+"", database)
 	return &EmptyRR{}, nil
 }
-func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ServerResourcesClient, context.Context, context.CancelFunc, error) {
+func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.ResourcesServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
 		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "SSH Manager not initialized")
 	}
@@ -146,7 +149,7 @@ func getServerConnected(ctx context.Context, manager *sshmanager.SSHManager, id 
 	if err != nil {
 		return nil, nil, nil, internal.NewHumaError(http.StatusInternalServerError, "Failed to get connected agent, it is probably not connected")
 	}
-	resource, ctx, cancel := agentConnection.Agent.ServerResourcesClient(ctx)
+	resource, ctx, cancel := agentConnection.Agent.ResourcesClient(ctx)
 
 	return resource, ctx, cancel, nil
 }
@@ -216,6 +219,7 @@ func watchServerResource(data internal.RouteData[models.WatchServerResourceReque
 	stream, err := resource.Get(ctx, &proto.GetServerResourcesRequest{
 		IntervalMs: uint32(data.Input.IntervalMs),
 	})
+
 	if err != nil {
 		internal.SendSSEError(send, err)
 		return nil
@@ -245,6 +249,7 @@ func watchServerProcesses(data internal.RouteData[models.WatchProcessesRequest],
 		return nil
 	}
 	defer cancel()
+
 	stream, err := resource.WatchProcesses(ctx, &proto.WatchProcessesRequest{
 		Columns:    data.Input.Columns,
 		IntervalMs: uint32(data.Input.IntervalMs),
@@ -268,4 +273,51 @@ func watchServerProcesses(data internal.RouteData[models.WatchProcessesRequest],
 		}
 
 	}
+}
+
+func stopProcess(data internal.RouteData[models.StopProcessRequest]) (*EmptyRR, error) {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.StopProcess(ctx, &proto.StopProcessRequest{
+		Pid: int32(data.Input.Body.PID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &EmptyRR{}, nil
+}
+func forceStopProcess(data internal.RouteData[models.StopProcessRequest]) (*EmptyRR, error) {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.ForceStopProcess(ctx, &proto.ForceStopProcessRequest{
+		Pid: int32(data.Input.Body.PID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &EmptyRR{}, nil
+}
+func signalProcess(data internal.RouteData[models.SignalProcessRequest]) (*EmptyRR, error) {
+	id := data.Input.ID
+	resource, ctx, cancel, err := getServerConnected(data.Context, data.SSHManager, id)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.SignalProcess(ctx, &proto.SignalProcessRequest{
+		Pid:    int32(data.Input.Body.PID),
+		Signal: data.Input.Body.SigNum,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &EmptyRR{}, nil
 }

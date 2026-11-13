@@ -193,6 +193,85 @@ func (WatchProcessesResponse_WatchProcessesStatus) EnumDescriptor() ([]byte, []i
 	return file_proto_resources_proto_rawDescGZIP(), []int{8, 0}
 }
 
+type SignalProcessRequest_SignalProcessRequestSignals int32
+
+const (
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED SignalProcessRequest_SignalProcessRequestSignals = 0
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_HUP         SignalProcessRequest_SignalProcessRequestSignals = 1  // reload config
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_INT         SignalProcessRequest_SignalProcessRequestSignals = 2  // like Ctrl+C
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_KILL        SignalProcessRequest_SignalProcessRequestSignals = 3  // uncatchable
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TERM        SignalProcessRequest_SignalProcessRequestSignals = 4  // graceful stop
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT        SignalProcessRequest_SignalProcessRequestSignals = 5  // quit + core dump
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_USR1        SignalProcessRequest_SignalProcessRequestSignals = 6  // app-defined
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_USR2        SignalProcessRequest_SignalProcessRequestSignals = 7  // app-defined
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_STOP        SignalProcessRequest_SignalProcessRequestSignals = 8  // pause, uncatchable
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_CONT        SignalProcessRequest_SignalProcessRequestSignals = 9  // resume
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP        SignalProcessRequest_SignalProcessRequestSignals = 10 // pause, catchable (Ctrl+Z)
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM        SignalProcessRequest_SignalProcessRequestSignals = 11
+	SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT       SignalProcessRequest_SignalProcessRequestSignals = 12 // abort
+)
+
+// Enum value maps for SignalProcessRequest_SignalProcessRequestSignals.
+var (
+	SignalProcessRequest_SignalProcessRequestSignals_name = map[int32]string{
+		0:  "SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED",
+		1:  "SIGNAL_PROCESS_REQUEST_SIGNALS_HUP",
+		2:  "SIGNAL_PROCESS_REQUEST_SIGNALS_INT",
+		3:  "SIGNAL_PROCESS_REQUEST_SIGNALS_KILL",
+		4:  "SIGNAL_PROCESS_REQUEST_SIGNALS_TERM",
+		5:  "SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT",
+		6:  "SIGNAL_PROCESS_REQUEST_SIGNALS_USR1",
+		7:  "SIGNAL_PROCESS_REQUEST_SIGNALS_USR2",
+		8:  "SIGNAL_PROCESS_REQUEST_SIGNALS_STOP",
+		9:  "SIGNAL_PROCESS_REQUEST_SIGNALS_CONT",
+		10: "SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP",
+		11: "SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM",
+		12: "SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT",
+	}
+	SignalProcessRequest_SignalProcessRequestSignals_value = map[string]int32{
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED": 0,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_HUP":         1,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_INT":         2,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_KILL":        3,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_TERM":        4,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT":        5,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_USR1":        6,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_USR2":        7,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_STOP":        8,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_CONT":        9,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP":        10,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM":        11,
+		"SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT":       12,
+	}
+)
+
+func (x SignalProcessRequest_SignalProcessRequestSignals) Enum() *SignalProcessRequest_SignalProcessRequestSignals {
+	p := new(SignalProcessRequest_SignalProcessRequestSignals)
+	*p = x
+	return p
+}
+
+func (x SignalProcessRequest_SignalProcessRequestSignals) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SignalProcessRequest_SignalProcessRequestSignals) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_resources_proto_enumTypes[3].Descriptor()
+}
+
+func (SignalProcessRequest_SignalProcessRequestSignals) Type() protoreflect.EnumType {
+	return &file_proto_resources_proto_enumTypes[3]
+}
+
+func (x SignalProcessRequest_SignalProcessRequestSignals) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SignalProcessRequest_SignalProcessRequestSignals.Descriptor instead.
+func (SignalProcessRequest_SignalProcessRequestSignals) EnumDescriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{13, 0}
+}
+
 type ServerUsageItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Usage         uint64                 `protobuf:"varint,1,opt,name=usage,proto3" json:"usage,omitempty"`
@@ -733,6 +812,278 @@ func (x *WatchProcessesResponse) GetItems() []*WatchProcessesResponse_Item {
 	return nil
 }
 
+type StopProcessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pid           int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StopProcessRequest) Reset() {
+	*x = StopProcessRequest{}
+	mi := &file_proto_resources_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StopProcessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopProcessRequest) ProtoMessage() {}
+
+func (x *StopProcessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopProcessRequest.ProtoReflect.Descriptor instead.
+func (*StopProcessRequest) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *StopProcessRequest) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+type StopProcessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StopProcessResponse) Reset() {
+	*x = StopProcessResponse{}
+	mi := &file_proto_resources_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StopProcessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopProcessResponse) ProtoMessage() {}
+
+func (x *StopProcessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopProcessResponse.ProtoReflect.Descriptor instead.
+func (*StopProcessResponse) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *StopProcessResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type ForceStopProcessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pid           int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForceStopProcessRequest) Reset() {
+	*x = ForceStopProcessRequest{}
+	mi := &file_proto_resources_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForceStopProcessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForceStopProcessRequest) ProtoMessage() {}
+
+func (x *ForceStopProcessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForceStopProcessRequest.ProtoReflect.Descriptor instead.
+func (*ForceStopProcessRequest) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ForceStopProcessRequest) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+type ForceStopProcessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ForceStopProcessResponse) Reset() {
+	*x = ForceStopProcessResponse{}
+	mi := &file_proto_resources_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ForceStopProcessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ForceStopProcessResponse) ProtoMessage() {}
+
+func (x *ForceStopProcessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ForceStopProcessResponse.ProtoReflect.Descriptor instead.
+func (*ForceStopProcessResponse) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ForceStopProcessResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type SignalProcessRequest struct {
+	state         protoimpl.MessageState                           `protogen:"open.v1"`
+	Pid           int32                                            `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	Signal        SignalProcessRequest_SignalProcessRequestSignals `protobuf:"varint,2,opt,name=signal,proto3,enum=proto.SignalProcessRequest_SignalProcessRequestSignals" json:"signal,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignalProcessRequest) Reset() {
+	*x = SignalProcessRequest{}
+	mi := &file_proto_resources_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignalProcessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignalProcessRequest) ProtoMessage() {}
+
+func (x *SignalProcessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignalProcessRequest.ProtoReflect.Descriptor instead.
+func (*SignalProcessRequest) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SignalProcessRequest) GetPid() int32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *SignalProcessRequest) GetSignal() SignalProcessRequest_SignalProcessRequestSignals {
+	if x != nil {
+		return x.Signal
+	}
+	return SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED
+}
+
+type SignalProcessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignalProcessResponse) Reset() {
+	*x = SignalProcessResponse{}
+	mi := &file_proto_resources_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignalProcessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignalProcessResponse) ProtoMessage() {}
+
+func (x *SignalProcessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_resources_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignalProcessResponse.ProtoReflect.Descriptor instead.
+func (*SignalProcessResponse) Descriptor() ([]byte, []int) {
+	return file_proto_resources_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SignalProcessResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 type TopProcessResponse_Item struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Pid           int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
@@ -745,7 +1096,7 @@ type TopProcessResponse_Item struct {
 
 func (x *TopProcessResponse_Item) Reset() {
 	*x = TopProcessResponse_Item{}
-	mi := &file_proto_resources_proto_msgTypes[9]
+	mi := &file_proto_resources_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +1108,7 @@ func (x *TopProcessResponse_Item) String() string {
 func (*TopProcessResponse_Item) ProtoMessage() {}
 
 func (x *TopProcessResponse_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_resources_proto_msgTypes[9]
+	mi := &file_proto_resources_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +1169,7 @@ type WatchProcessesResponse_Item struct {
 
 func (x *WatchProcessesResponse_Item) Reset() {
 	*x = WatchProcessesResponse_Item{}
-	mi := &file_proto_resources_proto_msgTypes[10]
+	mi := &file_proto_resources_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -830,7 +1181,7 @@ func (x *WatchProcessesResponse_Item) String() string {
 func (*WatchProcessesResponse_Item) ProtoMessage() {}
 
 func (x *WatchProcessesResponse_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_resources_proto_msgTypes[10]
+	mi := &file_proto_resources_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,15 +1336,46 @@ const file_proto_resources_proto_rawDesc = "" +
 	"\x1bWATCH_PROCESSES_STATUS_IDLE\x10\x04\x12\"\n" +
 	"\x1eWATCH_PROCESSES_STATUS_WAITING\x10\x05\x12\"\n" +
 	"\x1eWATCH_PROCESSES_STATUS_RUNNING\x10\x06\x12 \n" +
-	"\x1cWATCH_PROCESSES_STATUS_OTHER\x10\a*3\n" +
+	"\x1cWATCH_PROCESSES_STATUS_OTHER\x10\a\"&\n" +
+	"\x12StopProcessRequest\x12\x10\n" +
+	"\x03pid\x18\x01 \x01(\x05R\x03pid\"/\n" +
+	"\x13StopProcessResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"+\n" +
+	"\x17ForceStopProcessRequest\x12\x10\n" +
+	"\x03pid\x18\x01 \x01(\x05R\x03pid\"4\n" +
+	"\x18ForceStopProcessResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb4\x05\n" +
+	"\x14SignalProcessRequest\x12\x10\n" +
+	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12O\n" +
+	"\x06signal\x18\x02 \x01(\x0e27.proto.SignalProcessRequest.SignalProcessRequestSignalsR\x06signal\"\xb8\x04\n" +
+	"\x1bSignalProcessRequestSignals\x12.\n" +
+	"*SIGNAL_PROCESS_REQUEST_SIGNALS_UNSPECIFIED\x10\x00\x12&\n" +
+	"\"SIGNAL_PROCESS_REQUEST_SIGNALS_HUP\x10\x01\x12&\n" +
+	"\"SIGNAL_PROCESS_REQUEST_SIGNALS_INT\x10\x02\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_KILL\x10\x03\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_TERM\x10\x04\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT\x10\x05\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_USR1\x10\x06\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_USR2\x10\a\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_STOP\x10\b\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_CONT\x10\t\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP\x10\n" +
+	"\x12'\n" +
+	"#SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM\x10\v\x12(\n" +
+	"$SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT\x10\f\"1\n" +
+	"\x15SignalProcessResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess*3\n" +
 	"\x10TopProcessSortBy\x12\r\n" +
 	"\tCPU_USAGE\x10\x00\x12\x10\n" +
-	"\fMEMORY_USAGE\x10\x012\xb5\x02\n" +
-	"\x0fServerResources\x12L\n" +
+	"\fMEMORY_USAGE\x10\x012\x9d\x04\n" +
+	"\x10ResourcesService\x12L\n" +
 	"\x03Get\x12 .proto.GetServerResourcesRequest\x1a!.proto.GetServerResourcesResponse0\x01\x12<\n" +
 	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x1c.proto.GetServerInfoResponse\x12E\n" +
 	"\fTopProcesses\x12\x18.proto.TopProcessRequest\x1a\x19.proto.TopProcessResponse0\x01\x12O\n" +
-	"\x0eWatchProcesses\x12\x1c.proto.WatchProcessesRequest\x1a\x1d.proto.WatchProcessesResponse0\x01B*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\x0eWatchProcesses\x12\x1c.proto.WatchProcessesRequest\x1a\x1d.proto.WatchProcessesResponse0\x01\x12D\n" +
+	"\vStopProcess\x12\x19.proto.StopProcessRequest\x1a\x1a.proto.StopProcessResponse\x12S\n" +
+	"\x10ForceStopProcess\x12\x1e.proto.ForceStopProcessRequest\x1a\x1f.proto.ForceStopProcessResponse\x12J\n" +
+	"\rSignalProcess\x12\x1b.proto.SignalProcessRequest\x1a\x1c.proto.SignalProcessResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_resources_proto_rawDescOnce sync.Once
@@ -1007,48 +1389,62 @@ func file_proto_resources_proto_rawDescGZIP() []byte {
 	return file_proto_resources_proto_rawDescData
 }
 
-var file_proto_resources_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_resources_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_proto_resources_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_proto_resources_proto_goTypes = []any{
-	(TopProcessSortBy)(0),                            // 0: proto.TopProcessSortBy
-	(WatchProcessesRequest_WatchProcessesColumns)(0), // 1: proto.WatchProcessesRequest.WatchProcessesColumns
-	(WatchProcessesResponse_WatchProcessesStatus)(0), // 2: proto.WatchProcessesResponse.WatchProcessesStatus
-	(*ServerUsageItem)(nil),                          // 3: proto.ServerUsageItem
-	(*ServerCPUUsage)(nil),                           // 4: proto.ServerCPUUsage
-	(*GetServerResourcesRequest)(nil),                // 5: proto.GetServerResourcesRequest
-	(*GetServerResourcesResponse)(nil),               // 6: proto.GetServerResourcesResponse
-	(*GetServerInfoResponse)(nil),                    // 7: proto.GetServerInfoResponse
-	(*TopProcessResponse)(nil),                       // 8: proto.TopProcessResponse
-	(*TopProcessRequest)(nil),                        // 9: proto.TopProcessRequest
-	(*WatchProcessesRequest)(nil),                    // 10: proto.WatchProcessesRequest
-	(*WatchProcessesResponse)(nil),                   // 11: proto.WatchProcessesResponse
-	(*TopProcessResponse_Item)(nil),                  // 12: proto.TopProcessResponse.Item
-	(*WatchProcessesResponse_Item)(nil),              // 13: proto.WatchProcessesResponse.Item
-	(*emptypb.Empty)(nil),                            // 14: google.protobuf.Empty
+	(TopProcessSortBy)(0),                                 // 0: proto.TopProcessSortBy
+	(WatchProcessesRequest_WatchProcessesColumns)(0),      // 1: proto.WatchProcessesRequest.WatchProcessesColumns
+	(WatchProcessesResponse_WatchProcessesStatus)(0),      // 2: proto.WatchProcessesResponse.WatchProcessesStatus
+	(SignalProcessRequest_SignalProcessRequestSignals)(0), // 3: proto.SignalProcessRequest.SignalProcessRequestSignals
+	(*ServerUsageItem)(nil),                               // 4: proto.ServerUsageItem
+	(*ServerCPUUsage)(nil),                                // 5: proto.ServerCPUUsage
+	(*GetServerResourcesRequest)(nil),                     // 6: proto.GetServerResourcesRequest
+	(*GetServerResourcesResponse)(nil),                    // 7: proto.GetServerResourcesResponse
+	(*GetServerInfoResponse)(nil),                         // 8: proto.GetServerInfoResponse
+	(*TopProcessResponse)(nil),                            // 9: proto.TopProcessResponse
+	(*TopProcessRequest)(nil),                             // 10: proto.TopProcessRequest
+	(*WatchProcessesRequest)(nil),                         // 11: proto.WatchProcessesRequest
+	(*WatchProcessesResponse)(nil),                        // 12: proto.WatchProcessesResponse
+	(*StopProcessRequest)(nil),                            // 13: proto.StopProcessRequest
+	(*StopProcessResponse)(nil),                           // 14: proto.StopProcessResponse
+	(*ForceStopProcessRequest)(nil),                       // 15: proto.ForceStopProcessRequest
+	(*ForceStopProcessResponse)(nil),                      // 16: proto.ForceStopProcessResponse
+	(*SignalProcessRequest)(nil),                          // 17: proto.SignalProcessRequest
+	(*SignalProcessResponse)(nil),                         // 18: proto.SignalProcessResponse
+	(*TopProcessResponse_Item)(nil),                       // 19: proto.TopProcessResponse.Item
+	(*WatchProcessesResponse_Item)(nil),                   // 20: proto.WatchProcessesResponse.Item
+	(*emptypb.Empty)(nil),                                 // 21: google.protobuf.Empty
 }
 var file_proto_resources_proto_depIdxs = []int32{
-	4,  // 0: proto.GetServerResourcesResponse.cpu:type_name -> proto.ServerCPUUsage
-	3,  // 1: proto.GetServerResourcesResponse.memory:type_name -> proto.ServerUsageItem
-	3,  // 2: proto.GetServerResourcesResponse.disk:type_name -> proto.ServerUsageItem
-	3,  // 3: proto.GetServerResourcesResponse.swap:type_name -> proto.ServerUsageItem
-	12, // 4: proto.TopProcessResponse.items:type_name -> proto.TopProcessResponse.Item
+	5,  // 0: proto.GetServerResourcesResponse.cpu:type_name -> proto.ServerCPUUsage
+	4,  // 1: proto.GetServerResourcesResponse.memory:type_name -> proto.ServerUsageItem
+	4,  // 2: proto.GetServerResourcesResponse.disk:type_name -> proto.ServerUsageItem
+	4,  // 3: proto.GetServerResourcesResponse.swap:type_name -> proto.ServerUsageItem
+	19, // 4: proto.TopProcessResponse.items:type_name -> proto.TopProcessResponse.Item
 	0,  // 5: proto.TopProcessRequest.sort_by:type_name -> proto.TopProcessSortBy
 	1,  // 6: proto.WatchProcessesRequest.columns:type_name -> proto.WatchProcessesRequest.WatchProcessesColumns
-	13, // 7: proto.WatchProcessesResponse.items:type_name -> proto.WatchProcessesResponse.Item
-	2,  // 8: proto.WatchProcessesResponse.Item.status:type_name -> proto.WatchProcessesResponse.WatchProcessesStatus
-	5,  // 9: proto.ServerResources.Get:input_type -> proto.GetServerResourcesRequest
-	14, // 10: proto.ServerResources.Info:input_type -> google.protobuf.Empty
-	9,  // 11: proto.ServerResources.TopProcesses:input_type -> proto.TopProcessRequest
-	10, // 12: proto.ServerResources.WatchProcesses:input_type -> proto.WatchProcessesRequest
-	6,  // 13: proto.ServerResources.Get:output_type -> proto.GetServerResourcesResponse
-	7,  // 14: proto.ServerResources.Info:output_type -> proto.GetServerInfoResponse
-	8,  // 15: proto.ServerResources.TopProcesses:output_type -> proto.TopProcessResponse
-	11, // 16: proto.ServerResources.WatchProcesses:output_type -> proto.WatchProcessesResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	20, // 7: proto.WatchProcessesResponse.items:type_name -> proto.WatchProcessesResponse.Item
+	3,  // 8: proto.SignalProcessRequest.signal:type_name -> proto.SignalProcessRequest.SignalProcessRequestSignals
+	2,  // 9: proto.WatchProcessesResponse.Item.status:type_name -> proto.WatchProcessesResponse.WatchProcessesStatus
+	6,  // 10: proto.ResourcesService.Get:input_type -> proto.GetServerResourcesRequest
+	21, // 11: proto.ResourcesService.Info:input_type -> google.protobuf.Empty
+	10, // 12: proto.ResourcesService.TopProcesses:input_type -> proto.TopProcessRequest
+	11, // 13: proto.ResourcesService.WatchProcesses:input_type -> proto.WatchProcessesRequest
+	13, // 14: proto.ResourcesService.StopProcess:input_type -> proto.StopProcessRequest
+	15, // 15: proto.ResourcesService.ForceStopProcess:input_type -> proto.ForceStopProcessRequest
+	17, // 16: proto.ResourcesService.SignalProcess:input_type -> proto.SignalProcessRequest
+	7,  // 17: proto.ResourcesService.Get:output_type -> proto.GetServerResourcesResponse
+	8,  // 18: proto.ResourcesService.Info:output_type -> proto.GetServerInfoResponse
+	9,  // 19: proto.ResourcesService.TopProcesses:output_type -> proto.TopProcessResponse
+	12, // 20: proto.ResourcesService.WatchProcesses:output_type -> proto.WatchProcessesResponse
+	14, // 21: proto.ResourcesService.StopProcess:output_type -> proto.StopProcessResponse
+	16, // 22: proto.ResourcesService.ForceStopProcess:output_type -> proto.ForceStopProcessResponse
+	18, // 23: proto.ResourcesService.SignalProcess:output_type -> proto.SignalProcessResponse
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_proto_resources_proto_init() }
@@ -1061,8 +1457,8 @@ func file_proto_resources_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_resources_proto_rawDesc), len(file_proto_resources_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   11,
+			NumEnums:      4,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

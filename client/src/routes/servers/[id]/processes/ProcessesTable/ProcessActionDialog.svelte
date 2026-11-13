@@ -1,8 +1,8 @@
 <script lang="ts">
   import { unWrapErrorMessage } from "#lib/api/request.ts";
+  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
-  import { Button } from "#lib/components/ui/button/index.js";
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import { sendProcessSignal, type ProcessAction } from "./processActions";
@@ -36,28 +36,38 @@
     loading = true;
     error = "";
 
-    const { error: requestError } = await sendProcessSignal({
-      serverId,
-      pid,
-      signal: currentAction.signal,
-    });
+    try {
+      const { error: requestError } = await sendProcessSignal({
+        serverId,
+        pid,
+        action: currentAction,
+      });
 
-    // Ignore stale responses, for example if the dialog was closed meanwhile.
-    if (token !== requestToken) return;
+      // Ignore stale responses, for example if the dialog was closed meanwhile.
+      if (token !== requestToken) return;
 
-    loading = false;
-    if (requestError) {
-      error = unWrapErrorMessage(
-        requestError,
-        `Failed to send ${currentAction.signal}`,
+      loading = false;
+      if (requestError) {
+        error = unWrapErrorMessage(
+          requestError,
+          `Failed to send ${currentAction.signal}`,
+        );
+        return;
+      }
+
+      toast.success(
+        `${currentAction.signal} sent to ${processName} (PID ${pid})`,
       );
-      return;
-    }
+      open = false;
+    } catch (requestError) {
+      if (token !== requestToken) return;
 
-    toast.success(
-      `${currentAction.signal} sent to ${processName} (PID ${pid})`,
-    );
-    open = false;
+      loading = false;
+      error =
+        requestError instanceof Error
+          ? requestError.message
+          : `Failed to send ${currentAction.signal}`;
+    }
   }
 
   $effect(() => {
@@ -94,16 +104,17 @@
       <Loading class="h-50" text={loadingText} loading={loading} />
     {:else if error !== ""}
       <AlertDialog.Header>
-        <AlertDialog.Title>
+        <AlertDialog.Title class="sr-only">
           {action?.label ?? "Action"} failed
         </AlertDialog.Title>
-        <AlertDialog.Description>
-          {error}
-        </AlertDialog.Description>
       </AlertDialog.Header>
+      <ErrorSection
+        title={`${action?.label ?? "Action"} failed`}
+        message={error}
+        onRetry={retry}
+      />
       <AlertDialog.Footer>
         <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-        <Button onclick={retry}>Try again</Button>
       </AlertDialog.Footer>
     {:else}
       <AlertDialog.Header>

@@ -4,10 +4,13 @@ import (
 	"context"
 	"log"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"hazyio.com/servergram/agent/internal/common"
 	"hazyio.com/servergram/shared/gen/proto"
@@ -31,7 +34,7 @@ func getInfo(ctx context.Context) (*proto.GetServerInfoResponse, error) {
 		SystemTime:    now.Format(time.RFC3339),
 	}, nil
 }
-func getResourcesUsage(req *proto.GetServerResourcesRequest, stream proto.ServerResources_GetServer) error {
+func getResourcesUsage(req *proto.GetServerResourcesRequest, stream proto.ResourcesService_GetServer) error {
 	iv := max(time.Duration(req.IntervalMs)*time.Millisecond,
 		// clamp: don't let a client ask for 1ms
 		time.Second)
@@ -39,7 +42,7 @@ func getResourcesUsage(req *proto.GetServerResourcesRequest, stream proto.Server
 	defer t.Stop()
 	ctx := stream.Context()
 
-	workFunc := func(stream proto.ServerResources_GetServer) error {
+	workFunc := func(stream proto.ResourcesService_GetServer) error {
 		cpuUsage, err := cpuUsage(ctx)
 		if err != nil {
 			log.Println("Failed to get CPU usage", "error", err)
@@ -74,14 +77,14 @@ func getResourcesUsage(req *proto.GetServerResourcesRequest, stream proto.Server
 		}
 	}
 }
-func topProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_TopProcessesServer) error {
+func topProcesses(req *proto.TopProcessRequest, stream proto.ResourcesService_TopProcessesServer) error {
 	iv := max(time.Duration(req.IntervalMs)*time.Millisecond,
 		// clamp: don't let a client ask for 1ms
 		time.Second)
 	t := time.NewTicker(iv)
 	defer t.Stop()
 	ctx := stream.Context()
-	workFunc := func(stream proto.ServerResources_TopProcessesServer) error {
+	workFunc := func(stream proto.ResourcesService_TopProcessesServer) error {
 		switch req.SortBy {
 		case proto.TopProcessSortBy_CPU_USAGE:
 			data, err := getTopProcessesByCpu(ctx, int(req.Limit))
@@ -113,7 +116,7 @@ func topProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_Top
 
 }
 
-func watchProcesses(req *proto.WatchProcessesRequest, stream proto.ServerResources_WatchProcessesServer) error {
+func watchProcesses(req *proto.WatchProcessesRequest, stream proto.ResourcesService_WatchProcessesServer) error {
 	computeDuration := max(time.Duration(req.GetIntervalMs())*time.Millisecond,
 		time.Second) // clamp: don't let a client ask for 1ms
 
@@ -126,7 +129,7 @@ func watchProcesses(req *proto.WatchProcessesRequest, stream proto.ServerResourc
 	if len(columns) == 0 {
 		columns = make([]proto.WatchProcessesRequest_WatchProcessesColumns, 0)
 	}
-	workFunc := func(stream proto.ServerResources_WatchProcessesServer) error {
+	workFunc := func(stream proto.ResourcesService_WatchProcessesServer) error {
 		if running.Load() {
 			return nil
 		}
@@ -160,4 +163,61 @@ func watchProcesses(req *proto.WatchProcessesRequest, stream proto.ServerResourc
 		}
 	}
 
+}
+func triggerSignal(pid int32, signal syscall.Signal) error {
+	processId := int(pid)
+	if processId <= 1 {
+		return status.Error(codes.InvalidArgument, "invalid pid")
+	}
+	if err := syscall.Kill(processId, signal); err != nil {
+		switch err {
+		case syscall.ESRCH:
+			return status.Error(codes.NotFound, "no such process")
+		case syscall.EPERM:
+			return status.Error(codes.PermissionDenied, "not permitted to signal process")
+		}
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
+}
+
+func stopProcess(req *proto.StopProcessRequest) (*proto.StopProcessResponse, error) {
+
+	if err := triggerSignal(req.Pid, syscall.SIGKILL); err != nil {
+		return nil, err
+	}
+
+	return &proto.StopProcessResponse{Success: true}, nil
+}
+
+func forceStopProcess(req *proto.ForceStopProcessRequest) (*proto.ForceStopProcessResponse, error) {
+	if err := triggerSignal(req.Pid, syscall.SIGABRT); err != nil {
+		return nil, err
+	}
+
+	return &proto.ForceStopProcessResponse{Success: true}, nil
+}
+
+func sendSignal(req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, error) {
+	var signalMap = map[proto.SignalProcessRequest_SignalProcessRequestSignals]syscall.Signal{
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT: syscall.SIGHUP,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_INT:   syscall.SIGINT,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_KILL:  syscall.SIGKILL,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TERM:  syscall.SIGTERM,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_QUIT:  syscall.SIGQUIT,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_USR1:  syscall.SIGUSR1,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_USR2:  syscall.SIGUSR2,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_STOP:  syscall.SIGSTOP,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_CONT:  syscall.SIGCONT,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP:  syscall.SIGTSTP,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM:  syscall.SIGALRM,
+	}
+	sig, ok := signalMap[req.Signal]
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "unsupported signal")
+	}
+	if err := triggerSignal(req.Pid, sig); err != nil {
+		return nil, err
+	}
+	return &proto.SignalProcessResponse{Success: true}, nil
 }

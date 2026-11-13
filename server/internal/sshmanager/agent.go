@@ -25,14 +25,14 @@ func NewAgent(conn *grpc.ClientConn) *Agent {
 func (c *Agent) UpdateTimeout(seconds uint8) {
 	c.Timeout = time.Duration(seconds) * time.Second
 }
-func (c *Agent) ServerResourcesClient(ctx context.Context) (proto.ServerResourcesClient, context.Context, context.CancelFunc) {
+func (c *Agent) ResourcesClient(ctx context.Context) (proto.ResourcesServiceClient, context.Context, context.CancelFunc) {
 	slog.Debug("Creating server resources client")
 	ctx, cancel := context.WithCancel(ctx)
-	return proto.NewServerResourcesClient(c.Conn), ctx, cancel
+	return proto.NewResourcesServiceClient(c.Conn), ctx, cancel
 }
 
-func (c *Agent) FilesClient(ctx context.Context) (proto.FilesClient, context.Context, context.CancelFunc) {
+func (c *Agent) FilesClient(ctx context.Context) (proto.FilesServiceClient, context.Context, context.CancelFunc) {
 	slog.Debug("Creating files client")
 	ctx, cancel := context.WithCancel(ctx)
-	return proto.NewFilesClient(c.Conn), ctx, cancel
+	return proto.NewFilesServiceClient(c.Conn), ctx, cancel
 }

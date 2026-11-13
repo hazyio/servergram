@@ -17,7 +17,7 @@
 
 <nav
   aria-label="Section navigation"
-  class="mx-2 mt-2 flex w-fit items-center gap-1 rounded-lg border border-border/50 bg-muted/50 p-1"
+  class="flex items-center gap-1 overflow-x-none border-b border-border/60 px-2"
 >
   {#each items as item (item.href)}
     {@const active = isActive(item.href)}
@@ -25,10 +25,10 @@
       href={item.href}
       aria-current={active ? "page" : undefined}
       class={cn(
-        "rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-150",
-        "hover:bg-background/70 hover:text-foreground",
+        "-mb-px border-b-2 border-transparent px-3 py-2.5 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-150",
+        "hover:border-border hover:text-foreground",
         "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
-        active && "bg-background text-foreground shadow-sm",
+        active && "border-primary text-foreground",
       )}
     >
       {item.label}

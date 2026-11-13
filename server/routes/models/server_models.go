@@ -80,3 +80,18 @@ type WatchServerResourceResponse struct {
 type ServerInfoResponse struct {
 	Body *proto.GetServerInfoResponse
 }
+
+type StopProcessRequest struct {
+	ID   uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	Body struct {
+		PID uint `json:"pid" required:"true" minimum:"1" doc:"The process ID to stop"`
+	}
+}
+
+type SignalProcessRequest struct {
+	ID   uint `path:"id" minimum:"1" doc:"The ID of the server"`
+	Body struct {
+		PID    uint                                                   `json:"pid" required:"true" minimum:"1" doc:"The process ID to signal"`
+		SigNum proto.SignalProcessRequest_SignalProcessRequestSignals `json:"sig_num" required:"true" doc:"The signal to send to the process"`
+	}
+}

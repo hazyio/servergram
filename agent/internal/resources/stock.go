@@ -228,6 +228,10 @@ func readProcesses(processCache *ProcessCacheManager, columns []proto.WatchProce
 				item.MemoryUsage = mem.RSS
 			}
 		}
+		if slices.Contains(columns, proto.WatchProcessesRequest_WATCH_PROCESSES_COLUMNS_CPU) {
+			cpuUsage, _ := p.CPUPercentWithContext(ctx)
+			item.CpuUsage = cpuUsage
+		}
 		items = append(items, item)
 		runningPid = append(runningPid, p.Pid)
 

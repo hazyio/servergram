@@ -19,22 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Files_ListFiles_FullMethodName       = "/proto.Files/ListFiles"
-	Files_CreateDirectory_FullMethodName = "/proto.Files/CreateDirectory"
-	Files_RemoveDirectory_FullMethodName = "/proto.Files/RemoveDirectory"
-	Files_CreateFile_FullMethodName      = "/proto.Files/CreateFile"
-	Files_RemoveFile_FullMethodName      = "/proto.Files/RemoveFile"
-	Files_WatchDirectory_FullMethodName  = "/proto.Files/WatchDirectory"
-	Files_RenamePath_FullMethodName      = "/proto.Files/RenamePath"
-	Files_PathProperties_FullMethodName  = "/proto.Files/PathProperties"
-	Files_ReadFile_FullMethodName        = "/proto.Files/ReadFile"
-	Files_WriteFile_FullMethodName       = "/proto.Files/WriteFile"
+	FilesService_ListFiles_FullMethodName       = "/proto.FilesService/ListFiles"
+	FilesService_CreateDirectory_FullMethodName = "/proto.FilesService/CreateDirectory"
+	FilesService_RemoveDirectory_FullMethodName = "/proto.FilesService/RemoveDirectory"
+	FilesService_CreateFile_FullMethodName      = "/proto.FilesService/CreateFile"
+	FilesService_RemoveFile_FullMethodName      = "/proto.FilesService/RemoveFile"
+	FilesService_WatchDirectory_FullMethodName  = "/proto.FilesService/WatchDirectory"
+	FilesService_RenamePath_FullMethodName      = "/proto.FilesService/RenamePath"
+	FilesService_PathProperties_FullMethodName  = "/proto.FilesService/PathProperties"
+	FilesService_ReadFile_FullMethodName        = "/proto.FilesService/ReadFile"
+	FilesService_WriteFile_FullMethodName       = "/proto.FilesService/WriteFile"
 )
 
-// FilesClient is the client API for Files service.
+// FilesServiceClient is the client API for FilesService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type FilesClient interface {
+type FilesServiceClient interface {
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error)
 	CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 	RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
@@ -47,17 +47,17 @@ type FilesClient interface {
 	WriteFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse], error)
 }
 
-type filesClient struct {
+type filesServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewFilesClient(cc grpc.ClientConnInterface) FilesClient {
-	return &filesClient{cc}
+func NewFilesServiceClient(cc grpc.ClientConnInterface) FilesServiceClient {
+	return &filesServiceClient{cc}
 }
 
-func (c *filesClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error) {
+func (c *filesServiceClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListFilesChunkResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[0], Files_ListFiles_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &FilesService_ServiceDesc.Streams[0], FilesService_ListFiles_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,51 +72,51 @@ func (c *filesClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts 
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_ListFilesClient = grpc.ServerStreamingClient[ListFilesChunkResponse]
+type FilesService_ListFilesClient = grpc.ServerStreamingClient[ListFilesChunkResponse]
 
-func (c *filesClient) CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+func (c *filesServiceClient) CreateDirectory(ctx context.Context, in *CreateDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, Files_CreateDirectory_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_CreateDirectory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+func (c *filesServiceClient) RemoveDirectory(ctx context.Context, in *RemoveDirectoryRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, Files_RemoveDirectory_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_RemoveDirectory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) CreateFile(ctx context.Context, in *CreateFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+func (c *filesServiceClient) CreateFile(ctx context.Context, in *CreateFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, Files_CreateFile_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_CreateFile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+func (c *filesServiceClient) RemoveFile(ctx context.Context, in *RemoveFileRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, Files_RemoveFile_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_RemoveFile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error) {
+func (c *filesServiceClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchDirectoryResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[1], Files_WatchDirectory_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &FilesService_ServiceDesc.Streams[1], FilesService_WatchDirectory_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -131,31 +131,31 @@ func (c *filesClient) WatchDirectory(ctx context.Context, in *WatchDirectoryRequ
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_WatchDirectoryClient = grpc.ServerStreamingClient[WatchDirectoryResponse]
+type FilesService_WatchDirectoryClient = grpc.ServerStreamingClient[WatchDirectoryResponse]
 
-func (c *filesClient) RenamePath(ctx context.Context, in *RenamePathRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+func (c *filesServiceClient) RenamePath(ctx context.Context, in *RenamePathRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, Files_RenamePath_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_RenamePath_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) PathProperties(ctx context.Context, in *PathPropertiesRequest, opts ...grpc.CallOption) (*PathPropertiesResponse, error) {
+func (c *filesServiceClient) PathProperties(ctx context.Context, in *PathPropertiesRequest, opts ...grpc.CallOption) (*PathPropertiesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PathPropertiesResponse)
-	err := c.cc.Invoke(ctx, Files_PathProperties_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, FilesService_PathProperties_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *filesClient) ReadFile(ctx context.Context, in *ReadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ReadFileResponse], error) {
+func (c *filesServiceClient) ReadFile(ctx context.Context, in *ReadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ReadFileResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[2], Files_ReadFile_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &FilesService_ServiceDesc.Streams[2], FilesService_ReadFile_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,11 +170,11 @@ func (c *filesClient) ReadFile(ctx context.Context, in *ReadFileRequest, opts ..
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_ReadFileClient = grpc.ServerStreamingClient[ReadFileResponse]
+type FilesService_ReadFileClient = grpc.ServerStreamingClient[ReadFileResponse]
 
-func (c *filesClient) WriteFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse], error) {
+func (c *filesServiceClient) WriteFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &Files_ServiceDesc.Streams[3], Files_WriteFile_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &FilesService_ServiceDesc.Streams[3], FilesService_WriteFile_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -183,12 +183,12 @@ func (c *filesClient) WriteFile(ctx context.Context, opts ...grpc.CallOption) (g
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_WriteFileClient = grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse]
+type FilesService_WriteFileClient = grpc.ClientStreamingClient[WriteFileRequest, WriteFileResponse]
 
-// FilesServer is the server API for Files service.
-// All implementations must embed UnimplementedFilesServer
+// FilesServiceServer is the server API for FilesService service.
+// All implementations must embed UnimplementedFilesServiceServer
 // for forward compatibility.
-type FilesServer interface {
+type FilesServiceServer interface {
 	ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error
 	CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error)
 	RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error)
@@ -199,266 +199,266 @@ type FilesServer interface {
 	PathProperties(context.Context, *PathPropertiesRequest) (*PathPropertiesResponse, error)
 	ReadFile(*ReadFileRequest, grpc.ServerStreamingServer[ReadFileResponse]) error
 	WriteFile(grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]) error
-	mustEmbedUnimplementedFilesServer()
+	mustEmbedUnimplementedFilesServiceServer()
 }
 
-// UnimplementedFilesServer must be embedded to have
+// UnimplementedFilesServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedFilesServer struct{}
+type UnimplementedFilesServiceServer struct{}
 
-func (UnimplementedFilesServer) ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error {
+func (UnimplementedFilesServiceServer) ListFiles(*ListFilesRequest, grpc.ServerStreamingServer[ListFilesChunkResponse]) error {
 	return status.Error(codes.Unimplemented, "method ListFiles not implemented")
 }
-func (UnimplementedFilesServer) CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error) {
+func (UnimplementedFilesServiceServer) CreateDirectory(context.Context, *CreateDirectoryRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateDirectory not implemented")
 }
-func (UnimplementedFilesServer) RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error) {
+func (UnimplementedFilesServiceServer) RemoveDirectory(context.Context, *RemoveDirectoryRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveDirectory not implemented")
 }
-func (UnimplementedFilesServer) CreateFile(context.Context, *CreateFileRequest) (*SuccessResponse, error) {
+func (UnimplementedFilesServiceServer) CreateFile(context.Context, *CreateFileRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateFile not implemented")
 }
-func (UnimplementedFilesServer) RemoveFile(context.Context, *RemoveFileRequest) (*SuccessResponse, error) {
+func (UnimplementedFilesServiceServer) RemoveFile(context.Context, *RemoveFileRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveFile not implemented")
 }
-func (UnimplementedFilesServer) WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error {
+func (UnimplementedFilesServiceServer) WatchDirectory(*WatchDirectoryRequest, grpc.ServerStreamingServer[WatchDirectoryResponse]) error {
 	return status.Error(codes.Unimplemented, "method WatchDirectory not implemented")
 }
-func (UnimplementedFilesServer) RenamePath(context.Context, *RenamePathRequest) (*SuccessResponse, error) {
+func (UnimplementedFilesServiceServer) RenamePath(context.Context, *RenamePathRequest) (*SuccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RenamePath not implemented")
 }
-func (UnimplementedFilesServer) PathProperties(context.Context, *PathPropertiesRequest) (*PathPropertiesResponse, error) {
+func (UnimplementedFilesServiceServer) PathProperties(context.Context, *PathPropertiesRequest) (*PathPropertiesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PathProperties not implemented")
 }
-func (UnimplementedFilesServer) ReadFile(*ReadFileRequest, grpc.ServerStreamingServer[ReadFileResponse]) error {
+func (UnimplementedFilesServiceServer) ReadFile(*ReadFileRequest, grpc.ServerStreamingServer[ReadFileResponse]) error {
 	return status.Error(codes.Unimplemented, "method ReadFile not implemented")
 }
-func (UnimplementedFilesServer) WriteFile(grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]) error {
+func (UnimplementedFilesServiceServer) WriteFile(grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]) error {
 	return status.Error(codes.Unimplemented, "method WriteFile not implemented")
 }
-func (UnimplementedFilesServer) mustEmbedUnimplementedFilesServer() {}
-func (UnimplementedFilesServer) testEmbeddedByValue()               {}
+func (UnimplementedFilesServiceServer) mustEmbedUnimplementedFilesServiceServer() {}
+func (UnimplementedFilesServiceServer) testEmbeddedByValue()                      {}
 
-// UnsafeFilesServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to FilesServer will
+// UnsafeFilesServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FilesServiceServer will
 // result in compilation errors.
-type UnsafeFilesServer interface {
-	mustEmbedUnimplementedFilesServer()
+type UnsafeFilesServiceServer interface {
+	mustEmbedUnimplementedFilesServiceServer()
 }
 
-func RegisterFilesServer(s grpc.ServiceRegistrar, srv FilesServer) {
-	// If the following call panics, it indicates UnimplementedFilesServer was
+func RegisterFilesServiceServer(s grpc.ServiceRegistrar, srv FilesServiceServer) {
+	// If the following call panics, it indicates UnimplementedFilesServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Files_ServiceDesc, srv)
+	s.RegisterService(&FilesService_ServiceDesc, srv)
 }
 
-func _Files_ListFiles_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _FilesService_ListFiles_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListFilesRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(FilesServer).ListFiles(m, &grpc.GenericServerStream[ListFilesRequest, ListFilesChunkResponse]{ServerStream: stream})
+	return srv.(FilesServiceServer).ListFiles(m, &grpc.GenericServerStream[ListFilesRequest, ListFilesChunkResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_ListFilesServer = grpc.ServerStreamingServer[ListFilesChunkResponse]
+type FilesService_ListFilesServer = grpc.ServerStreamingServer[ListFilesChunkResponse]
 
-func _Files_CreateDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_CreateDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateDirectoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).CreateDirectory(ctx, in)
+		return srv.(FilesServiceServer).CreateDirectory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_CreateDirectory_FullMethodName,
+		FullMethod: FilesService_CreateDirectory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).CreateDirectory(ctx, req.(*CreateDirectoryRequest))
+		return srv.(FilesServiceServer).CreateDirectory(ctx, req.(*CreateDirectoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_RemoveDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_RemoveDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveDirectoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).RemoveDirectory(ctx, in)
+		return srv.(FilesServiceServer).RemoveDirectory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_RemoveDirectory_FullMethodName,
+		FullMethod: FilesService_RemoveDirectory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).RemoveDirectory(ctx, req.(*RemoveDirectoryRequest))
+		return srv.(FilesServiceServer).RemoveDirectory(ctx, req.(*RemoveDirectoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_CreateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_CreateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateFileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).CreateFile(ctx, in)
+		return srv.(FilesServiceServer).CreateFile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_CreateFile_FullMethodName,
+		FullMethod: FilesService_CreateFile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).CreateFile(ctx, req.(*CreateFileRequest))
+		return srv.(FilesServiceServer).CreateFile(ctx, req.(*CreateFileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_RemoveFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_RemoveFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveFileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).RemoveFile(ctx, in)
+		return srv.(FilesServiceServer).RemoveFile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_RemoveFile_FullMethodName,
+		FullMethod: FilesService_RemoveFile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).RemoveFile(ctx, req.(*RemoveFileRequest))
+		return srv.(FilesServiceServer).RemoveFile(ctx, req.(*RemoveFileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_WatchDirectory_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _FilesService_WatchDirectory_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(WatchDirectoryRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(FilesServer).WatchDirectory(m, &grpc.GenericServerStream[WatchDirectoryRequest, WatchDirectoryResponse]{ServerStream: stream})
+	return srv.(FilesServiceServer).WatchDirectory(m, &grpc.GenericServerStream[WatchDirectoryRequest, WatchDirectoryResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_WatchDirectoryServer = grpc.ServerStreamingServer[WatchDirectoryResponse]
+type FilesService_WatchDirectoryServer = grpc.ServerStreamingServer[WatchDirectoryResponse]
 
-func _Files_RenamePath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_RenamePath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RenamePathRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).RenamePath(ctx, in)
+		return srv.(FilesServiceServer).RenamePath(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_RenamePath_FullMethodName,
+		FullMethod: FilesService_RenamePath_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).RenamePath(ctx, req.(*RenamePathRequest))
+		return srv.(FilesServiceServer).RenamePath(ctx, req.(*RenamePathRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_PathProperties_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FilesService_PathProperties_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PathPropertiesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FilesServer).PathProperties(ctx, in)
+		return srv.(FilesServiceServer).PathProperties(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Files_PathProperties_FullMethodName,
+		FullMethod: FilesService_PathProperties_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FilesServer).PathProperties(ctx, req.(*PathPropertiesRequest))
+		return srv.(FilesServiceServer).PathProperties(ctx, req.(*PathPropertiesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Files_ReadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _FilesService_ReadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ReadFileRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(FilesServer).ReadFile(m, &grpc.GenericServerStream[ReadFileRequest, ReadFileResponse]{ServerStream: stream})
+	return srv.(FilesServiceServer).ReadFile(m, &grpc.GenericServerStream[ReadFileRequest, ReadFileResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_ReadFileServer = grpc.ServerStreamingServer[ReadFileResponse]
+type FilesService_ReadFileServer = grpc.ServerStreamingServer[ReadFileResponse]
 
-func _Files_WriteFile_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(FilesServer).WriteFile(&grpc.GenericServerStream[WriteFileRequest, WriteFileResponse]{ServerStream: stream})
+func _FilesService_WriteFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FilesServiceServer).WriteFile(&grpc.GenericServerStream[WriteFileRequest, WriteFileResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type Files_WriteFileServer = grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]
+type FilesService_WriteFileServer = grpc.ClientStreamingServer[WriteFileRequest, WriteFileResponse]
 
-// Files_ServiceDesc is the grpc.ServiceDesc for Files service.
+// FilesService_ServiceDesc is the grpc.ServiceDesc for FilesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Files_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Files",
-	HandlerType: (*FilesServer)(nil),
+var FilesService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.FilesService",
+	HandlerType: (*FilesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateDirectory",
-			Handler:    _Files_CreateDirectory_Handler,
+			Handler:    _FilesService_CreateDirectory_Handler,
 		},
 		{
 			MethodName: "RemoveDirectory",
-			Handler:    _Files_RemoveDirectory_Handler,
+			Handler:    _FilesService_RemoveDirectory_Handler,
 		},
 		{
 			MethodName: "CreateFile",
-			Handler:    _Files_CreateFile_Handler,
+			Handler:    _FilesService_CreateFile_Handler,
 		},
 		{
 			MethodName: "RemoveFile",
-			Handler:    _Files_RemoveFile_Handler,
+			Handler:    _FilesService_RemoveFile_Handler,
 		},
 		{
 			MethodName: "RenamePath",
-			Handler:    _Files_RenamePath_Handler,
+			Handler:    _FilesService_RenamePath_Handler,
 		},
 		{
 			MethodName: "PathProperties",
-			Handler:    _Files_PathProperties_Handler,
+			Handler:    _FilesService_PathProperties_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ListFiles",
-			Handler:       _Files_ListFiles_Handler,
+			Handler:       _FilesService_ListFiles_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "WatchDirectory",
-			Handler:       _Files_WatchDirectory_Handler,
+			Handler:       _FilesService_WatchDirectory_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "ReadFile",
-			Handler:       _Files_ReadFile_Handler,
+			Handler:       _FilesService_ReadFile_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "WriteFile",
-			Handler:       _Files_WriteFile_Handler,
+			Handler:       _FilesService_WriteFile_Handler,
 			ClientStreams: true,
 		},
 	},

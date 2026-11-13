@@ -1240,8 +1240,8 @@ const file_proto_files_proto_rawDesc = "" +
 	"\x12WatchDirectoryKind\x12\f\n" +
 	"\bMODIFIED\x10\x00\x12\v\n" +
 	"\aCREATED\x10\x01\x12\v\n" +
-	"\aDELETED\x10\x022\xc3\x05\n" +
-	"\x05Files\x12E\n" +
+	"\aDELETED\x10\x022\xca\x05\n" +
+	"\fFilesService\x12E\n" +
 	"\tListFiles\x12\x17.proto.ListFilesRequest\x1a\x1d.proto.ListFilesChunkResponse0\x01\x12H\n" +
 	"\x0fCreateDirectory\x12\x1d.proto.CreateDirectoryRequest\x1a\x16.proto.SuccessResponse\x12H\n" +
 	"\x0fRemoveDirectory\x12\x1d.proto.RemoveDirectoryRequest\x1a\x16.proto.SuccessResponse\x12>\n" +
@@ -1299,26 +1299,26 @@ var file_proto_files_proto_depIdxs = []int32{
 	2,  // 3: proto.WatchDirectoryResponse.entry:type_name -> proto.FileEntry
 	2,  // 4: proto.PathPropertiesResponse.entry:type_name -> proto.FileEntry
 	19, // 5: proto.WriteFileRequest.meta:type_name -> proto.WriteFileRequest.WriteFileMeta
-	4,  // 6: proto.Files.ListFiles:input_type -> proto.ListFilesRequest
-	5,  // 7: proto.Files.CreateDirectory:input_type -> proto.CreateDirectoryRequest
-	7,  // 8: proto.Files.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
-	10, // 9: proto.Files.CreateFile:input_type -> proto.CreateFileRequest
-	11, // 10: proto.Files.RemoveFile:input_type -> proto.RemoveFileRequest
-	8,  // 11: proto.Files.WatchDirectory:input_type -> proto.WatchDirectoryRequest
-	12, // 12: proto.Files.RenamePath:input_type -> proto.RenamePathRequest
-	13, // 13: proto.Files.PathProperties:input_type -> proto.PathPropertiesRequest
-	15, // 14: proto.Files.ReadFile:input_type -> proto.ReadFileRequest
-	17, // 15: proto.Files.WriteFile:input_type -> proto.WriteFileRequest
-	3,  // 16: proto.Files.ListFiles:output_type -> proto.ListFilesChunkResponse
-	6,  // 17: proto.Files.CreateDirectory:output_type -> proto.SuccessResponse
-	6,  // 18: proto.Files.RemoveDirectory:output_type -> proto.SuccessResponse
-	6,  // 19: proto.Files.CreateFile:output_type -> proto.SuccessResponse
-	6,  // 20: proto.Files.RemoveFile:output_type -> proto.SuccessResponse
-	9,  // 21: proto.Files.WatchDirectory:output_type -> proto.WatchDirectoryResponse
-	6,  // 22: proto.Files.RenamePath:output_type -> proto.SuccessResponse
-	14, // 23: proto.Files.PathProperties:output_type -> proto.PathPropertiesResponse
-	16, // 24: proto.Files.ReadFile:output_type -> proto.ReadFileResponse
-	18, // 25: proto.Files.WriteFile:output_type -> proto.WriteFileResponse
+	4,  // 6: proto.FilesService.ListFiles:input_type -> proto.ListFilesRequest
+	5,  // 7: proto.FilesService.CreateDirectory:input_type -> proto.CreateDirectoryRequest
+	7,  // 8: proto.FilesService.RemoveDirectory:input_type -> proto.RemoveDirectoryRequest
+	10, // 9: proto.FilesService.CreateFile:input_type -> proto.CreateFileRequest
+	11, // 10: proto.FilesService.RemoveFile:input_type -> proto.RemoveFileRequest
+	8,  // 11: proto.FilesService.WatchDirectory:input_type -> proto.WatchDirectoryRequest
+	12, // 12: proto.FilesService.RenamePath:input_type -> proto.RenamePathRequest
+	13, // 13: proto.FilesService.PathProperties:input_type -> proto.PathPropertiesRequest
+	15, // 14: proto.FilesService.ReadFile:input_type -> proto.ReadFileRequest
+	17, // 15: proto.FilesService.WriteFile:input_type -> proto.WriteFileRequest
+	3,  // 16: proto.FilesService.ListFiles:output_type -> proto.ListFilesChunkResponse
+	6,  // 17: proto.FilesService.CreateDirectory:output_type -> proto.SuccessResponse
+	6,  // 18: proto.FilesService.RemoveDirectory:output_type -> proto.SuccessResponse
+	6,  // 19: proto.FilesService.CreateFile:output_type -> proto.SuccessResponse
+	6,  // 20: proto.FilesService.RemoveFile:output_type -> proto.SuccessResponse
+	9,  // 21: proto.FilesService.WatchDirectory:output_type -> proto.WatchDirectoryResponse
+	6,  // 22: proto.FilesService.RenamePath:output_type -> proto.SuccessResponse
+	14, // 23: proto.FilesService.PathProperties:output_type -> proto.PathPropertiesResponse
+	16, // 24: proto.FilesService.ReadFile:output_type -> proto.ReadFileResponse
+	18, // 25: proto.FilesService.WriteFile:output_type -> proto.WriteFileResponse
 	16, // [16:26] is the sub-list for method output_type
 	6,  // [6:16] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name

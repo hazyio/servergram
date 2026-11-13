@@ -8,20 +8,31 @@ import (
 )
 
 type ResourcesServer struct {
-	proto.UnimplementedServerResourcesServer
+	proto.UnimplementedResourcesServiceServer
 }
 
-func (s *ResourcesServer) Get(req *proto.GetServerResourcesRequest, stream proto.ServerResources_GetServer) error {
+func (s *ResourcesServer) Get(req *proto.GetServerResourcesRequest, stream proto.ResourcesService_GetServer) error {
 	return getResourcesUsage(req, stream)
 
 }
 func (s *ResourcesServer) Info(ctx context.Context, _ *emptypb.Empty) (*proto.GetServerInfoResponse, error) {
 	return getInfo(ctx)
 }
-func (s *ResourcesServer) TopProcesses(req *proto.TopProcessRequest, stream proto.ServerResources_TopProcessesServer) error {
+func (s *ResourcesServer) TopProcesses(req *proto.TopProcessRequest, stream proto.ResourcesService_TopProcessesServer) error {
 	return topProcesses(req, stream)
 }
 
-func (s *ResourcesServer) WatchProcesses(req *proto.WatchProcessesRequest, stream proto.ServerResources_WatchProcessesServer) error {
-	return watchProcesses(req, stream) 
+func (s *ResourcesServer) WatchProcesses(req *proto.WatchProcessesRequest, stream proto.ResourcesService_WatchProcessesServer) error {
+	return watchProcesses(req, stream)
+}
+
+func (s *ResourcesServer) StopProcess(_ context.Context, req *proto.StopProcessRequest) (*proto.StopProcessResponse, error) {
+	return stopProcess(req)
+}
+func (s *ResourcesServer) ForceStopProcess(_ context.Context, req *proto.ForceStopProcessRequest) (*proto.ForceStopProcessResponse, error) {
+	return forceStopProcess(req)
+}
+
+func (s *ResourcesServer) SendSignal(_ context.Context, req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, error) {
+	return sendSignal(req)
 }

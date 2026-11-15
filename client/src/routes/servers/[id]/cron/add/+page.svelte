@@ -2,6 +2,9 @@
   import { goto } from "$app/navigation";
   import { unWrapErrorMessage } from "#lib/api/request.ts";
   import appPaths from "#lib/appPaths.ts";
+  import CronRetentionSelect from "#lib/components/base/cron/CronRetentionSelect.svelte";
+  import CronScheduleDialog from "#lib/components/base/cron/CronScheduleDialog.svelte";
+  import { isCronExpression } from "#lib/components/base/cron/cronSchedule.ts";
   import {
     Alert,
     AlertDescription,
@@ -13,13 +16,12 @@
   import * as Field from "#lib/components/ui/field/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
   import { Separator } from "#lib/components/ui/separator/index.js";
-  import { CircleAlert } from "@lucide/svelte";
+  import { CircleAlert, CalendarClock } from "@lucide/svelte";
   import Loader from "@lucide/svelte/icons/loader";
   import { toast } from "svelte-sonner";
   import * as z from "zod";
   import type { PageProps } from "./$types";
   import { createCronJob } from "../cronJobs.ts";
-  import CronRetentionSelect from "./CronRetentionSelect.svelte";
 
   let { params }: PageProps = $props();
   const serverId = $derived(Number(params.id));
@@ -28,7 +30,10 @@
   const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 365];
 
   let name = $state("");
+  let command = $state("");
   let schedule = $state("");
+  let scheduleDescription = $state("");
+  let scheduleDialogOpen = $state(false);
   let wrapWithAgent = $state(false);
   let metadataRuns = $state("20");
   let runLogs = $state("20");
@@ -36,6 +41,7 @@
   let submitting = $state(false);
   let formError = $state({
     name: "",
+    command: "",
     schedule: "",
   });
 
@@ -45,25 +51,28 @@
       .trim()
       .min(1, "Job name is required")
       .max(100, "Job name is too long"),
+    command: z.string().trim().min(1, "Command is required"),
     schedule: z
       .string()
       .trim()
-      .min(1, "Run schedule is required")
-      .refine((value) => {
-        const fields = value.split(/\s+/);
-        return fields.length === 5 || fields.length === 6;
-      }, "Use a cron expression with 5 or 6 fields"),
+      .min(1, "Choose a run schedule")
+      .refine(
+        (value) => isCronExpression(value),
+        "Use a cron expression with 5 or 6 fields",
+      ),
   });
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     formError.name = "";
+    formError.command = "";
     formError.schedule = "";
 
-    const result = formSchema.safeParse({ name, schedule });
+    const result = formSchema.safeParse({ name, command, schedule });
     if (!result.success) {
       for (const issue of result.error.issues) {
         if (issue.path[0] === "name") formError.name = issue.message;
+        if (issue.path[0] === "command") formError.command = issue.message;
         if (issue.path[0] === "schedule") {
           formError.schedule = issue.message;
         }
@@ -74,6 +83,7 @@
     submitting = true;
     const { data, error } = await createCronJob(serverId, {
       name: result.data.name,
+      command: result.data.command,
       schedule: result.data.schedule,
       wrap_with_agent: wrapWithAgent,
       retention: wrapWithAgent
@@ -143,25 +153,61 @@
 
         <Field.Field data-invalid={!!formError.schedule}>
           <Field.Label for="cron-schedule">Run schedule</Field.Label>
-          <Input
+          <Button
             id="cron-schedule"
-            type="text"
-            bind:value={schedule}
-            oninput={() => (formError.schedule = "")}
-            placeholder="*/5 * * * *"
+            variant="outline"
+            class="h-auto w-full justify-between gap-2 px-2.5 py-2 text-left font-normal"
+            onclick={() => {
+              formError.schedule = "";
+              scheduleDialogOpen = true;
+            }}
             disabled={submitting}
-            required
             aria-invalid={formError.schedule ? "true" : "false"}
-          />
-          <Field.Description>
-            Use standard cron syntax, for example <code>*/5 * * * *</code> to run
-            every five minutes.
-          </Field.Description>
+          >
+            {#if schedule}
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-mono text-xs">{schedule}</span>
+                <span class="block truncate text-xs text-muted-foreground">
+                  {scheduleDescription}
+                </span>
+              </span>
+            {:else}
+              <span class="flex-1 text-muted-foreground">Set a schedule</span>
+            {/if}
+            <CalendarClock class="shrink-0 text-muted-foreground" />
+          </Button>
           {#if formError.schedule}
             <Field.Error>{formError.schedule}</Field.Error>
+          {:else}
+            <Field.Description>
+              The cron expression is generated from the schedule you pick.
+            </Field.Description>
           {/if}
         </Field.Field>
       </div>
+
+      <Field.Field data-invalid={!!formError.command}>
+        <Field.Label for="cron-command">Command</Field.Label>
+        <Input
+          id="cron-command"
+          type="text"
+          bind:value={command}
+          oninput={() => (formError.command = "")}
+          placeholder="/usr/local/bin/backup-db.sh"
+          class="font-mono"
+          disabled={submitting}
+          required
+          aria-invalid={formError.command ? "true" : "false"}
+        />
+        {#if formError.command}
+          <Field.Error>{formError.command}</Field.Error>
+        {:else}
+          <Field.Description>
+            The command or script the job runs on the server, for example
+            <code>/usr/bin/rsync -a /var/www /backup/www</code>.
+          </Field.Description>
+        {/if}
+      </Field.Field>
 
       <Separator />
 
@@ -241,3 +287,13 @@
     </form>
   </Card>
 </div>
+
+<CronScheduleDialog
+  bind:open={scheduleDialogOpen}
+  expression={schedule}
+  onApply={({ expression, description }) => {
+    schedule = expression;
+    scheduleDescription = description;
+    formError.schedule = "";
+  }}
+/>

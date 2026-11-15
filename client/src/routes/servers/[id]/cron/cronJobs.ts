@@ -20,8 +20,16 @@ export type CronJob = {
 
 export type CreateCronJobInput = {
   name: string;
+  command: string;
   schedule: string;
   wrap_with_agent: boolean;
+  retention?: CronRetention;
+};
+
+export type UpdateCronJobInput = {
+  name: string;
+  command: string;
+  schedule: string;
   retention?: CronRetention;
 };
 
@@ -187,15 +195,17 @@ export async function createCronJob(
 ): Promise<CronApiResponse<CronJob>> {
   return simulateRequest(() => {
     const name = input.name.trim();
+    const command = input.command.trim();
     const schedule = input.schedule.trim();
 
     if (!name) throw new Error("Name is required");
+    if (!command) throw new Error("Command is required");
     if (!schedule) throw new Error("Run schedule is required");
 
     const job: CronJob = {
       id: nextJobId++,
       name,
-      command: "",
+      command,
       schedule,
       status: input.wrap_with_agent ? "scheduled" : "unmanaged",
       last_run: null,
@@ -207,6 +217,35 @@ export async function createCronJob(
     }
 
     jobsFor(serverId).push(job);
+    return job;
+  });
+}
+
+export async function updateCronJob(
+  serverId: number,
+  jobId: number,
+  input: UpdateCronJobInput,
+): Promise<CronApiResponse<CronJob>> {
+  return simulateRequest(() => {
+    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
+    if (!job) throw new Error("Cron job no longer exists");
+
+    const name = input.name.trim();
+    const command = input.command.trim();
+    const schedule = input.schedule.trim();
+
+    if (!name) throw new Error("Name is required");
+    if (!command) throw new Error("Command is required");
+    if (!schedule) throw new Error("Run schedule is required");
+
+    job.name = name;
+    job.command = command;
+    job.schedule = schedule;
+
+    if (input.retention && job.status !== "unmanaged") {
+      job.retention = input.retention;
+    }
+
     return job;
   });
 }
@@ -295,23 +334,6 @@ export async function wrapCronJobsWithAgent(
     }
 
     return { items: wrapped };
-  });
-}
-
-export async function renameCronJob(
-  serverId: number,
-  jobId: number,
-  name: string,
-): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
-
-    const trimmed = name.trim();
-    if (!trimmed) throw new Error("Name is required");
-
-    job.name = trimmed;
-    return job;
   });
 }
 

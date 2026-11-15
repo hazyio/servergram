@@ -23,7 +23,7 @@
     type CronAction,
     type CronJob,
   } from "../cronJobs.ts";
-  import CronRenameDialog from "./CronRenameDialog.svelte";
+  import CronEditDialog from "../CronEditDialog.svelte";
 
   let {
     serverId,
@@ -41,12 +41,11 @@
 
   let pending = $state<CronAction | "duplicate" | "delete" | null>(null);
   let confirmDelete = $state(false);
-  let renameOpen = $state(false);
+  let editOpen = $state(false);
 
   const primary = $derived(getPrimaryCronAction(job.status));
   const busy = $derived(pending !== null);
   const displayName = $derived(cronJobDisplayName(job));
-  const isUnnamed = $derived(!job.name.trim());
   const isUnmanaged = $derived(job.status === "unmanaged");
 
   const actionMessage: Record<CronAction, string> = {
@@ -174,11 +173,11 @@
             class="w-full cursor-pointer justify-start gap-2 py-5"
             disabled={busy}
             onclick={() => {
-              renameOpen = true;
+              editOpen = true;
             }}
           >
             <Pencil class="size-4" />
-            {isUnnamed ? "Name" : "Rename"}
+            Edit
           </Button>
         </Popover.Close>
         <Popover.Close>
@@ -243,9 +242,9 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
-<CronRenameDialog
-  bind:open={renameOpen}
+<CronEditDialog
+  bind:open={editOpen}
   {serverId}
   {job}
-  onRenamed={(renamed) => onUpdated?.(renamed)}
+  onUpdated={(updated) => onUpdated?.(updated)}
 />

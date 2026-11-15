@@ -1,0 +1,286 @@
+<script lang="ts">
+  import { unWrapErrorMessage } from "#lib/api/request.ts";
+  import CronRetentionSelect from "#lib/components/base/cron/CronRetentionSelect.svelte";
+  import CronScheduleDialog from "#lib/components/base/cron/CronScheduleDialog.svelte";
+  import {
+    describeCronExpression,
+    isCronExpression,
+  } from "#lib/components/base/cron/cronSchedule.ts";
+  import { Button } from "#lib/components/ui/button/index.ts";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import * as Field from "#lib/components/ui/field/index.ts";
+  import { Input } from "#lib/components/ui/input/index.ts";
+  import { Separator } from "#lib/components/ui/separator/index.js";
+  import { CalendarClock } from "@lucide/svelte";
+  import Loader from "@lucide/svelte/icons/loader";
+  import { toast } from "svelte-sonner";
+  import * as z from "zod";
+  import { updateCronJob, type CronJob } from "./cronJobs.ts";
+
+  let {
+    open = $bindable(false),
+    serverId,
+    job,
+    onUpdated,
+  }: {
+    open: boolean;
+    serverId: number;
+    job: CronJob;
+    onUpdated?: (job: CronJob) => void;
+  } = $props();
+
+  const runCountOptions = [5, 10, 20, 40, 80, 160, 240, 480, 960];
+  const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 365];
+
+  let name = $state("");
+  let command = $state("");
+  let schedule = $state("");
+  let scheduleDescription = $state("");
+  let metadataRuns = $state("20");
+  let runLogs = $state("20");
+  let errorLogDays = $state("14");
+  let scheduleDialogOpen = $state(false);
+  let submitting = $state(false);
+  let requestError = $state("");
+  let formError = $state({
+    name: "",
+    command: "",
+    schedule: "",
+  });
+
+  const isManaged = $derived(job.status !== "unmanaged");
+
+  const formSchema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "Job name is required")
+      .max(100, "Job name is too long"),
+    command: z.string().trim().min(1, "Command is required"),
+    schedule: z
+      .string()
+      .trim()
+      .min(1, "Choose a run schedule")
+      .refine(
+        (value) => isCronExpression(value),
+        "Use a cron expression with 5 or 6 fields",
+      ),
+  });
+
+  $effect(() => {
+    if (!open) return;
+
+    name = job.name;
+    command = job.command;
+    schedule = job.schedule;
+    scheduleDescription = job.schedule
+      ? describeCronExpression(job.schedule)
+      : "";
+    metadataRuns = String(job.retention?.metadata_runs ?? 20);
+    runLogs = String(job.retention?.run_logs ?? 20);
+    errorLogDays = String(job.retention?.error_log_days ?? 14);
+    formError.name = "";
+    formError.command = "";
+    formError.schedule = "";
+    requestError = "";
+  });
+
+  function close() {
+    if (submitting) return;
+    open = false;
+    requestError = "";
+  }
+
+  async function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    formError.name = "";
+    formError.command = "";
+    formError.schedule = "";
+    requestError = "";
+
+    const result = formSchema.safeParse({ name, command, schedule });
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        if (issue.path[0] === "name") formError.name = issue.message;
+        if (issue.path[0] === "command") formError.command = issue.message;
+        if (issue.path[0] === "schedule") formError.schedule = issue.message;
+      }
+      return;
+    }
+
+    submitting = true;
+    const { data, error } = await updateCronJob(serverId, job.id, {
+      name: result.data.name,
+      command: result.data.command,
+      schedule: result.data.schedule,
+      retention: isManaged
+        ? {
+            metadata_runs: Number(metadataRuns),
+            run_logs: Number(runLogs),
+            error_log_days: Number(errorLogDays),
+          }
+        : undefined,
+    });
+    submitting = false;
+
+    if (error || !data) {
+      requestError = error
+        ? unWrapErrorMessage(error, "Failed to update cron job")
+        : "Failed to update cron job";
+      return;
+    }
+
+    onUpdated?.(data);
+    toast.success(`"${data.name}" updated`);
+    open = false;
+  }
+</script>
+
+<Dialog.Root bind:open>
+  <Dialog.Content class="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+    <Dialog.Header>
+      <Dialog.Title>Edit cron job</Dialog.Title>
+      <Dialog.Description>
+        Update the name, command, or run schedule. If the job is wrapped with
+        the agent you can also change how much history it keeps.
+      </Dialog.Description>
+    </Dialog.Header>
+
+    <form
+      id="edit-cron-job-form"
+      onsubmit={handleSubmit}
+      class="flex flex-col gap-4"
+    >
+      <Field.Field data-invalid={!!formError.name}>
+        <Field.Label for="edit-cron-name">Name</Field.Label>
+        <Input
+          id="edit-cron-name"
+          type="text"
+          bind:value={name}
+          oninput={() => (formError.name = "")}
+          placeholder="e.g. Database backup"
+          disabled={submitting}
+          aria-invalid={formError.name ? "true" : "false"}
+        />
+        {#if formError.name}
+          <Field.Error>{formError.name}</Field.Error>
+        {/if}
+      </Field.Field>
+
+      <Field.Field data-invalid={!!formError.command}>
+        <Field.Label for="edit-cron-command">Command</Field.Label>
+        <Input
+          id="edit-cron-command"
+          type="text"
+          bind:value={command}
+          oninput={() => (formError.command = "")}
+          placeholder="/usr/local/bin/backup-db.sh"
+          class="font-mono"
+          disabled={submitting}
+          aria-invalid={formError.command ? "true" : "false"}
+        />
+        {#if formError.command}
+          <Field.Error>{formError.command}</Field.Error>
+        {/if}
+      </Field.Field>
+
+      <Field.Field data-invalid={!!formError.schedule}>
+        <Field.Label for="edit-cron-schedule">Run schedule</Field.Label>
+        <Button
+          id="edit-cron-schedule"
+          variant="outline"
+          class="h-auto w-full justify-between gap-2 px-2.5 py-2 text-left font-normal"
+          onclick={() => {
+            formError.schedule = "";
+            scheduleDialogOpen = true;
+          }}
+          disabled={submitting}
+          aria-invalid={formError.schedule ? "true" : "false"}
+        >
+          {#if schedule}
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-mono text-xs">{schedule}</span>
+              <span class="block truncate text-xs text-muted-foreground">
+                {scheduleDescription}
+              </span>
+            </span>
+          {:else}
+            <span class="flex-1 text-muted-foreground">Set a schedule</span>
+          {/if}
+          <CalendarClock class="shrink-0 text-muted-foreground" />
+        </Button>
+        {#if formError.schedule}
+          <Field.Error>{formError.schedule}</Field.Error>
+        {/if}
+      </Field.Field>
+
+      {#if isManaged}
+        <Separator />
+
+        <div>
+          <p class="text-sm font-medium">Retention</p>
+          <p class="text-xs text-muted-foreground">
+            How much run history the agent keeps for this job.
+          </p>
+        </div>
+
+        <div class="grid gap-x-4 gap-y-4 sm:grid-cols-2">
+          <CronRetentionSelect
+            id="edit-metadata-runs"
+            label="Runs metadata to keep"
+            bind:value={metadataRuns}
+            options={runCountOptions}
+            unit="run"
+          />
+          <CronRetentionSelect
+            id="edit-run-logs"
+            label="Run logs to keep"
+            bind:value={runLogs}
+            options={runCountOptions}
+            unit="run"
+          />
+          <CronRetentionSelect
+            id="edit-error-log-days"
+            label="Error logs to keep"
+            bind:value={errorLogDays}
+            options={errorLogDayOptions}
+            unit="day"
+          />
+        </div>
+      {/if}
+
+      {#if requestError}
+        <p class="text-sm text-destructive" role="alert">{requestError}</p>
+      {/if}
+
+      <Dialog.Footer>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={submitting}
+          onclick={close}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {#if submitting}
+            <Loader class="animate-spin" />
+            Saving...
+          {:else}
+            Save changes
+          {/if}
+        </Button>
+      </Dialog.Footer>
+    </form>
+  </Dialog.Content>
+</Dialog.Root>
+
+<CronScheduleDialog
+  bind:open={scheduleDialogOpen}
+  expression={schedule}
+  onApply={({ expression, description }) => {
+    schedule = expression;
+    scheduleDescription = description;
+    formError.schedule = "";
+  }}
+/>

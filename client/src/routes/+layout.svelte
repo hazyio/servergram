@@ -6,7 +6,10 @@
   import { page } from "$app/state";
   import type { LayoutProps } from "./$types";
   import "./layout.css";
-  import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
+  import {
+    severPageInfo,
+    cronJobPageInfo,
+  } from "#lib/states/severPageInfo.svelte.ts";
 
   let { children }: LayoutProps = $props();
   let connectedServerInfo = $derived(severPageInfo);
@@ -89,6 +92,26 @@
       url: appPaths.servers.cronAdd(connectedServerInfo.id),
     },
   ]);
+  const isCronJobPage = $derived(
+    page.route.id === "/servers/[id]/cron/[jobId]",
+  );
+  const severCronJobBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+    {
+      title: "Cron Jobs",
+      url: appPaths.servers.cron(connectedServerInfo.id),
+    },
+    {
+      title: cronJobPageInfo.name || "Job runs",
+      url: isCronJobPage
+        ? page.url.pathname
+        : appPaths.servers.cronJob(connectedServerInfo.id, cronJobPageInfo.id),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -113,6 +136,7 @@
       severFilesBreadcrumbs,
       severProcessesBreadcrumbs,
       severAddCronBreadcrumbs,
+      severCronJobBreadcrumbs,
       severCronBreadcrumbs,
     ]}
     sideBarItems={[

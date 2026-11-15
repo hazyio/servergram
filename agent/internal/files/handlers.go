@@ -37,6 +37,9 @@ func handleListFiles(req *proto.ListFilesRequest, stream proto.FilesService_List
 	}
 	batch := make([]*proto.FileEntry, 0, 500)
 	for _, e := range entries {
+		if stream.Context().Err() != nil {
+			return stream.Context().Err()
+		}
 		if stripDirFromPath(newPath, e.Name())[0] == '.' && !req.IncludeHidden {
 			continue
 		}

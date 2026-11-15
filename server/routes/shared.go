@@ -16,6 +16,7 @@ func RegisterRoutes(api *huma.Group, database *gorm.DB, sshManager *sshmanager.S
 	registerServerRoutes(api, database, sshManager, allowedOrigins, polls)
 	registerLogRoutes(api, database, allowedOrigins, polls)
 	registerNotificationRoutes(api, database, allowedOrigins, polls)
+	registerCronRoutes(api, database, sshManager, allowedOrigins, polls)
 }
 
 type EmptyRR struct {

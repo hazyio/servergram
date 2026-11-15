@@ -89,4 +89,3 @@ func UnWrapLogErr[T any](data T, e error) *T {
 	}
 	return &data
 }
-

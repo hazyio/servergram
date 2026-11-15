@@ -20,6 +20,7 @@ const appPaths = {
     docker: (id: number) => `/servers/${id}/docker`,
     cron: (id: number) => `/servers/${id}/cron`,
     cronAdd: (id: number) => `/servers/${id}/cron/add`,
+    cronJob: (id: number, jobId: number) => `/servers/${id}/cron/${jobId}`,
   },
   databases: {
     index: "/databases",

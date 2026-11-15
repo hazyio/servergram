@@ -46,7 +46,7 @@ func newUnEncryptedConnection(server *db.Server, onAgentExit func(error)) (*SSHC
 		User:            server.Username,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 		HostKeyCallback: dbHostKeyCallback(server, &hostErr),
-		Timeout:         10 * time.Second,
+		Timeout:         30 * time.Second,
 	}
 	slog.Info("attempting to connect to SSH server", "host", server.Host, "port", server.Port)
 	addr := net.JoinHostPort(server.Host, strconv.Itoa(int(server.Port)))
@@ -215,8 +215,8 @@ func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string,
 				return conn, nil
 			}),
 			grpc.WithKeepaliveParams(keepalive.ClientParameters{
-				Time:                15 * time.Second,
-				Timeout:             3 * time.Second,
+				Time:                30 * time.Second,
+				Timeout:             15 * time.Second,
 				PermitWithoutStream: true,
 			}),
 		)

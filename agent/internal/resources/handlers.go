@@ -20,9 +20,9 @@ func getInfo(ctx context.Context) (*proto.GetServerInfoResponse, error) {
 	cpuInfo, _ := cpu.InfoWithContext(ctx)
 	h, _ := host.InfoWithContext(ctx)
 	now := time.Now().UTC()
-
-	// h.PlatformVersion
-	// Implement the logic to gather server info here
+	if len(cpuInfo) == 0 {
+		return nil, status.Error(codes.Internal, "no CPU info available")
+	}
 	return &proto.GetServerInfoResponse{
 		CpuModel:      cpuInfo[0].ModelName,
 		Os:            h.OS,

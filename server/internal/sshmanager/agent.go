@@ -44,3 +44,9 @@ func (c *Agent) FilesClient(ctx context.Context) (proto.FilesServiceClient, cont
 	ctx, cancel := context.WithCancel(ctx)
 	return proto.NewFilesServiceClient(c.Conn), ctx, cancel
 }
+
+func (c *Agent) CronClient(ctx context.Context) (proto.CronServiceClient, context.Context, context.CancelFunc) {
+	slog.Debug("Creating cron client")
+	ctx, cancel := context.WithCancel(ctx)
+	return proto.NewCronServiceClient(c.Conn), ctx, cancel
+}

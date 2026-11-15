@@ -7,19 +7,22 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
+	"hazyio.com/servergram/agent/internal/cron"
 	"hazyio.com/servergram/agent/internal/files"
 	"hazyio.com/servergram/agent/internal/resources"
 	"hazyio.com/servergram/shared"
 	pb "hazyio.com/servergram/shared/gen/proto"
 )
 
-func Serve() {
+func Serve(database *gorm.DB) {
 	log.SetOutput(os.Stderr) // stdout belongs to the protocol
 	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
 	log.Println("starting agent connection")
 	srv := grpc.NewServer()
-	pb.RegisterFilesServiceServer(srv, &files.FilesServer{})
+	pb.RegisterFilesServiceServer(srv, files.NewFilesServer(database))
 	pb.RegisterResourcesServiceServer(srv, &resources.ResourcesServer{})
+	pb.RegisterCronServiceServer(srv, cron.NewCronServer(database))
 
 	lis := &oneConnListener{ch: make(chan net.Conn, 1), done: make(chan struct{})}
 	log.Println("agent ready")

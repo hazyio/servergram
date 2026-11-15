@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "hazyio.com/servergram/shared/proto;proto";
+
+message Cron {
+  string hash = 1;
+  string name = 2;
+  bool managed = 3;
+  string status = 4;
+  uint64 id = 5;
+  string last_run_at = 6;
+  string next_run_at = 7;
+  string schedule = 8;
+  string command = 9;
+}
+
+message ListCronJobsRequest {}
+
+message ListCronJobsResponse {
+  repeated Cron jobs = 1;
+  bool done = 2;
+}
+service CronService {
+  rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
+}

@@ -4,11 +4,19 @@ import (
 	"context"
 	"os"
 
+	"gorm.io/gorm"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
 type FilesServer struct {
+	database *gorm.DB
 	proto.UnimplementedFilesServiceServer
+}
+
+func NewFilesServer(database *gorm.DB) *FilesServer {
+	return &FilesServer{
+		database: database,
+	}
 }
 
 func (s *FilesServer) ListFiles(req *proto.ListFilesRequest, stream proto.FilesService_ListFilesServer) error {

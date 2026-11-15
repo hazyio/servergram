@@ -1,10 +1,11 @@
 package db
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -30,10 +31,12 @@ func InitDatabase() (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(1)
 	sqlDB.SetMaxIdleConns(1)
 	sqlDB.SetConnMaxLifetime(0) // never expire; an expired in-memory DB would vanish
-	// WAL mode and a busy timeout so concurrent readers and a writer don’t collide
+	// WAL mode and a busy timeout so concurrent readers and a writer don't collide
 	database.Exec("PRAGMA journal_mode = WAL")
 	database.Exec("PRAGMA busy_timeout = 5000")
 	database.Exec("PRAGMA foreign_keys = ON")
-
+	if err := database.AutoMigrate(&CronJob{}); err != nil {
+		log.Fatal(err)
+	}
 	return database, nil
 }

@@ -61,7 +61,11 @@ export const getColumns = (
           .toLowerCase()
           .includes(query);
       },
-      cell: (info) => renderComponent(CronJobName, { job: info.row.original }),
+      cell: (info) =>
+        renderComponent(CronJobName, {
+          job: info.row.original,
+          serverId,
+        }),
     }),
     columnHelper.accessor("schedule", {
       header: sortableHeader("Schedule"),

@@ -19,6 +19,7 @@ const appPaths = {
     processes: (id: number) => `/servers/${id}/processes`,
     docker: (id: number) => `/servers/${id}/docker`,
     cron: (id: number) => `/servers/${id}/cron`,
+    cronAdd: (id: number) => `/servers/${id}/cron/add`,
   },
   databases: {
     index: "/databases",

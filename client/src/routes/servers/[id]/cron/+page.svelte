@@ -147,7 +147,7 @@
       capitalize={true}
     />
     <CronSettingOption bind:columns />
-    <AddNewJob />
+    <AddNewJob {serverId} />
   </div>
 
   {#if !loading && !loadError && unmanagedJobs.length > 0}

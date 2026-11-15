@@ -15,7 +15,9 @@
   >
     {displayName}
   </span>
-  <span class="truncate font-mono text-xs text-muted-foreground"
-    >{job.command}</span
-  >
+  {#if job.command}
+    <span class="truncate font-mono text-xs text-muted-foreground"
+      >{job.command}</span
+    >
+  {/if}
 </div>

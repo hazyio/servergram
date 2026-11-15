@@ -63,6 +63,17 @@
       url: appPaths.servers.processes(connectedServerInfo.id),
     },
   ]);
+  const severCronBreadcrumbs = $derived([
+    ...serverBreadcrumbs,
+    {
+      title: connectedServerInfo.name,
+      url: appPaths.servers.overview(connectedServerInfo.id),
+    },
+    {
+      title: "Cron Jobs",
+      url: appPaths.servers.cron(connectedServerInfo.id),
+    },
+  ]);
 </script>
 
 <svelte:head>
@@ -86,6 +97,7 @@
       severPageBreadcrumbs,
       severFilesBreadcrumbs,
       severProcessesBreadcrumbs,
+      severCronBreadcrumbs,
     ]}
     sideBarItems={[
       {

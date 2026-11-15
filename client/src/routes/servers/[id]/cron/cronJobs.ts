@@ -1,6 +1,12 @@
 export type CronJobStatus =
   "running" | "scheduled" | "paused" | "failed" | "unmanaged";
 
+export type CronRetention = {
+  metadata_runs: number;
+  run_logs: number;
+  error_log_days: number;
+};
+
 export type CronJob = {
   id: number;
   name: string;
@@ -9,6 +15,14 @@ export type CronJob = {
   status: CronJobStatus;
   last_run: string | null;
   next_run: string | null;
+  retention?: CronRetention;
+};
+
+export type CreateCronJobInput = {
+  name: string;
+  schedule: string;
+  wrap_with_agent: boolean;
+  retention?: CronRetention;
 };
 
 export type CronAction = "run" | "resume" | "stop";
@@ -165,6 +179,36 @@ export function getPrimaryCronAction(status: CronJobStatus): {
     default:
       return { kind: "run", label: "Run" };
   }
+}
+
+export async function createCronJob(
+  serverId: number,
+  input: CreateCronJobInput,
+): Promise<CronApiResponse<CronJob>> {
+  return simulateRequest(() => {
+    const name = input.name.trim();
+    const schedule = input.schedule.trim();
+
+    if (!name) throw new Error("Name is required");
+    if (!schedule) throw new Error("Run schedule is required");
+
+    const job: CronJob = {
+      id: nextJobId++,
+      name,
+      command: "",
+      schedule,
+      status: input.wrap_with_agent ? "scheduled" : "unmanaged",
+      last_run: null,
+      next_run: input.wrap_with_agent ? iso(minutes(5)) : null,
+    };
+
+    if (input.wrap_with_agent && input.retention) {
+      job.retention = input.retention;
+    }
+
+    jobsFor(serverId).push(job);
+    return job;
+  });
 }
 
 export async function listCronJobs(

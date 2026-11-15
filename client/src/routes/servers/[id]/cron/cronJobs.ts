@@ -1,4 +1,5 @@
-export type CronJobStatus = "running" | "scheduled" | "paused" | "failed";
+export type CronJobStatus =
+  "running" | "scheduled" | "paused" | "failed" | "unmanaged";
 
 export type CronJob = {
   id: number;
@@ -91,7 +92,7 @@ function seedJobs(): CronJob[] {
       name: "",
       command: "/opt/scripts/nightly-sync.sh",
       schedule: "15 1 * * *",
-      status: "scheduled",
+      status: "unmanaged",
       last_run: iso(minutes(-600)),
       next_run: iso(minutes(45)),
     },
@@ -100,7 +101,7 @@ function seedJobs(): CronJob[] {
       name: "",
       command: "/usr/bin/rsync -a /var/www /backup/www",
       schedule: "0 */6 * * *",
-      status: "paused",
+      status: "unmanaged",
       last_run: null,
       next_run: null,
     },
@@ -184,6 +185,9 @@ export async function performCronAction(
   return simulateRequest(() => {
     const job = jobsFor(serverId).find((entry) => entry.id === jobId);
     if (!job) throw new Error("Cron job no longer exists");
+    if (job.status === "unmanaged") {
+      throw new Error("Wrap this cron job with the agent before managing it");
+    }
 
     switch (action) {
       case "run":
@@ -224,6 +228,29 @@ export async function duplicateCronJob(
     };
     jobs.push(copy);
     return copy;
+  });
+}
+
+export async function wrapCronJobsWithAgent(
+  serverId: number,
+  jobIds: number[],
+): Promise<CronApiResponse<{ items: CronJob[] }>> {
+  return simulateRequest(() => {
+    const jobs = jobsFor(serverId);
+    const wrapped = jobs.filter(
+      (job) => jobIds.includes(job.id) && job.status === "unmanaged",
+    );
+
+    if (wrapped.length === 0) {
+      throw new Error("No unmanaged cron jobs were found");
+    }
+
+    for (const job of wrapped) {
+      job.status = "scheduled";
+      job.next_run = iso(minutes(5));
+    }
+
+    return { items: wrapped };
   });
 }
 

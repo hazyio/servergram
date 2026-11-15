@@ -28,6 +28,11 @@
       variant: "destructive",
       class: "",
     },
+    unmanaged: {
+      label: "Unmanaged",
+      variant: "outline",
+      class: "text-amber-600 dark:text-amber-400",
+    },
   };
 
   const current = $derived(statuses[status]);

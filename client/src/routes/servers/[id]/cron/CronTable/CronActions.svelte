@@ -47,6 +47,7 @@
   const busy = $derived(pending !== null);
   const displayName = $derived(cronJobDisplayName(job));
   const isUnnamed = $derived(!job.name.trim());
+  const isUnmanaged = $derived(job.status === "unmanaged");
 
   const actionMessage: Record<CronAction, string> = {
     run: "started",
@@ -126,8 +127,10 @@
     variant="outline"
     size="sm"
     class="gap-1.5 w-20"
-    disabled={busy}
-    title={`${primary.label} ${displayName}`}
+    disabled={busy || isUnmanaged}
+    title={isUnmanaged
+      ? "Wrap this job with the agent to manage it"
+      : `${primary.label} ${displayName}`}
     onclick={() => applyAction(primary.kind)}
   >
     {#if pending === primary.kind}

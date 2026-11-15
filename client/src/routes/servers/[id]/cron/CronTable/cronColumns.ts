@@ -35,8 +35,16 @@ export const getColumns = (
       header: sortableHeader("Status"),
       filterFn: (row, _columnId, filterValue) => {
         if (!filterValue || filterValue === "all") return true;
-        const isActive = row.original.status !== "paused";
-        return filterValue === "active" ? isActive : !isActive;
+        if (filterValue === "unmanaged") {
+          return row.original.status === "unmanaged";
+        }
+        if (filterValue === "active") {
+          return (
+            row.original.status !== "paused" &&
+            row.original.status !== "unmanaged"
+          );
+        }
+        return row.original.status === "paused";
       },
       cell: (info) =>
         renderComponent(CronStatusBadge, { status: info.getValue() }),

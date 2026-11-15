@@ -5,8 +5,16 @@
   import { ConnectedServices } from "#lib/components/base/services/services.svelte.ts";
   import Sort from "#lib/components/base/sort.svelte";
   import TimeAgo from "#lib/components/base/TimeAgo.svelte";
+  import {
+    Alert,
+    AlertAction,
+    AlertDescription,
+    AlertTitle,
+  } from "#lib/components/ui/alert/index.js";
+  import { Button } from "#lib/components/ui/button/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
   import * as Card from "#lib/components/ui/card/index.js";
+  import { CircleAlert } from "@lucide/svelte";
   import { onMount } from "svelte";
   import type { PageProps } from "./$types";
   import AddNewJob from "./AddNewJob.svelte";
@@ -14,6 +22,7 @@
     type CronColumns,
   } from "./CronSettingOption.svelte";
   import CronTable from "./CronTable/CronTable.svelte";
+  import CronWrapUnmanagedDialog from "./CronWrapUnmanagedDialog.svelte";
   import { listCronJobs, type CronJob } from "./cronJobs.ts";
 
   let { params }: PageProps = $props();
@@ -21,12 +30,13 @@
     return ConnectedServices.findServer(Number(params.id));
   });
   let serverId = $derived(Number(params.id));
-  type SortStatueType = "all" | "active" | "inactive";
+  type SortStatueType = "all" | "active" | "inactive" | "unmanaged";
   let sortStatus = $state<SortStatueType>("all");
   let search = $state("");
   let jobs = $state<CronJob[]>([]);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
+  let wrapDialogOpen = $state(false);
   let columns = $state<Record<CronColumns, boolean>>({
     status: true,
     job: true,
@@ -37,10 +47,14 @@
 
   const totalJobs = $derived(jobs.length);
   const activeJobs = $derived(
-    jobs.filter((job) => job.status !== "paused").length,
+    jobs.filter((job) => job.status !== "paused" && job.status !== "unmanaged")
+      .length,
   );
   const failedJobs = $derived(
     jobs.filter((job) => job.status === "failed").length,
+  );
+  const unmanagedJobs = $derived(
+    jobs.filter((job) => job.status === "unmanaged"),
   );
   const nextJob = $derived.by(() => {
     const upcoming = jobs
@@ -128,13 +142,31 @@
     />
 
     <Sort
-      items={["all", "active", "inactive"]}
+      items={["all", "active", "inactive", "unmanaged"]}
       bind:value={sortStatus}
       capitalize={true}
     />
     <CronSettingOption bind:columns />
     <AddNewJob />
   </div>
+
+  {#if !loading && !loadError && unmanagedJobs.length > 0}
+    <Alert class="mt-3 border-amber-500/40 bg-amber-500/5">
+      <CircleAlert class="text-amber-600 dark:text-amber-400" />
+      <AlertTitle>Unmanaged cron jobs</AlertTitle>
+      <AlertDescription>
+        {unmanagedJobs.length} cron
+        {unmanagedJobs.length === 1 ? "job is" : "jobs are"} not managed by the agent.
+        Wrap {unmanagedJobs.length === 1 ? "it" : "them"} to get logging, status tracking,
+        and run history.
+      </AlertDescription>
+      <AlertAction>
+        <Button size="sm" onclick={() => (wrapDialogOpen = true)}>
+          Fix now
+        </Button>
+      </AlertAction>
+    </Alert>
+  {/if}
 
   {#if loading}
     <Loading loading class="mt-20 w-12 h-12" text="Loading cron jobs..." />
@@ -166,3 +198,13 @@
     </div>
   {/if}
 </div>
+
+<CronWrapUnmanagedDialog
+  bind:open={wrapDialogOpen}
+  {serverId}
+  jobs={unmanagedJobs}
+  onWrapped={(wrapped) => {
+    const updated = new Map(wrapped.map((job) => [job.id, job]));
+    jobs = jobs.map((job) => updated.get(job.id) ?? job);
+  }}
+/>

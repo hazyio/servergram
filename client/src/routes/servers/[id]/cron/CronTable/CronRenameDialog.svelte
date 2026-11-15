@@ -6,11 +6,7 @@
   import * as Field from "#lib/components/ui/field/index.ts";
   import Input from "#lib/components/ui/input/input.svelte";
   import { toast } from "svelte-sonner";
-  import {
-    cronJobDisplayName,
-    renameCronJob,
-    type CronJob,
-  } from "../cronJobs.ts";
+  import { renameCronJob, type CronJob } from "../cronJobs.ts";
 
   let {
     open = $bindable(false),
@@ -53,7 +49,10 @@
 
     if (error || !data) {
       formError = error
-        ? unWrapErrorMessage(error, `Failed to ${isNaming ? "name" : "rename"} job`)
+        ? unWrapErrorMessage(
+            error,
+            `Failed to ${isNaming ? "name" : "rename"} job`,
+          )
         : `Failed to ${isNaming ? "name" : "rename"} job`;
       return;
     }

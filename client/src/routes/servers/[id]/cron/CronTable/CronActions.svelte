@@ -8,12 +8,14 @@
     CopyPlus,
     EllipsisVertical,
     Loader,
+    Pencil,
     Play,
     Square,
     Trash2,
   } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
   import {
+    cronJobDisplayName,
     deleteCronJob,
     duplicateCronJob,
     getPrimaryCronAction,
@@ -21,6 +23,7 @@
     type CronAction,
     type CronJob,
   } from "../cronJobs.ts";
+  import CronRenameDialog from "./CronRenameDialog.svelte";
 
   let {
     serverId,
@@ -38,9 +41,12 @@
 
   let pending = $state<CronAction | "duplicate" | "delete" | null>(null);
   let confirmDelete = $state(false);
+  let renameOpen = $state(false);
 
   const primary = $derived(getPrimaryCronAction(job.status));
   const busy = $derived(pending !== null);
+  const displayName = $derived(cronJobDisplayName(job));
+  const isUnnamed = $derived(!job.name.trim());
 
   const actionMessage: Record<CronAction, string> = {
     run: "started",
@@ -58,14 +64,14 @@
     if (error || !data) {
       toast.error(
         error
-          ? unWrapErrorMessage(error, `Failed to ${action} ${job.name}`)
-          : `Failed to ${action} ${job.name}`,
+          ? unWrapErrorMessage(error, `Failed to ${action} ${displayName}`)
+          : `Failed to ${action} ${displayName}`,
       );
       return;
     }
 
     onUpdated?.(data);
-    toast.success(`${job.name} ${actionMessage[action]}`);
+    toast.success(`${displayName} ${actionMessage[action]}`);
   }
 
   async function duplicate() {
@@ -78,14 +84,14 @@
     if (error || !data) {
       toast.error(
         error
-          ? unWrapErrorMessage(error, `Failed to duplicate ${job.name}`)
-          : `Failed to duplicate ${job.name}`,
+          ? unWrapErrorMessage(error, `Failed to duplicate ${displayName}`)
+          : `Failed to duplicate ${displayName}`,
       );
       return;
     }
 
     onCreated?.(data);
-    toast.success(`${job.name} duplicated`);
+    toast.success(`${displayName} duplicated`);
   }
 
   async function remove() {
@@ -96,13 +102,13 @@
     pending = null;
 
     if (error) {
-      toast.error(unWrapErrorMessage(error, `Failed to delete ${job.name}`));
+      toast.error(unWrapErrorMessage(error, `Failed to delete ${displayName}`));
       return;
     }
 
     confirmDelete = false;
     onDeleted?.(job.id);
-    toast.success(`${job.name} deleted`);
+    toast.success(`${displayName} deleted`);
   }
 
   async function copyCommand() {
@@ -121,7 +127,7 @@
     size="sm"
     class="gap-1.5 w-20"
     disabled={busy}
-    title={`${primary.label} ${job.name}`}
+    title={`${primary.label} ${displayName}`}
     onclick={() => applyAction(primary.kind)}
   >
     {#if pending === primary.kind}
@@ -164,6 +170,19 @@
             variant="ghost"
             class="w-full cursor-pointer justify-start gap-2 py-5"
             disabled={busy}
+            onclick={() => {
+              renameOpen = true;
+            }}
+          >
+            <Pencil class="size-4" />
+            {isUnnamed ? "Name" : "Rename"}
+          </Button>
+        </Popover.Close>
+        <Popover.Close>
+          <Button
+            variant="ghost"
+            class="w-full cursor-pointer justify-start gap-2 py-5"
+            disabled={busy}
             onclick={duplicate}
           >
             {#if pending === "duplicate"}
@@ -197,8 +216,8 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Delete cron job?</AlertDialog.Title>
       <AlertDialog.Description>
-        This will permanently delete "{job.name}" and run its schedule no more.
-        This action cannot be undone.
+        This will permanently delete "{displayName}" and run its schedule no
+        more. This action cannot be undone.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
@@ -220,3 +239,10 @@
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>
+
+<CronRenameDialog
+  bind:open={renameOpen}
+  {serverId}
+  {job}
+  onRenamed={(renamed) => onUpdated?.(renamed)}
+/>

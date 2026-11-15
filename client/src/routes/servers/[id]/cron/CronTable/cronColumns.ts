@@ -1,7 +1,7 @@
 import type { DataTableFeatures } from "#lib/components/base/data-table-features.js";
 import SortableTableHeader from "#lib/components/base/SortableTableHeader.svelte";
 import { createColumnHelper, renderComponent } from "@tanstack/svelte-table";
-import type { CronJob } from "../cronJobs.ts";
+import { cronJobDisplayName, type CronJob } from "../cronJobs.ts";
 import CronActions from "./CronActions.svelte";
 import CronJobName from "./CronJobName.svelte";
 import CronRelativeTime from "./CronRelativeTime.svelte";
@@ -49,7 +49,7 @@ export const getColumns = (
           .trim()
           .toLowerCase();
         if (!query) return true;
-        return `${row.original.name} ${row.original.command} ${row.original.schedule}`
+        return `${cronJobDisplayName(row.original)} ${row.original.command} ${row.original.schedule}`
           .toLowerCase()
           .includes(query);
       },

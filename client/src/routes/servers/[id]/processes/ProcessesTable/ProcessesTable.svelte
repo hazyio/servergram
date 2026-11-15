@@ -265,7 +265,7 @@
             <Table.Row>
               {#each row.getVisibleCells() as cell, index (cell.id)}
                 <Table.Cell
-                  class={`px-4 py-2 ${index === 0 ? "ps-8" : ""}`}
+                  class={`p-0 px-4 ${index === 0 ? "ps-8" : ""}`}
                 >
                   <FlexRender {cell} />
                 </Table.Cell>
@@ -284,7 +284,7 @@
       {#each table.getRowModel().rows as row (row.id)}
         <Table.Row>
           {#each row.getVisibleCells() as cell (cell.id)}
-            <Table.Cell class="px-4 py-2">
+            <Table.Cell class="p-0 px-4">
               <FlexRender {cell} />
             </Table.Cell>
           {/each}

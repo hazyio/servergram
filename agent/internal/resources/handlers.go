@@ -183,7 +183,7 @@ func triggerSignal(pid int32, signal syscall.Signal) error {
 
 func stopProcess(req *proto.StopProcessRequest) (*proto.StopProcessResponse, error) {
 
-	if err := triggerSignal(req.Pid, syscall.SIGKILL); err != nil {
+	if err := triggerSignal(req.Pid, syscall.SIGTERM); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +191,7 @@ func stopProcess(req *proto.StopProcessRequest) (*proto.StopProcessResponse, err
 }
 
 func forceStopProcess(req *proto.ForceStopProcessRequest) (*proto.ForceStopProcessResponse, error) {
-	if err := triggerSignal(req.Pid, syscall.SIGABRT); err != nil {
+	if err := triggerSignal(req.Pid, syscall.SIGKILL); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +200,7 @@ func forceStopProcess(req *proto.ForceStopProcessRequest) (*proto.ForceStopProce
 
 func sendSignal(req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, error) {
 	var signalMap = map[proto.SignalProcessRequest_SignalProcessRequestSignals]syscall.Signal{
-		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT: syscall.SIGHUP,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_HUP:   syscall.SIGHUP,
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_INT:   syscall.SIGINT,
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_KILL:  syscall.SIGKILL,
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TERM:  syscall.SIGTERM,
@@ -211,6 +211,7 @@ func sendSignal(req *proto.SignalProcessRequest) (*proto.SignalProcessResponse, 
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_CONT:  syscall.SIGCONT,
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_TSTP:  syscall.SIGTSTP,
 		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ALRM:  syscall.SIGALRM,
+		proto.SignalProcessRequest_SIGNAL_PROCESS_REQUEST_SIGNALS_ABORT: syscall.SIGABRT,
 	}
 	sig, ok := signalMap[req.Signal]
 	if !ok {

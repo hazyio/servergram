@@ -30,7 +30,7 @@
 
 <ContextMenu.Root>
   <ContextMenu.Trigger>
-    <div class="flex max-w-50 items-center gap-3" title={name}>
+    <div class="flex max-w-50 items-center gap-3 py-2" title={name}>
       <span class="truncate">{name}</span>
     </div>
   </ContextMenu.Trigger>

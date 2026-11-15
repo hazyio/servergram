@@ -2,6 +2,12 @@ import { NewRequestClient } from "#lib/api/request.ts";
 
 export type ProcessActionKind = "stop" | "force-stop" | "signal";
 
+/**
+ * `sigNum` is the numeric value of the
+ * `SignalProcessRequest.SignalProcessRequestSignals` protobuf enum used by the
+ * API. It is not the Unix signal number (for example, SIGTERM is 4 here and 15
+ * on Linux).
+ */
 export type ProcessAction = {
   label: string;
   signal: string;
@@ -13,38 +19,38 @@ export type ProcessAction = {
 export const stopProcessAction: ProcessAction = {
   label: "Stop",
   signal: "SIGTERM",
-  sigNum: 15,
+  sigNum: 4,
   kind: "stop",
 };
 
 export const forceStopProcessAction: ProcessAction = {
   label: "Force stop",
   signal: "SIGKILL",
-  sigNum: 9,
+  sigNum: 3,
   kind: "force-stop",
   variant: "destructive",
 };
 
 export const processSignalActions: ProcessAction[] = [
-  { label: "Terminate", signal: "SIGTERM", sigNum: 15, kind: "signal" },
+  { label: "Terminate", signal: "SIGTERM", sigNum: 4, kind: "signal" },
   {
     label: "Kill",
     signal: "SIGKILL",
-    sigNum: 9,
+    sigNum: 3,
     kind: "signal",
     variant: "destructive",
   },
   { label: "Interrupt", signal: "SIGINT", sigNum: 2, kind: "signal" },
   { label: "Hang up", signal: "SIGHUP", sigNum: 1, kind: "signal" },
-  { label: "Quit", signal: "SIGQUIT", sigNum: 3, kind: "signal" },
-  { label: "Pause", signal: "SIGSTOP", sigNum: 19, kind: "signal" },
-  { label: "Continue", signal: "SIGCONT", sigNum: 18, kind: "signal" },
-  { label: "User 1", signal: "SIGUSR1", sigNum: 10, kind: "signal" },
-  { label: "User 2", signal: "SIGUSR2", sigNum: 12, kind: "signal" },
+  { label: "Quit", signal: "SIGQUIT", sigNum: 5, kind: "signal" },
+  { label: "Pause", signal: "SIGSTOP", sigNum: 8, kind: "signal" },
+  { label: "Continue", signal: "SIGCONT", sigNum: 9, kind: "signal" },
+  { label: "User 1", signal: "SIGUSR1", sigNum: 6, kind: "signal" },
+  { label: "User 2", signal: "SIGUSR2", sigNum: 7, kind: "signal" },
   {
     label: "Abort",
     signal: "SIGABRT",
-    sigNum: 6,
+    sigNum: 12,
     kind: "signal",
     variant: "destructive",
   },

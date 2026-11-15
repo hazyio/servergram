@@ -130,115 +130,119 @@
   />
 </svelte:head>
 
-<div class="container mx-auto p-3">
-  <Card class="mx-auto w-full mt-2 max-w-xl p-4">
+<div class="mx-auto w-full max-w-5xl p-3 sm:p-5">
+  <Card class="mt-2 w-full p-4 sm:p-6">
     <form
       id="create-server-form"
       onsubmit={handleSubmit}
-      class="flex flex-col gap-4"
+      class="flex flex-col gap-5"
     >
-      <Field.Field data-invalid={!!formError.serverName}>
-        <Field.Label for="server-name">Server Name</Field.Label>
-        <Input
-          id="server-name"
-          type="text"
-          bind:value={serverName}
-          oninput={() => (formError.serverName = "")}
-          required
-          aria-invalid={formError.serverName ? "true" : "false"}
-        />
+      <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+        <Field.Field data-invalid={!!formError.serverName}>
+          <Field.Label for="server-name">Server Name</Field.Label>
+          <Input
+            id="server-name"
+            type="text"
+            bind:value={serverName}
+            oninput={() => (formError.serverName = "")}
+            required
+            aria-invalid={formError.serverName ? "true" : "false"}
+          />
 
-        {#if formError.serverName}
-          <Field.Error>{formError.serverName}</Field.Error>
-        {/if}
-      </Field.Field>
-      <Field.Field data-invalid={!!formError.host}>
-        <Field.Label for="server-host">Host</Field.Label>
-        <Input
-          id="server-host"
-          type="text"
-          bind:value={host}
-          oninput={() => (formError.host = "")}
-          placeholder="example.com or IP address"
-          required
-          aria-invalid={formError.host ? "true" : "false"}
-        />
-        {#if formError.host}
-          <Field.Error>{formError.host}</Field.Error>
-        {/if}
-      </Field.Field>
-      <Field.Field data-invalid={!!formError.username}>
-        <Field.Label for="ssh-username">SSH Username</Field.Label>
-        <Input
-          disabled={submitting}
-          id="ssh-username"
-          type="text"
-          bind:value={username}
-          oninput={() => (formError.username = "")}
-          autocomplete="username"
-          required
-          aria-invalid={formError.username ? "true" : "false"}
-        />
-        {#if formError.username}
-          <Field.Error>{formError.username}</Field.Error>
-        {/if}
-      </Field.Field>
-      <Field.Field data-invalid={!!formError.port}>
-        <Field.Label for="ssh-port">SSH Port</Field.Label>
-        <Input
-          disabled={submitting}
-          id="ssh-port"
-          type="number"
-          bind:value={port}
-          oninput={() => (formError.port = "")}
-          min="1"
-          max="65535"
-          step="1"
-          required
-          aria-invalid={formError.port ? "true" : "false"}
-        />
-        {#if formError.port}
-          <Field.Error>{formError.port}</Field.Error>
-        {/if}
-      </Field.Field>
-      <Field.Field data-invalid={!!formError.group}>
-        <Field.Label for="group">Group</Field.Label>
-        <SelectGroup
-          value={group}
-          onSelect={(val) => {
-            group = val;
-            formError.group = "";
-          }}
-        />
-        <input type="hidden" name="group" value={group} />
+          {#if formError.serverName}
+            <Field.Error>{formError.serverName}</Field.Error>
+          {/if}
+        </Field.Field>
+        <Field.Field data-invalid={!!formError.host}>
+          <Field.Label for="server-host">Host</Field.Label>
+          <Input
+            id="server-host"
+            type="text"
+            bind:value={host}
+            oninput={() => (formError.host = "")}
+            placeholder="example.com or IP address"
+            required
+            aria-invalid={formError.host ? "true" : "false"}
+          />
+          {#if formError.host}
+            <Field.Error>{formError.host}</Field.Error>
+          {/if}
+        </Field.Field>
+        <Field.Field data-invalid={!!formError.username}>
+          <Field.Label for="ssh-username">SSH Username</Field.Label>
+          <Input
+            disabled={submitting}
+            id="ssh-username"
+            type="text"
+            bind:value={username}
+            oninput={() => (formError.username = "")}
+            autocomplete="username"
+            required
+            aria-invalid={formError.username ? "true" : "false"}
+          />
+          {#if formError.username}
+            <Field.Error>{formError.username}</Field.Error>
+          {/if}
+        </Field.Field>
+        <Field.Field data-invalid={!!formError.port}>
+          <Field.Label for="ssh-port">SSH Port</Field.Label>
+          <Input
+            disabled={submitting}
+            id="ssh-port"
+            type="number"
+            bind:value={port}
+            oninput={() => (formError.port = "")}
+            min="1"
+            max="65535"
+            step="1"
+            required
+            aria-invalid={formError.port ? "true" : "false"}
+          />
+          {#if formError.port}
+            <Field.Error>{formError.port}</Field.Error>
+          {/if}
+        </Field.Field>
+        <Field.Field data-invalid={!!formError.group}>
+          <Field.Label for="group">Group</Field.Label>
+          <SelectGroup
+            value={group}
+            onSelect={(val) => {
+              group = val;
+              formError.group = "";
+            }}
+          />
+          <input type="hidden" name="group" value={group} />
 
-        {#if formError.group}
-          <Field.Error>{formError.group}</Field.Error>
-        {/if}
-      </Field.Field>
-      <Field.Field data-invalid={!!formError.sshKey}>
-        <Field.Label for="ssh-key">SSH Key</Field.Label>
-        <SelectSSHKey
-          value={sshKey}
-          onSelect={(val) => {
-            sshKey = val;
-            formError.sshKey = "";
-          }}
-        />
-        <input type="hidden" name="sshKey" value={sshKey} />
+          {#if formError.group}
+            <Field.Error>{formError.group}</Field.Error>
+          {/if}
+        </Field.Field>
+        <Field.Field data-invalid={!!formError.sshKey}>
+          <Field.Label for="ssh-key">SSH Key</Field.Label>
+          <SelectSSHKey
+            value={sshKey}
+            onSelect={(val) => {
+              sshKey = val;
+              formError.sshKey = "";
+            }}
+          />
+          <input type="hidden" name="sshKey" value={sshKey} />
 
-        {#if formError.sshKey}
-          <Field.Error>{formError.sshKey}</Field.Error>
-        {/if}
-      </Field.Field>
+          {#if formError.sshKey}
+            <Field.Error>{formError.sshKey}</Field.Error>
+          {/if}
+        </Field.Field>
+      </div>
 
-      <Button type="submit" form="create-server-form" disabled={submitting}>
-        {#if submitting}
-          <Loader class="animate-spin" />
-        {:else}
-          Save
-        {/if}
-      </Button>
+      <div class="flex justify-end pt-2">
+        <Button type="submit" form="create-server-form" disabled={submitting}>
+          {#if submitting}
+            <Loader class="animate-spin" />
+          {:else}
+            Save
+          {/if}
+        </Button>
+      </div>
     </form>
   </Card>
 </div>

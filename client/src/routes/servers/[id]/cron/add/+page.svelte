@@ -108,8 +108,8 @@
   />
 </svelte:head>
 
-<div class="container mx-auto p-3">
-  <Card class="mx-auto w-full mt-2 max-w-2xl p-4">
+<div class="mx-auto w-full max-w-5xl p-3 sm:p-5">
+  <Card class="mt-2 w-full p-4 sm:p-6">
     <div class="mb-5">
       <h1 class="text-lg font-semibold">Add Cron Job</h1>
       <p class="mt-1 text-sm text-muted-foreground">
@@ -121,45 +121,47 @@
     <form
       id="create-cron-job-form"
       onsubmit={handleSubmit}
-      class="flex flex-col gap-4"
+      class="flex flex-col gap-5"
     >
-      <Field.Field data-invalid={!!formError.name}>
-        <Field.Label for="cron-job-name">Name</Field.Label>
-        <Input
-          id="cron-job-name"
-          type="text"
-          bind:value={name}
-          oninput={() => (formError.name = "")}
-          placeholder="e.g. Database backup"
-          disabled={submitting}
-          required
-          aria-invalid={formError.name ? "true" : "false"}
-        />
-        {#if formError.name}
-          <Field.Error>{formError.name}</Field.Error>
-        {/if}
-      </Field.Field>
+      <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+        <Field.Field data-invalid={!!formError.name}>
+          <Field.Label for="cron-job-name">Name</Field.Label>
+          <Input
+            id="cron-job-name"
+            type="text"
+            bind:value={name}
+            oninput={() => (formError.name = "")}
+            placeholder="e.g. Database backup"
+            disabled={submitting}
+            required
+            aria-invalid={formError.name ? "true" : "false"}
+          />
+          {#if formError.name}
+            <Field.Error>{formError.name}</Field.Error>
+          {/if}
+        </Field.Field>
 
-      <Field.Field data-invalid={!!formError.schedule}>
-        <Field.Label for="cron-schedule">Run schedule</Field.Label>
-        <Input
-          id="cron-schedule"
-          type="text"
-          bind:value={schedule}
-          oninput={() => (formError.schedule = "")}
-          placeholder="*/5 * * * *"
-          disabled={submitting}
-          required
-          aria-invalid={formError.schedule ? "true" : "false"}
-        />
-        <Field.Description>
-          Use standard cron syntax, for example <code>*/5 * * * *</code> to run every
-          five minutes.
-        </Field.Description>
-        {#if formError.schedule}
-          <Field.Error>{formError.schedule}</Field.Error>
-        {/if}
-      </Field.Field>
+        <Field.Field data-invalid={!!formError.schedule}>
+          <Field.Label for="cron-schedule">Run schedule</Field.Label>
+          <Input
+            id="cron-schedule"
+            type="text"
+            bind:value={schedule}
+            oninput={() => (formError.schedule = "")}
+            placeholder="*/5 * * * *"
+            disabled={submitting}
+            required
+            aria-invalid={formError.schedule ? "true" : "false"}
+          />
+          <Field.Description>
+            Use standard cron syntax, for example <code>*/5 * * * *</code> to run
+            every five minutes.
+          </Field.Description>
+          {#if formError.schedule}
+            <Field.Error>{formError.schedule}</Field.Error>
+          {/if}
+        </Field.Field>
+      </div>
 
       <Separator />
 
@@ -191,7 +193,7 @@
           </AlertDescription>
         </Alert>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <CronRetentionSelect
             id="metadata-runs"
             label="Runs metadata to keep"

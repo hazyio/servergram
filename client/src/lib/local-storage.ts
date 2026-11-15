@@ -2,12 +2,14 @@ type LocalStorageKeys =
   | "theme"
   | "file-explorer-settings"
   | "file-viewer-theme"
-  | "process-explorer-settings";
+  | "process-explorer-settings"
+  | "cron-explorer-settings";
 const LocalStorageKeys = {
   theme: "theme",
   "file-explorer-settings": "file-explorer-settings",
   "process-explorer-settings": "process-explorer-settings",
   "file-viewer-theme": "file-viewer-theme",
+  "cron-explorer-settings": "cron-explorer-settings",
 };
 export function useLocalStorage() {
   return {

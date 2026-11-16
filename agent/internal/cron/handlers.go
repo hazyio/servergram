@@ -147,3 +147,34 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 	return &proto.CreateCronJobResponse{}, nil
 
 }
+
+func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB, req *proto.FixUnmanagedCronJobsRequest) (*proto.FixUnmanagedCronJobsResponse, error) {
+	count := uint32(0)
+	file := make([]byte, 0)
+	err := readCronJobEach(ctx, database, func(job *db.CronJob, schedule, command string) error {
+		if job.Managed {
+			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(command), job.ID)
+		} else {
+			count++
+			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(command), job.ID)
+
+		}
+		line, err := BuildLine(schedule, command)
+		if err != nil {
+			return err
+		}
+		file = appendLine(file, line)
+
+		return nil
+	})
+	if err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, "failed to list cron jobs: %v", err)
+	}
+	if count > 0 {
+		if err := installCrontab(ctx, file); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to install crontab: %v", err)
+		}
+	}
+	return &proto.FixUnmanagedCronJobsResponse{Fixed: count}, nil
+}

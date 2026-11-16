@@ -23,6 +23,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.SSE("/{id}/list", http.StatusOK, listCronJobs)
 	server.Post("/{id}/create", http.StatusOK, createCronJob)
 	server.Post("/{id}/remove-duplicates", http.StatusOK, removeDuplicateCronJobs)
+	server.Post("/{id}/fix-unmanaged", http.StatusOK, fixUnmanagedCronJobs)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -115,5 +116,24 @@ func removeDuplicateCronJobs(data internal.RouteData[PathIdRequest]) (*models.Re
 	response := &models.RemoveDuplicateCronJobsResponse{}
 	response.Body.Removed = result.Removed
 	db.AddLog(db.LogActionDelete, fmt.Sprintf("Removed %d duplicate cron jobs in server \"%d\"", result.Removed, data.Input.ID), data.Database)
+	return response, nil
+}
+
+func fixUnmanagedCronJobs(data internal.RouteData[PathIdRequest]) (*models.FixUnmanagedCronJobsResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
+	result, err := resource.FixUnmanagedCronJobs(ctx, &proto.FixUnmanagedCronJobsRequest{})
+	if err != nil {
+		slog.Error("Failed to fix unmanaged cron jobs", "error", err)
+		return nil, err
+	}
+
+	response := &models.FixUnmanagedCronJobsResponse{}
+	response.Body.Fixed = result.Fixed
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Fixed %d unmanaged cron jobs in server \"%d\"", result.Fixed, data.Input.ID), data.Database)
 	return response, nil
 }

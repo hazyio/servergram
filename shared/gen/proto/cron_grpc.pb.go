@@ -22,6 +22,7 @@ const (
 	CronService_ListCronJobs_FullMethodName            = "/proto.CronService/ListCronJobs"
 	CronService_CreateCronJob_FullMethodName           = "/proto.CronService/CreateCronJob"
 	CronService_RemoveDuplicateCronJobs_FullMethodName = "/proto.CronService/RemoveDuplicateCronJobs"
+	CronService_FixUnmanagedCronJobs_FullMethodName    = "/proto.CronService/FixUnmanagedCronJobs"
 )
 
 // CronServiceClient is the client API for CronService service.
@@ -31,6 +32,7 @@ type CronServiceClient interface {
 	ListCronJobs(ctx context.Context, in *ListCronJobsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListCronJobsResponse], error)
 	CreateCronJob(ctx context.Context, in *CreateCronJobRequest, opts ...grpc.CallOption) (*CreateCronJobResponse, error)
 	RemoveDuplicateCronJobs(ctx context.Context, in *RemoveDuplicateCronJobsRequest, opts ...grpc.CallOption) (*RemoveDuplicateCronJobsResponse, error)
+	FixUnmanagedCronJobs(ctx context.Context, in *FixUnmanagedCronJobsRequest, opts ...grpc.CallOption) (*FixUnmanagedCronJobsResponse, error)
 }
 
 type cronServiceClient struct {
@@ -80,6 +82,16 @@ func (c *cronServiceClient) RemoveDuplicateCronJobs(ctx context.Context, in *Rem
 	return out, nil
 }
 
+func (c *cronServiceClient) FixUnmanagedCronJobs(ctx context.Context, in *FixUnmanagedCronJobsRequest, opts ...grpc.CallOption) (*FixUnmanagedCronJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FixUnmanagedCronJobsResponse)
+	err := c.cc.Invoke(ctx, CronService_FixUnmanagedCronJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CronServiceServer is the server API for CronService service.
 // All implementations must embed UnimplementedCronServiceServer
 // for forward compatibility.
@@ -87,6 +99,7 @@ type CronServiceServer interface {
 	ListCronJobs(*ListCronJobsRequest, grpc.ServerStreamingServer[ListCronJobsResponse]) error
 	CreateCronJob(context.Context, *CreateCronJobRequest) (*CreateCronJobResponse, error)
 	RemoveDuplicateCronJobs(context.Context, *RemoveDuplicateCronJobsRequest) (*RemoveDuplicateCronJobsResponse, error)
+	FixUnmanagedCronJobs(context.Context, *FixUnmanagedCronJobsRequest) (*FixUnmanagedCronJobsResponse, error)
 	mustEmbedUnimplementedCronServiceServer()
 }
 
@@ -105,6 +118,9 @@ func (UnimplementedCronServiceServer) CreateCronJob(context.Context, *CreateCron
 }
 func (UnimplementedCronServiceServer) RemoveDuplicateCronJobs(context.Context, *RemoveDuplicateCronJobsRequest) (*RemoveDuplicateCronJobsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveDuplicateCronJobs not implemented")
+}
+func (UnimplementedCronServiceServer) FixUnmanagedCronJobs(context.Context, *FixUnmanagedCronJobsRequest) (*FixUnmanagedCronJobsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method FixUnmanagedCronJobs not implemented")
 }
 func (UnimplementedCronServiceServer) mustEmbedUnimplementedCronServiceServer() {}
 func (UnimplementedCronServiceServer) testEmbeddedByValue()                     {}
@@ -174,6 +190,24 @@ func _CronService_RemoveDuplicateCronJobs_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CronService_FixUnmanagedCronJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FixUnmanagedCronJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CronServiceServer).FixUnmanagedCronJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CronService_FixUnmanagedCronJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CronServiceServer).FixUnmanagedCronJobs(ctx, req.(*FixUnmanagedCronJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CronService_ServiceDesc is the grpc.ServiceDesc for CronService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -188,6 +222,10 @@ var CronService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveDuplicateCronJobs",
 			Handler:    _CronService_RemoveDuplicateCronJobs_Handler,
+		},
+		{
+			MethodName: "FixUnmanagedCronJobs",
+			Handler:    _CronService_FixUnmanagedCronJobs_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -9,6 +9,7 @@ import (
 
 	"hazyio.com/servergram/agent/internal"
 	"hazyio.com/servergram/agent/internal/db"
+	"hazyio.com/servergram/agent/internal/wrapper"
 )
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "invalid job id")
 			os.Exit(2)
 		}
-		if err := internal.RunJob(id, command); err != nil {
+		if err := wrapper.RunJob(database, id, command, db.CronRunTriggerScheduled); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

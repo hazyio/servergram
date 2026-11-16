@@ -20,6 +20,31 @@ import (
 	"hazyio.com/servergram/agent/internal/db"
 )
 
+func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
+	data, err := readCrontab(ctx)
+	if err != nil {
+		return "", err
+	}
+	sc := bufio.NewScanner(bytes.NewReader(data))
+	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
+	for sc.Scan() {
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+		line := sc.Text()
+		schedule, command, err := ParseLine(line)
+		if err != nil {
+			log.Printf("failed to parse cron line: %s", err)
+			continue
+		}
+		h := hashCronJob(schedule, command)
+		if h == hash {
+			return command, nil
+		}
+	}
+
+	return "", fmt.Errorf("Could not find command for cron job with hash %q", hash)
+}
 func validateName(name string) error {
 	// if name == "" {
 	// 	return status.Error(codes.InvalidArgument, "cron job name cannot be empty")

@@ -30,3 +30,7 @@ func (s *CronServer) CreateCronJob(ctx context.Context, req *proto.CreateCronJob
 func (s *CronServer) RemoveDuplicateCronJobs(ctx context.Context, req *proto.RemoveDuplicateCronJobsRequest) (*proto.RemoveDuplicateCronJobsResponse, error) {
 	return handleRemoveDuplicateCronJobs(ctx, req)
 }
+
+func (s *CronServer) FixUnmanagedCronJobs(ctx context.Context, req *proto.FixUnmanagedCronJobsRequest) (*proto.FixUnmanagedCronJobsResponse, error) {
+	return handleFixUnmanagedCronJobs(ctx,s.database, req)
+}

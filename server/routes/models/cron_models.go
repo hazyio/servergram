@@ -24,3 +24,9 @@ type RemoveDuplicateCronJobsResponse struct {
 		Removed uint32 `json:"removed" doc:"Number of duplicate cron job lines removed"`
 	}
 }
+
+type FixUnmanagedCronJobsResponse struct {
+	Body struct {
+		Fixed uint32 `json:"fixed" doc:"Number of unmanaged cron jobs fixed"`
+	}
+}

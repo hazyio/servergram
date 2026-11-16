@@ -35,7 +35,7 @@ func InitDatabase() (*gorm.DB, error) {
 	database.Exec("PRAGMA journal_mode = WAL")
 	database.Exec("PRAGMA busy_timeout = 5000")
 	database.Exec("PRAGMA foreign_keys = ON")
-	if err := database.AutoMigrate(&CronJob{}); err != nil {
+	if err := database.AutoMigrate(&CronJob{}, &CronRun{}); err != nil {
 		log.Fatal(err)
 	}
 	return database, nil

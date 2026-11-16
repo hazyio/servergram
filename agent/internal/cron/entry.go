@@ -20,3 +20,7 @@ func NewCronServer(database *gorm.DB) *CronServer {
 func (s *CronServer) ListCronJobs(req *proto.ListCronJobsRequest, stream proto.CronService_ListCronJobsServer) error {
 	return handleListCronJobs(s.database, req, stream)
 }
+
+func (s *CronServer) CreateCronJob(req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
+	return handleCreateCronJob(s.database, req)
+}

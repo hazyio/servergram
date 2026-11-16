@@ -22,6 +22,21 @@ message ListCronJobsResponse {
   repeated Cron jobs = 1;
   bool done = 2;
 }
+message CreateCronJobRequest {
+  string name = 1;
+  string schedule = 2;
+  string command = 3;
+  int32 meta_keep_count = 4;
+  int32 run_logs_keep_count = 5;
+  int32 error_logs_keep_days = 6;
+  bool wrap = 7;
+}
+
+message CreateCronJobResponse {
+  Cron job = 1;
+}
+
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
+  rpc CreateCronJob(CreateCronJobRequest) returns (CreateCronJobResponse);
 }

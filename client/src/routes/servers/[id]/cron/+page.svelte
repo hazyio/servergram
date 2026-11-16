@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { unWrapErrorMessage } from "#lib/api/request.ts";
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import { ConnectedServices } from "#lib/components/base/services/services.svelte.ts";
@@ -14,8 +13,9 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
   import * as Card from "#lib/components/ui/card/index.js";
-  import { CircleAlert } from "@lucide/svelte";
-  import { onMount } from "svelte";
+  import type { components } from "#lib/types/request-schema.d.ts";
+  import { CircleAlert, Loader } from "@lucide/svelte";
+  import { onDestroy, onMount } from "svelte";
   import type { PageProps } from "./$types";
   import AddNewJob from "./AddNewJob.svelte";
   import CronSettingOption, {
@@ -23,7 +23,7 @@
   } from "./CronSettingOption.svelte";
   import CronTable from "./CronTable/CronTable.svelte";
   import CronWrapUnmanagedDialog from "./CronWrapUnmanagedDialog.svelte";
-  import { listCronJobs, type CronJob } from "./cronJobs.ts";
+  import { type CronJob, type CronJobStatus } from "./cronJobs.ts";
 
   let { params }: PageProps = $props();
   let server = $derived.by(() => {
@@ -36,6 +36,8 @@
   let jobs = $state<CronJob[]>([]);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
+  let updating = $state(false);
+  let eventSource: EventSource | undefined;
   let wrapDialogOpen = $state(false);
   let columns = $state<Record<CronColumns, boolean>>({
     status: true,
@@ -67,22 +69,109 @@
     return upcoming[0] ?? null;
   });
 
-  async function loadJobs() {
+  type CronChunk = components["schemas"]["ListCronJobsResponse"];
+
+  const knownStatuses = new Set<CronJobStatus>([
+    "running",
+    "scheduled",
+    "paused",
+    "failed",
+  ]);
+
+  function toCronJob(cron: components["schemas"]["Cron"]): CronJob {
+    const status: CronJobStatus = !cron.managed
+      ? "unmanaged"
+      : knownStatuses.has(cron.status as CronJobStatus)
+        ? (cron.status as CronJobStatus)
+        : "scheduled";
+
+    return {
+      id: cron.id ?? 0,
+      name: cron.name ?? "",
+      command: cron.command ?? "",
+      schedule: cron.schedule ?? "",
+      status,
+      last_run: cron.last_run_at || null,
+      next_run: cron.next_run_at || null,
+    };
+  }
+
+  function stop() {
+    eventSource?.close();
+    eventSource = undefined;
+    updating = false;
+  }
+
+  function loadJobs() {
+    stop();
     loading = true;
     loadError = null;
+    jobs = [];
 
-    const { data, error } = await listCronJobs(serverId);
-    loading = false;
+    const source = new EventSource(`/api/cron/${serverId}/list`, {
+      withCredentials: true,
+    });
+    eventSource = source;
 
-    if (error) {
-      loadError = unWrapErrorMessage(error, "Failed to load cron jobs");
-      return;
-    }
+    source.addEventListener("data", (event) => {
+      if (source !== eventSource) return;
 
-    jobs = data?.items ?? [];
+      try {
+        const chunk = JSON.parse(
+          (event as MessageEvent<string>).data,
+        ) as CronChunk;
+
+        if (chunk.jobs?.length) {
+          const byId = new Map(jobs.map((job) => [job.id, job]));
+          for (const cron of chunk.jobs) {
+            const job = toCronJob(cron);
+            byId.set(job.id, job);
+          }
+          jobs = [...byId.values()];
+        }
+
+        loading = false;
+
+        if (chunk.done) {
+          stop();
+        } else {
+          updating = true;
+        }
+      } catch {
+        stop();
+        loading = false;
+        loadError = "Failed to parse cron jobs";
+      }
+    });
+
+    // Server-sent "error" events carry data; connection errors do not.
+    source.addEventListener("error", (event) => {
+      if (source !== eventSource || !(event instanceof MessageEvent)) return;
+
+      try {
+        const response = JSON.parse(event.data) as { message?: string };
+        loadError = response.message ?? "Failed to load cron jobs";
+      } catch {
+        loadError = "Failed to load cron jobs";
+      }
+
+      stop();
+      loading = false;
+    });
+
+    source.onerror = () => {
+      if (source !== eventSource || source.readyState !== EventSource.CLOSED) {
+        return;
+      }
+
+      stop();
+      loading = false;
+      if (!loadError) loadError = "Cron stream closed unexpectedly";
+    };
   }
 
   onMount(loadJobs);
+  onDestroy(stop);
 </script>
 
 <svelte:head>
@@ -178,6 +267,15 @@
       class="my-7"
     />
   {:else}
+    {#if updating}
+      <div
+        class="mt-2 flex items-center gap-2 px-2 text-sm text-muted-foreground"
+      >
+        <Loader class="size-4 animate-spin" />
+        Updating...
+      </div>
+    {/if}
+
     <div class="px-2">
       <CronTable
         {jobs}

@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CronService_ListCronJobs_FullMethodName = "/proto.CronService/ListCronJobs"
+	CronService_ListCronJobs_FullMethodName  = "/proto.CronService/ListCronJobs"
+	CronService_CreateCronJob_FullMethodName = "/proto.CronService/CreateCronJob"
 )
 
 // CronServiceClient is the client API for CronService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CronServiceClient interface {
 	ListCronJobs(ctx context.Context, in *ListCronJobsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ListCronJobsResponse], error)
+	CreateCronJob(ctx context.Context, in *CreateCronJobRequest, opts ...grpc.CallOption) (*CreateCronJobResponse, error)
 }
 
 type cronServiceClient struct {
@@ -56,11 +58,22 @@ func (c *cronServiceClient) ListCronJobs(ctx context.Context, in *ListCronJobsRe
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type CronService_ListCronJobsClient = grpc.ServerStreamingClient[ListCronJobsResponse]
 
+func (c *cronServiceClient) CreateCronJob(ctx context.Context, in *CreateCronJobRequest, opts ...grpc.CallOption) (*CreateCronJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCronJobResponse)
+	err := c.cc.Invoke(ctx, CronService_CreateCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CronServiceServer is the server API for CronService service.
 // All implementations must embed UnimplementedCronServiceServer
 // for forward compatibility.
 type CronServiceServer interface {
 	ListCronJobs(*ListCronJobsRequest, grpc.ServerStreamingServer[ListCronJobsResponse]) error
+	CreateCronJob(context.Context, *CreateCronJobRequest) (*CreateCronJobResponse, error)
 	mustEmbedUnimplementedCronServiceServer()
 }
 
@@ -73,6 +86,9 @@ type UnimplementedCronServiceServer struct{}
 
 func (UnimplementedCronServiceServer) ListCronJobs(*ListCronJobsRequest, grpc.ServerStreamingServer[ListCronJobsResponse]) error {
 	return status.Error(codes.Unimplemented, "method ListCronJobs not implemented")
+}
+func (UnimplementedCronServiceServer) CreateCronJob(context.Context, *CreateCronJobRequest) (*CreateCronJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCronJob not implemented")
 }
 func (UnimplementedCronServiceServer) mustEmbedUnimplementedCronServiceServer() {}
 func (UnimplementedCronServiceServer) testEmbeddedByValue()                     {}
@@ -106,13 +122,36 @@ func _CronService_ListCronJobs_Handler(srv interface{}, stream grpc.ServerStream
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type CronService_ListCronJobsServer = grpc.ServerStreamingServer[ListCronJobsResponse]
 
+func _CronService_CreateCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCronJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CronServiceServer).CreateCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CronService_CreateCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CronServiceServer).CreateCronJob(ctx, req.(*CreateCronJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CronService_ServiceDesc is the grpc.ServiceDesc for CronService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CronService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.CronService",
 	HandlerType: (*CronServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateCronJob",
+			Handler:    _CronService_CreateCronJob_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ListCronJobs",

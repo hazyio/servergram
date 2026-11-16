@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get by ID list */
+        get: operations["sse-cron--id-list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/create-dir-in-server/{id}": {
         parameters: {
             query?: never;
@@ -726,6 +743,18 @@ export interface components {
             /** @description The name of the group */
             name: string;
         };
+        Cron: {
+            command?: string;
+            hash?: string;
+            /** Format: int64 */
+            id?: number;
+            last_run_at?: string;
+            managed?: boolean;
+            name?: string;
+            next_run_at?: string;
+            schedule?: string;
+            status?: string;
+        };
         DeleteFileRequestBody: {
             /** @description The name of the file to delete */
             name: string;
@@ -825,6 +854,10 @@ export interface components {
             name: string;
             /** Format: int64 */
             resources_attached: number;
+        };
+        ListCronJobsResponse: {
+            done?: boolean;
+            jobs?: components["schemas"]["Cron"][] | null;
         };
         ListFilesChunkResponse: {
             done?: boolean;
@@ -1063,6 +1096,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "sse-cron--id-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": ({
+                        data: components["schemas"]["ListCronJobsResponse"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "data";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    } | {
+                        data: components["schemas"]["SSEError"];
+                        /**
+                         * @description The event name.
+                         * @constant
+                         */
+                        event: "error";
+                        /** @description The event ID. */
+                        id?: number;
+                        /** @description The retry time in milliseconds. */
+                        retry?: number;
+                    })[];
+                };
             };
             /** @description Error */
             default: {

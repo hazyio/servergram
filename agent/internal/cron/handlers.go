@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/labstack/gommon/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/agent/internal/db"
 	"hazyio.com/servergram/shared/gen/proto"
@@ -33,10 +35,24 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 	})
 	if err != nil {
 		log.Error(err)
-		return err
+		return status.Errorf(codes.Internal, "failed to list cron jobs: %v", err)
 	}
 
 	stream.Send(&proto.ListCronJobsResponse{Jobs: batch, Done: true})
 
 	return nil
+}
+
+func handleCreateCronJob(database *gorm.DB, req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
+	if err := validateName(req.Name); err != nil {
+		return nil, err
+	}
+	if err := ValidateCommand(req.Command); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid command: %v", err)
+	}
+	
+	if err := ValidateSchedule(req.Schedule); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule: %v", err)
+	}
+	
 }

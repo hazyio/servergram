@@ -3,10 +3,12 @@ package internal
 import (
 	"log"
 	"os"
+	"time"
 
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"gorm.io/gorm"
 	"hazyio.com/servergram/agent/internal/cron"
 	"hazyio.com/servergram/agent/internal/files"
@@ -19,7 +21,10 @@ func Serve(database *gorm.DB) {
 	log.SetOutput(os.Stderr) // stdout belongs to the protocol
 	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
 	log.Println("starting agent connection")
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+		MinTime:             15 * time.Second,
+		PermitWithoutStream: true,
+	}))
 	pb.RegisterFilesServiceServer(srv, files.NewFilesServer(database))
 	pb.RegisterResourcesServiceServer(srv, &resources.ResourcesServer{})
 	pb.RegisterCronServiceServer(srv, cron.NewCronServer(database))

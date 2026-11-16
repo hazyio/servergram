@@ -18,6 +18,23 @@ import (
 	"hazyio.com/servergram/agent/internal/db"
 )
 
+func validateName(name string) error {
+	if name == "" {
+		return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
+	}
+	if name == "." || name == ".." {
+		return status.Errorf(codes.InvalidArgument, "invalid cron job name %q", name)
+	}
+	if len(name) > 255 {
+		return status.Errorf(codes.InvalidArgument, "cron job name %q is too long", name)
+	}
+	if strings.ContainsAny(name, `/\`) || strings.ContainsRune(name, '\x00') || strings.ContainsRune(name, ':') || strings.ContainsRune(name, '*') || strings.ContainsRune(name, '?') || strings.ContainsRune(name, '"') || strings.ContainsRune(name, '<') || strings.ContainsRune(name, '>') || strings.ContainsRune(name, '|') || strings.Contains(name, "..") {
+		return status.Errorf(codes.InvalidArgument, "invalid cron job name %q", name)
+	}
+
+	return nil
+}
+
 // Read and process each cron job from the crontab.
 func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db.CronJob, schedule, command string) error) error {
 	data, err := readCrontab(ctx)
@@ -25,6 +42,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		return status.Errorf(codes.Internal, "read crontab: %s", err.Error())
 	}
 	sc := bufio.NewScanner(bytes.NewReader(data))
+	hashes := make([]string, 0)
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
 	for sc.Scan() {
 		line := sc.Text()
@@ -63,7 +81,17 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		if err := onLine(job, schedule, command); err != nil {
 			return err
 		}
+		hashes = append(hashes, hash)
 	}
+	go func() {
+		if len(hashes) > 0 {
+			// delete orphaned jobs
+			err := database.Where("hash NOT IN ?", hashes).Delete(&db.CronJob{}).Error
+			if err != nil {
+				log.Printf("failed to delete orphaned cron jobs: %s", err)
+			}
+		}
+	}()
 	return nil
 }
 

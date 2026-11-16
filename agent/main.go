@@ -34,8 +34,12 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-	default:
+
+	case "serve":
 		internal.Serve(database)
+
+	default:
+		log.Fatalf("unknown command: %s", os.Args[1])
 	}
 
 }

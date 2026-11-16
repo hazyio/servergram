@@ -191,13 +191,14 @@ func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string,
 
 		stdin, _ := session.StdinPipe()
 		stdout, _ := session.StdoutPipe()
-		// sess.Stderr =slog.Default().Handler()
+		sw := newSlogWriter(slog.Default().With("source", "agent-stderr"), slog.LevelWarn)
 
-		if err := session.Start(remotePath); err != nil {
+		session.Stderr = sw
+
+		if err := session.Start(remotePath + " serve"); err != nil {
 			session.Close()
 			return nil, err
 		}
-
 		conn := shared.NewStdioConn(stdout, stdin, func() error {
 			stdin.Close()
 			return session.Close()
@@ -215,17 +216,19 @@ func startAgentConnection(ctx context.Context, c *ssh.Client, remotePath string,
 				return conn, nil
 			}),
 			grpc.WithKeepaliveParams(keepalive.ClientParameters{
-				Time:                30 * time.Second,
-				Timeout:             15 * time.Second,
+				Time:                15 * time.Second,
+				Timeout:             10 * time.Second,
 				PermitWithoutStream: true,
 			}),
 		)
 		go func() {
 			err := session.Wait() // blocks until the remote process exits
+			sw.Flush()
+
 			var exitErr *ssh.ExitError
 			switch {
 			case errors.As(err, &exitErr):
-				slog.Warn("agent exited", "status", exitErr.ExitStatus(), "signal", exitErr.Signal())
+				slog.Warn("agent exited", "status", exitErr.ExitStatus(), "signal", exitErr.Signal(), "error", err)
 			case err != nil:
 				slog.Warn("agent session ended", "err", err)
 			default:

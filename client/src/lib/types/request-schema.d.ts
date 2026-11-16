@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/remove-duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post by ID remove duplicates */
+        post: operations["post-cron--id-remove-duplicates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/create-dir-in-server/{id}": {
         parameters: {
             query?: never;
@@ -945,6 +962,13 @@ export interface components {
             /** @description The path of the directory to remove */
             path: string;
         };
+        RemoveDuplicateCronJobsResponseBody: {
+            /**
+             * Format: int32
+             * @description Number of duplicate cron job lines removed
+             */
+            removed: number;
+        };
         RenamePathRequestBody: {
             /** @description The new name for the file/directory */
             new_name: string;
@@ -1212,6 +1236,38 @@ export interface operations {
                         /** @description The retry time in milliseconds. */
                         retry?: number;
                     })[];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-cron--id-remove-duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoveDuplicateCronJobsResponseBody"];
                 };
             };
             /** @description Error */

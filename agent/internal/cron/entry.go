@@ -26,3 +26,7 @@ func (s *CronServer) ListCronJobs(req *proto.ListCronJobsRequest, stream proto.C
 func (s *CronServer) CreateCronJob(ctx context.Context, req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
 	return handleCreateCronJob(ctx, s.database, req)
 }
+
+func (s *CronServer) RemoveDuplicateCronJobs(ctx context.Context, req *proto.RemoveDuplicateCronJobsRequest) (*proto.RemoveDuplicateCronJobsResponse, error) {
+	return handleRemoveDuplicateCronJobs(ctx, req)
+}

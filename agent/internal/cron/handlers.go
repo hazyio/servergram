@@ -63,6 +63,22 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 	return nil
 }
 
+func handleRemoveDuplicateCronJobs(ctx context.Context, req *proto.RemoveDuplicateCronJobsRequest) (*proto.RemoveDuplicateCronJobsResponse, error) {
+	data, err := readCrontab(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "read crontab: %v", err)
+	}
+
+	cleaned, removed := dedupeCronLines(data)
+	if removed > 0 {
+		if err := installCrontab(ctx, cleaned); err != nil {
+			return nil, status.Errorf(codes.Internal, "install crontab: %v", err)
+		}
+	}
+
+	return &proto.RemoveDuplicateCronJobsResponse{Removed: removed}, nil
+}
+
 func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
 	if err := validateName(req.Name); err != nil {
 		return nil, err
@@ -110,7 +126,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 		}
 		var command string
 		if req.Wrap {
-			command = fmt.Sprintf("%s run-command %s  id=%d", common.GetAgentPath(), req.Command, newCronJob.ID)
+			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(req.Command), newCronJob.ID)
 		} else {
 			command = fmt.Sprintf("%s", req.Command)
 		}

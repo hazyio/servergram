@@ -18,3 +18,9 @@ type CreateCronJobRequest struct {
 type CreateCronJobResponse struct {
 	Body *proto.Cron
 }
+
+type RemoveDuplicateCronJobsResponse struct {
+	Body struct {
+		Removed uint32 `json:"removed" doc:"Number of duplicate cron job lines removed"`
+	}
+}

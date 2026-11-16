@@ -22,8 +22,13 @@
     type CronColumns,
   } from "./CronSettingOption.svelte";
   import CronTable from "./CronTable/CronTable.svelte";
+  import CronDuplicateDialog from "./CronDuplicateDialog.svelte";
   import CronWrapUnmanagedDialog from "./CronWrapUnmanagedDialog.svelte";
-  import { type CronJob, type CronJobStatus } from "./cronJobs.ts";
+  import {
+    type CronDuplicateGroup,
+    type CronJob,
+    type CronJobStatus,
+  } from "./cronJobs.ts";
 
   let { params }: PageProps = $props();
   let server = $derived.by(() => {
@@ -39,6 +44,8 @@
   let updating = $state(false);
   let eventSource: EventSource | undefined;
   let wrapDialogOpen = $state(false);
+  let duplicateDialogOpen = $state(false);
+  let duplicateGroups = $state<CronDuplicateGroup[]>([]);
   let columns = $state<Record<CronColumns, boolean>>({
     status: true,
     job: true,
@@ -87,6 +94,7 @@
 
     return {
       id: cron.id ?? 0,
+      hash: cron.hash ?? "",
       name: cron.name ?? "",
       command: cron.command ?? "",
       schedule: cron.schedule ?? "",
@@ -107,6 +115,9 @@
     loading = true;
     loadError = null;
     jobs = [];
+    duplicateGroups = [];
+
+    const hashCounts = new Map<string, CronDuplicateGroup>();
 
     const source = new EventSource(`/api/cron/${serverId}/list`, {
       withCredentials: true,
@@ -126,8 +137,24 @@
           for (const cron of chunk.jobs) {
             const job = toCronJob(cron);
             byId.set(job.id, job);
+
+            if (job.hash) {
+              const group = hashCounts.get(job.hash);
+              if (group) {
+                group.count += 1;
+              } else {
+                hashCounts.set(job.hash, {
+                  hash: job.hash,
+                  job,
+                  count: 1,
+                });
+              }
+            }
           }
           jobs = [...byId.values()];
+          duplicateGroups = [...hashCounts.values()].filter(
+            (group) => group.count > 1,
+          );
         }
 
         loading = false;
@@ -258,6 +285,23 @@
     </Alert>
   {/if}
 
+  {#if !loading && !loadError && duplicateGroups.length > 0}
+    <Alert class="mt-3 border-amber-500/40 bg-amber-500/5">
+      <CircleAlert class="text-amber-600 dark:text-amber-400" />
+      <AlertTitle>Duplicate cron jobs</AlertTitle>
+      <AlertDescription>
+        {duplicateGroups.length} cron
+        {duplicateGroups.length === 1 ? "job has" : "jobs have"} duplicate entries
+        with the same hash and may run more than once. Only one of each is shown.
+      </AlertDescription>
+      <AlertAction>
+        <Button size="sm" onclick={() => (duplicateDialogOpen = true)}>
+          Fix now
+        </Button>
+      </AlertAction>
+    </Alert>
+  {/if}
+
   {#if loading}
     <Loading loading class="mt-20 w-12 h-12" text="Loading cron jobs..." />
   {:else if loadError}
@@ -305,5 +349,15 @@
   onWrapped={(wrapped) => {
     const updated = new Map(wrapped.map((job) => [job.id, job]));
     jobs = jobs.map((job) => updated.get(job.id) ?? job);
+  }}
+/>
+
+<CronDuplicateDialog
+  bind:open={duplicateDialogOpen}
+  {serverId}
+  duplicates={duplicateGroups}
+  onRemoved={() => {
+    duplicateGroups = [];
+    loadJobs();
   }}
 />

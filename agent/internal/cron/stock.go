@@ -115,6 +115,35 @@ func hashCronJob(schedule, command string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// dedupeCronLines removes lines that describe the same job (same hash),
+// keeping the first occurrence. Non-job lines (comments, blanks, env
+// assignments) are preserved.
+func dedupeCronLines(data []byte) ([]byte, uint32) {
+	lines := strings.Split(string(data), "\n")
+	seen := make(map[string]struct{}, len(lines))
+	out := make([]string, 0, len(lines))
+	var removed uint32
+
+	for _, line := range lines {
+		schedule, command, err := ParseLine(line)
+		if err != nil {
+			out = append(out, line)
+			continue
+		}
+
+		hash := hashCronJob(schedule, command)
+		if _, exists := seen[hash]; exists {
+			removed++
+			continue
+		}
+
+		seen[hash] = struct{}{}
+		out = append(out, line)
+	}
+
+	return []byte(strings.Join(out, "\n")), removed
+}
+
 // installCrontab replaces the user's crontab with content, via stdin.
 func installCrontab(ctx context.Context, content []byte) error {
 	var stderr bytes.Buffer
@@ -134,4 +163,8 @@ func appendLine(cur []byte, line string) []byte {
 		out = append(out, '\n')
 	}
 	return append(out, line+"\n"...)
+}
+
+func shQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

@@ -22,7 +22,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server := internal.NewGroup("/cron", api, database, []string{"Cron"}, ssh, allowedOrigins, polls)
 	server.SSE("/{id}/list", http.StatusOK, listCronJobs)
 	server.Post("/{id}/create", http.StatusOK, createCronJob)
-
+	server.Post("/{id}/remove-duplicates", http.StatusOK, removeDuplicateCronJobs)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -97,4 +97,23 @@ func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*Empty
 	}
 	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created cron job in server \"%d\"", data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
+}
+
+func removeDuplicateCronJobs(data internal.RouteData[PathIdRequest]) (*models.RemoveDuplicateCronJobsResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
+	result, err := resource.RemoveDuplicateCronJobs(ctx, &proto.RemoveDuplicateCronJobsRequest{})
+	if err != nil {
+		slog.Error("Failed to remove duplicate cron jobs", "error", err)
+		return nil, err
+	}
+
+	response := &models.RemoveDuplicateCronJobsResponse{}
+	response.Body.Removed = result.Removed
+	db.AddLog(db.LogActionDelete, fmt.Sprintf("Removed %d duplicate cron jobs in server \"%d\"", result.Removed, data.Input.ID), data.Database)
+	return response, nil
 }

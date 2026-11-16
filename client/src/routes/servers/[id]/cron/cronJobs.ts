@@ -11,6 +11,7 @@ export type CronRetention = {
 
 export type CronJob = {
   id: number;
+  hash?: string;
   name: string;
   command: string;
   schedule: string;
@@ -18,6 +19,12 @@ export type CronJob = {
   last_run: string | null;
   next_run: string | null;
   retention?: CronRetention;
+};
+
+export type CronDuplicateGroup = {
+  hash: string;
+  job: CronJob;
+  count: number;
 };
 
 export type CreateCronJobInput = {
@@ -219,6 +226,21 @@ export async function createCronJob(
   }
 
   return { data: input };
+}
+
+export async function removeDuplicateCronJobs(
+  serverId: number,
+): Promise<CronApiResponse<{ removed: number }>> {
+  const { data, error } = await NewRequestClient().POST(
+    "/api/cron/{id}/remove-duplicates",
+    { params: { path: { id: serverId } } },
+  );
+
+  if (error) {
+    return { error };
+  }
+
+  return { data: data ?? { removed: 0 } };
 }
 
 export async function updateCronJob(

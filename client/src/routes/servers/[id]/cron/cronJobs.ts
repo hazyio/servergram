@@ -11,7 +11,9 @@ export type CronRetention = {
 
 export type CronJob = {
   id: number;
+  key?: string;
   hash?: string;
+  duplicate?: boolean;
   name: string;
   command: string;
   schedule: string;

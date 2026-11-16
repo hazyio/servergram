@@ -34,7 +34,7 @@
     get data() {
       return jobs;
     },
-    getRowId: (job) => String(job.id),
+    getRowId: (job) => job.key ?? String(job.id),
     columns,
   });
 
@@ -71,7 +71,11 @@
   </Table.Header>
   <Table.Body>
     {#each table.getRowModel().rows as row (row.id)}
-      <Table.Row class="h-15">
+      <Table.Row
+        class={row.original.duplicate
+          ? "h-15 bg-amber-500/10 hover:bg-amber-500/15"
+          : "h-15"}
+      >
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell class="p-0 px-4">
             <FlexRender {cell} />

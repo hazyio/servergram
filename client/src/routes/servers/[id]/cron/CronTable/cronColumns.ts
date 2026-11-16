@@ -65,6 +65,7 @@ export const getColumns = (
         renderComponent(CronJobName, {
           job: info.row.original,
           serverId,
+          duplicate: info.row.original.duplicate,
         }),
     }),
     columnHelper.accessor("schedule", {

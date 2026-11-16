@@ -118,6 +118,7 @@
     duplicateGroups = [];
 
     const hashCounts = new Map<string, CronDuplicateGroup>();
+    let nextKey = 0;
 
     const source = new EventSource(`/api/cron/${serverId}/list`, {
       withCredentials: true,
@@ -133,10 +134,12 @@
         ) as CronChunk;
 
         if (chunk.jobs?.length) {
-          const byId = new Map(jobs.map((job) => [job.id, job]));
+          const incoming: CronJob[] = [];
+
           for (const cron of chunk.jobs) {
             const job = toCronJob(cron);
-            byId.set(job.id, job);
+            job.key = `${job.id}:${job.hash || "no-hash"}:${nextKey++}`;
+            incoming.push(job);
 
             if (job.hash) {
               const group = hashCounts.get(job.hash);
@@ -151,7 +154,18 @@
               }
             }
           }
-          jobs = [...byId.values()];
+
+          const duplicateHashes = new Set(
+            [...hashCounts.values()]
+              .filter((group) => group.count > 1)
+              .map((group) => group.hash),
+          );
+
+          jobs = [...jobs, ...incoming].map((job) => ({
+            ...job,
+            duplicate: !!job.hash && duplicateHashes.has(job.hash),
+          }));
+
           duplicateGroups = [...hashCounts.values()].filter(
             (group) => group.count > 1,
           );
@@ -292,7 +306,7 @@
       <AlertDescription>
         {duplicateGroups.length} cron
         {duplicateGroups.length === 1 ? "job has" : "jobs have"} duplicate entries
-        with the same hash and may run more than once. Only one of each is shown.
+        with the same hash and may run more than once. They are highlighted below.
       </AlertDescription>
       <AlertAction>
         <Button size="sm" onclick={() => (duplicateDialogOpen = true)}>
@@ -329,10 +343,22 @@
         statusFilter={sortStatus}
         visibleColumns={columns}
         onUpdated={(updated) => {
-          jobs = jobs.map((job) => (job.id === updated.id ? updated : job));
+          jobs = jobs.map((job) =>
+            job.id === updated.id
+              ? {
+                  ...updated,
+                  key: job.key,
+                  hash: job.hash ?? updated.hash,
+                  duplicate: job.duplicate,
+                }
+              : job,
+          );
         }}
         onCreated={(created) => {
-          jobs = [...jobs, created];
+          jobs = [
+            ...jobs,
+            { ...created, key: `created:${created.id}:${jobs.length}` },
+          ];
         }}
         onDeleted={(id) => {
           jobs = jobs.filter((job) => job.id !== id);
@@ -348,7 +374,17 @@
   jobs={unmanagedJobs}
   onWrapped={(wrapped) => {
     const updated = new Map(wrapped.map((job) => [job.id, job]));
-    jobs = jobs.map((job) => updated.get(job.id) ?? job);
+    jobs = jobs.map((job) => {
+      const next = updated.get(job.id);
+      return next
+        ? {
+            ...next,
+            key: job.key,
+            hash: job.hash ?? next.hash,
+            duplicate: job.duplicate,
+          }
+        : job;
+    });
   }}
 />
 

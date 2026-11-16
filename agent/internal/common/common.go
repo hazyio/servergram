@@ -3,7 +3,7 @@ package common
 import (
 	"bytes"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,9 +82,16 @@ func looksLikeText(b []byte, truncated bool) bool {
 	return utf8.Valid(b)
 }
 
+func LogError(e error) error {
+	if e != nil {
+		slog.Error("error", "err", e)
+	}
+	return e
+}
+
 func UnWrapLogErr[T any](data T, e error) *T {
 	if e != nil {
-		log.Printf("error: %v", e)
+		slog.Error("error", "err", e)
 		return nil
 	}
 	return &data

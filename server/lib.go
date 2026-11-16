@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -30,6 +29,7 @@ import (
 	"hazyio.com/servergram/server/internal/sshmanager"
 	"hazyio.com/servergram/server/routes"
 	"hazyio.com/servergram/server/websockets"
+	"hazyio.com/servergram/shared"
 )
 
 //go:embed all:dist
@@ -39,7 +39,7 @@ func NewRouter(_ context.Context, database *gorm.DB, polls *internal.Polls) *htt
 	env := internal.LoadEnv()
 	cert, err := tls.LoadX509KeyPair(env.SSLPublicKey, env.SSLPrivateKey)
 	if err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to load TLS key pair: %v", err)
 	}
 	mux := http.NewServeMux()
 
@@ -133,7 +133,7 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 func handleRoot(w http.ResponseWriter, r *http.Request) {
 	sub, err := fs.Sub(distFS, "dist") // strip the "dist/" prefix
 	if err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to load embedded frontend: %v", err)
 	}
 	http.FileServer(http.FS(sub)).ServeHTTP(w, r)
 
@@ -144,19 +144,19 @@ func InitDatabase() *gorm.DB {
 
 	db_url := env.DatabaseUrl
 	if db_url == "" {
-		log.Fatal("DATABASE_URL environment variable is not set")
+		shared.Fatal("DATABASE_URL environment variable is not set")
 	}
 	dialector, err := getDatabaseDialector(db_url)
 	if err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to create database dialector: %v", err)
 	}
 	database, err := gorm.Open(dialector, &gorm.Config{TranslateError: true})
 	if err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to open database: %v", err)
 	}
 	sqlDB, err := database.DB()
 	if err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to get underlying database: %v", err)
 	}
 
 	if database.Dialector.Name() == "sqlite" {
@@ -174,7 +174,7 @@ func InitDatabase() *gorm.DB {
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 	if err := database.AutoMigrate(db.Server{}, db.Sessions{}, db.SSHKey{}, db.Group{}, db.Log{}, db.Notification{}); err != nil {
-		log.Fatal(err)
+		shared.Fatal("failed to migrate database: %v", err)
 	}
 
 	return database

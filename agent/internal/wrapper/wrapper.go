@@ -16,7 +16,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		return err
 	}
 	newRun := &db.CronRun{
-		JobID:     int64(jobID),
+		CronJobID:     int64(jobID),
 		Status:    db.RunStatusRunning,
 		Trigger:   trigger,
 		StartedAt: time.Now(),

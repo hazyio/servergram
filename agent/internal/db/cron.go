@@ -29,7 +29,7 @@ type CronJob struct {
 	NextRunAt        time.Time
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
-	Runs             []CronRun `gorm:"foreignKey:JobID"`
+	Runs             []CronRun `gorm:"foreignKey:CronJobID;constraint:OnDelete:CASCADE"`
 }
 
 func FindCronJobByID(db *gorm.DB, id uint64) (*CronJob, error) {

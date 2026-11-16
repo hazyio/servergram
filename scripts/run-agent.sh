@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+export LOG_LEVEL=debug
 set -euo pipefail
 PORT="${PORT:-9000}"
 BIN="/tmp/servergram-agent"

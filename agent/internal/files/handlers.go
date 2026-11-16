@@ -35,7 +35,7 @@ func handleListFiles(req *proto.ListFilesRequest, stream proto.FilesService_List
 
 		return status.Error(codes.Internal, "unknown error")
 	}
-	batch := make([]*proto.FileEntry, 0, 500)
+	batch := make([]*proto.FileEntry, 0, 50)
 	for _, e := range entries {
 		if stream.Context().Err() != nil {
 			return stream.Context().Err()
@@ -45,12 +45,16 @@ func handleListFiles(req *proto.ListFilesRequest, stream proto.FilesService_List
 		}
 		info, _ := e.Info()
 		batch = append(batch, toEntry(info))
-		if len(batch) == 500 {
-			stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath})
-			batch = batch[:0]
+		if len(batch) == 50 {
+			if err := stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath}); err != nil {
+				return err
+			}
+			batch = make([]*proto.FileEntry, 0, 50)
 		}
 	}
-	stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath, Done: true})
+	if err := stream.Send(&proto.ListFilesChunkResponse{Entries: batch, ResolvedPath: newPath, Done: true}); err != nil {
+		return err
+	}
 
 	return nil
 }

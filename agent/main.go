@@ -13,9 +13,18 @@ import (
 	"hazyio.com/servergram/shared"
 )
 
-func main() {
-	h := slog.NewJSONHandler(os.Stderr, nil)
+var logLevel slog.LevelVar
+
+func setupLogging() {
+	if os.Getenv("LOG_LEVEL") == "debug" {
+		logLevel.Set(slog.LevelDebug)
+	}
+	h := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: &logLevel})
 	slog.SetDefault(slog.New(h))
+}
+
+func main() {
+	setupLogging()
 	if len(os.Args) < 2 {
 		shared.Fatal("usage: agent <serve|run-job> ...")
 	}

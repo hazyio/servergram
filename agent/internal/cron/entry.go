@@ -20,7 +20,7 @@ func NewCronServer(database *gorm.DB) *CronServer {
 }
 
 func (s *CronServer) ListCronJobs(req *proto.ListCronJobsRequest, stream proto.CronService_ListCronJobsServer) error {
-	return handleListCronJobs(s.database, req, stream)
+	return handleListCronJobs(s.database, stream)
 }
 
 func (s *CronServer) CreateCronJob(ctx context.Context, req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
@@ -28,9 +28,9 @@ func (s *CronServer) CreateCronJob(ctx context.Context, req *proto.CreateCronJob
 }
 
 func (s *CronServer) RemoveDuplicateCronJobs(ctx context.Context, req *proto.RemoveDuplicateCronJobsRequest) (*proto.RemoveDuplicateCronJobsResponse, error) {
-	return handleRemoveDuplicateCronJobs(ctx, req)
+	return handleRemoveDuplicateCronJobs(ctx)
 }
 
 func (s *CronServer) FixUnmanagedCronJobs(ctx context.Context, req *proto.FixUnmanagedCronJobsRequest) (*proto.FixUnmanagedCronJobsResponse, error) {
-	return handleFixUnmanagedCronJobs(ctx,s.database, req)
+	return handleFixUnmanagedCronJobs(ctx, s.database)
 }

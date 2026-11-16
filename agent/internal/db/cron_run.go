@@ -24,12 +24,13 @@ const (
 
 type CronRun struct {
 	ID         int64 `gorm:"primaryKey"`
-	JobID      int64
+	CronJobID      int64
 	Status     CronRunStatus
 	Trigger    CronRunTrigger
 	StartedAt  time.Time
 	FinishedAt time.Time
 	ExitCode   int
+	CronJob    CronJob `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 func (c *CronRun) RetrieveStatus(database *gorm.DB) error {

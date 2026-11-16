@@ -1,16 +1,17 @@
 package internal
 
 import (
+	"log/slog"
 	"net/url"
+	"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"log"
-	"os"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+
+	"hazyio.com/servergram/shared"
 )
 
 type Env struct {
@@ -66,7 +67,7 @@ func LoadEnv() Env {
 	err := godotenv.Load()
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Fatal("Error loading .env file, are you sure it is in same dir you are running this application")
+			shared.Fatal("Error loading .env file, are you sure it is in same dir you are running this application")
 		}
 	}
 
@@ -87,27 +88,27 @@ func LoadEnv() Env {
 		// If DATABASE_URL is not set, default to a SQLite database in the config directory.
 		dir, err := os.UserConfigDir()
 		if err != nil {
-			log.Fatalf("failed to get user config dir: %v", err)
+			shared.Fatal("failed to get user config dir: %v", err)
 		}
 		env.DatabaseUrl = "sqlite3://" + dir + "/servergram.db"
 	}
 	if env.Password == "" {
-		log.Println("PASSWORD is not set, authentication will be disabled")
+		slog.Warn("PASSWORD is not set, authentication will be disabled")
 	}
 
 	if strings.TrimSpace(env.ServerPort) == "" {
-		log.Println("SERVER_PORT is not set, defaulting to 9788 this is dangerous as it allowed requests from all origins")
+		slog.Warn("SERVER_PORT is not set, defaulting to 9788 this is dangerous as it allowed requests from all origins")
 		env.ServerPort = "9788"
 		env.AllowedOrigins = []string{"*"}
 	}
 	if env.Password == env.EncryptionMasterKey {
-		log.Fatalf("PASSWORD and SHH_MASTER_KEY should not be the same")
+		shared.Fatal("PASSWORD and SHH_MASTER_KEY should not be the same")
 	}
 	if err := validate.Struct(env); err != nil {
-		log.Fatalf("environment validation failed: %v", err)
+		shared.Fatal("environment validation failed: %v", err)
 	}
 	if !FileExists(env.SSLPublicKey) || !FileExists(env.SSLPrivateKey) {
-		log.Fatalf("SSL_PUBLIC_KEY and SSL_PRIVATE_KEY must point to existing files")
+		shared.Fatal("SSL_PUBLIC_KEY and SSL_PRIVATE_KEY must point to existing files")
 	}
 	return env
 }

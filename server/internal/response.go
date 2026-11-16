@@ -2,7 +2,7 @@ package internal
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -65,6 +65,6 @@ func ToHumaError(err error) error {
 	}
 
 	// Unknown: log the real error, return a generic one.
-	log.Printf("unhandled error: %v", err)
+	slog.Error("unhandled error", "error", err)
 	return huma.Error500InternalServerError("internal error")
 }

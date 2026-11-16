@@ -396,7 +396,7 @@ func NextRuns(schedule string, from time.Time, n int) ([]time.Time, error) {
 
 	out := make([]time.Time, 0, n)
 	t := from
-	for i := 0; i < n; i++ {
+	for range n {
 		next, err := s.next(t)
 		if err != nil {
 			return nil, err

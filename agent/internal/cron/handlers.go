@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
-	"github.com/labstack/gommon/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -16,15 +16,17 @@ import (
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
-func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, stream proto.CronService_ListCronJobsServer) error {
+func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobsServer) error {
 	hashes := make([]string, 0)
 
 	batch := make([]*proto.Cron, 0, 50)
 	err := readCronJobEach(stream.Context(), database, func(job *db.CronJob, schedule, command string) error {
 		if len(batch) == 50 {
-			stream.Send(&proto.ListCronJobsResponse{Jobs: batch})
-
-			batch = batch[:0] // reset batch
+			slog.Debug("sending batch of cron jobs")
+			if err := common.LogError(stream.Send(&proto.ListCronJobsResponse{Jobs: batch})); err != nil {
+				return err
+			}
+			batch = make([]*proto.Cron, 0, 50) // new slice, never reuse after Send
 		}
 		nextRunAt, err := NextRun(schedule, time.Now())
 		if err != nil {
@@ -46,7 +48,7 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 		return nil
 	})
 	if err != nil {
-		log.Error(err)
+		slog.Error("failed to read cron jobs", "error", err)
 		return status.Errorf(codes.Internal, "failed to list cron jobs: %v", err)
 	}
 	go func() {
@@ -54,16 +56,19 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 			// delete orphaned jobs
 			err := database.Where("hash NOT IN ?", hashes).Delete(&db.CronJob{}).Error
 			if err != nil {
-				log.Printf("failed to delete orphaned cron jobs: %s", err)
+				slog.Error("failed to delete orphaned cron jobs", "error", err)
 			}
 		}
 	}()
-	stream.Send(&proto.ListCronJobsResponse{Jobs: batch, Done: true})
+	slog.Debug("sending final batch of cron jobs", "jobs", len(batch))
+	if err := common.LogError(stream.Send(&proto.ListCronJobsResponse{Jobs: batch, Done: true})); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func handleRemoveDuplicateCronJobs(ctx context.Context, req *proto.RemoveDuplicateCronJobsRequest) (*proto.RemoveDuplicateCronJobsResponse, error) {
+func handleRemoveDuplicateCronJobs(ctx context.Context) (*proto.RemoveDuplicateCronJobsResponse, error) {
 	data, err := readCrontab(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "read crontab: %v", err)
@@ -148,7 +153,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 
 }
 
-func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB, req *proto.FixUnmanagedCronJobsRequest) (*proto.FixUnmanagedCronJobsResponse, error) {
+func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB) (*proto.FixUnmanagedCronJobsResponse, error) {
 	count := uint32(0)
 	file := make([]byte, 0)
 	err := readCronJobEach(ctx, database, func(job *db.CronJob, schedule, command string) error {
@@ -168,7 +173,6 @@ func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB, req *pro
 		return nil
 	})
 	if err != nil {
-		log.Error(err)
 		return nil, status.Errorf(codes.Internal, "failed to list cron jobs: %v", err)
 	}
 	if count > 0 {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"hazyio.com/servergram/agent/internal"
 	"hazyio.com/servergram/agent/internal/db"
@@ -21,16 +22,26 @@ func main() {
 
 	switch os.Args[1] {
 	case "run-job":
-		if len(os.Args) != 3 {
-			fmt.Fprintln(os.Stderr, "usage: agent run-job <id>")
+		if len(os.Args) != 4 {
+			fmt.Fprintln(os.Stderr, `usage: agent run-job "command" id=<id>`)
 			os.Exit(2)
 		}
-		id, err := strconv.ParseUint(os.Args[2], 10, 64) // "7; rm -rf" fails here
+		command := os.Args[2]
+		if command == "" {
+			fmt.Fprintln(os.Stderr, "command must not be empty")
+			os.Exit(2)
+		}
+		idStr, ok := strings.CutPrefix(os.Args[3], "id=")
+		if !ok {
+			fmt.Fprintln(os.Stderr, "expected id=<id> as the last argument")
+			os.Exit(2)
+		}
+		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "invalid job id")
 			os.Exit(2)
 		}
-		if err := internal.RunJob(id, 0); err != nil {
+		if err := internal.RunJob(id, command); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

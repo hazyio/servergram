@@ -14,7 +14,7 @@
   import { Input } from "#lib/components/ui/input/index.ts";
   import * as Card from "#lib/components/ui/card/index.js";
   import type { components } from "#lib/types/request-schema.d.ts";
-  import { CircleAlert, Loader } from "@lucide/svelte";
+  import { CircleAlert, Loader, RefreshCcw } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import type { PageProps } from "./$types";
   import AddNewJob from "./AddNewJob.svelte";
@@ -229,6 +229,7 @@
       type="search"
       bind:value={search}
     />
+    <Button variant="outline" onclick={loadJobs}><RefreshCcw /></Button>
 
     <Sort
       items={["all", "active", "inactive", "unmanaged"]}

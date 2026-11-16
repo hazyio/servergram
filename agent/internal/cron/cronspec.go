@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -212,4 +213,196 @@ func BuildLine(schedule, command string) (string, error) {
 func BothDayFieldsRestricted(schedule string) bool {
 	f := strings.Fields(schedule)
 	return len(f) == 5 && !strings.HasPrefix(f[2], "*") && !strings.HasPrefix(f[4], "*")
+}
+
+var aliasSchedules = map[string]string{
+	"@yearly":   "0 0 1 1 *",
+	"@annually": "0 0 1 1 *",
+	"@monthly":  "0 0 1 * *",
+	"@weekly":   "0 0 * * 0",
+	"@daily":    "0 0 * * *",
+	"@midnight": "0 0 * * *",
+	"@hourly":   "0 * * * *",
+}
+
+const maxNextRunYears = 10
+
+type cronSchedule struct {
+	minutes  [60]bool
+	hours    [24]bool
+	days     [32]bool // 1-31
+	months   [13]bool // 1-12
+	weekdays [7]bool  // 0-6, Sunday = 0
+
+	domRestricted bool
+	dowRestricted bool
+}
+
+// parseCronField marks every value selected by expr in set. It reports whether
+// the field is restricted (i.e. does not start with "*").
+func parseCronField(f fieldSpec, expr string, set []bool) (bool, error) {
+	restricted := !strings.HasPrefix(expr, "*")
+
+	for _, part := range strings.Split(expr, ",") {
+		base, stepStr, hasStep := strings.Cut(part, "/")
+		step := 1
+		if hasStep {
+			n, err := strconv.Atoi(stepStr)
+			if !isDigits(stepStr) || err != nil || n < 1 || n > f.max {
+				return false, fmt.Errorf("%s: invalid step %q", f.name, stepStr)
+			}
+			step = n
+		}
+
+		lo, hi := f.min, f.max
+		if base != "*" {
+			loStr, hiStr, isRange := strings.Cut(base, "-")
+			var err error
+			lo, err = f.value(loStr)
+			if err != nil {
+				return false, err
+			}
+			hi = lo
+			if isRange {
+				hi, err = f.value(hiStr)
+				if err != nil {
+					return false, err
+				}
+			} else if hasStep {
+				return false, fmt.Errorf("%s: step needs * or a range, got %q", f.name, part)
+			}
+			if lo > hi {
+				return false, fmt.Errorf("%s: range %q is backwards", f.name, base)
+			}
+		}
+
+		for v := lo; v <= hi; v += step {
+			idx := v
+			if f.name == "day-of-week" && idx == 7 {
+				idx = 0 // 0 and 7 are both Sunday
+			}
+			set[idx] = true
+		}
+	}
+
+	return restricted, nil
+}
+
+func parseCronSchedule(spec string) (*cronSchedule, error) {
+	if err := ValidateSchedule(spec); err != nil {
+		return nil, err
+	}
+
+	spec = strings.TrimSpace(spec)
+	if strings.HasPrefix(spec, "@") {
+		expanded, ok := aliasSchedules[spec]
+		if !ok {
+			if spec == "@reboot" {
+				return nil, errors.New("@reboot has no scheduled run time")
+			}
+			return nil, fmt.Errorf("unknown alias %q", spec)
+		}
+		spec = expanded
+	}
+
+	parts := strings.Fields(spec)
+	if len(parts) != 5 {
+		return nil, fmt.Errorf("expected 5 fields, got %d", len(parts))
+	}
+
+	s := &cronSchedule{}
+	var err error
+
+	if _, err = parseCronField(fieldSpecs[0], parts[0], s.minutes[:]); err != nil {
+		return nil, err
+	}
+	if _, err = parseCronField(fieldSpecs[1], parts[1], s.hours[:]); err != nil {
+		return nil, err
+	}
+	if s.domRestricted, err = parseCronField(fieldSpecs[2], parts[2], s.days[:]); err != nil {
+		return nil, err
+	}
+	if _, err = parseCronField(fieldSpecs[3], parts[3], s.months[:]); err != nil {
+		return nil, err
+	}
+	if s.dowRestricted, err = parseCronField(fieldSpecs[4], parts[4], s.weekdays[:]); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (s *cronSchedule) matchesDay(t time.Time) bool {
+	dom := s.days[t.Day()]
+	dow := s.weekdays[int(t.Weekday())]
+
+	// When both day fields are restricted cron matches either one.
+	if s.domRestricted && s.dowRestricted {
+		return dom || dow
+	}
+	return dom && dow
+}
+
+// next returns the first matching minute strictly after from.
+func (s *cronSchedule) next(from time.Time) (time.Time, error) {
+	loc := from.Location()
+	t := from.Truncate(time.Minute).Add(time.Minute)
+	limit := from.AddDate(maxNextRunYears, 0, 0)
+
+	for t.Before(limit) {
+		if !s.months[int(t.Month())] {
+			t = time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, loc)
+			continue
+		}
+		if !s.matchesDay(t) {
+			t = time.Date(t.Year(), t.Month(), t.Day()+1, 0, 0, 0, 0, loc)
+			continue
+		}
+		if !s.hours[t.Hour()] {
+			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour()+1, 0, 0, 0, loc)
+			continue
+		}
+		if !s.minutes[t.Minute()] {
+			t = t.Add(time.Minute)
+			continue
+		}
+		return t, nil
+	}
+
+	return time.Time{}, fmt.Errorf("no next run found within %d years", maxNextRunYears)
+}
+
+// NextRun returns the first time the schedule fires strictly after from.
+// It supports 5-field cron expressions and the standard @aliases, except
+// @reboot which has no scheduled run time.
+func NextRun(schedule string, from time.Time) (time.Time, error) {
+	s, err := parseCronSchedule(schedule)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid schedule %q: %w", schedule, err)
+	}
+	return s.next(from)
+}
+
+// NextRuns returns the next n fire times, useful for previews in the UI.
+func NextRuns(schedule string, from time.Time, n int) ([]time.Time, error) {
+	if n <= 0 {
+		return []time.Time{}, nil
+	}
+
+	s, err := parseCronSchedule(schedule)
+	if err != nil {
+		return nil, fmt.Errorf("invalid schedule %q: %w", schedule, err)
+	}
+
+	out := make([]time.Time, 0, n)
+	t := from
+	for i := 0; i < n; i++ {
+		next, err := s.next(t)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, next)
+		t = next
+	}
+	return out, nil
 }

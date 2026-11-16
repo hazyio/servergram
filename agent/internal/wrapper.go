@@ -1,8 +1,6 @@
 package internal
 
-import "time"
-
-func RunJob(jobID uint64, timeout time.Duration) error {
+func RunJob( jobID uint64, command string) error {
 	// TODO: implement job execution logic
 	return nil
 }

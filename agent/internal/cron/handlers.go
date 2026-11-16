@@ -21,10 +21,14 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 
 	batch := make([]*proto.Cron, 0, 50)
 	err := readCronJobEach(stream.Context(), database, func(job *db.CronJob, schedule, command string) error {
-		if len(batch) == 500 {
+		if len(batch) == 50 {
 			stream.Send(&proto.ListCronJobsResponse{Jobs: batch})
 
 			batch = batch[:0] // reset batch
+		}
+		nextRunAt, err := NextRun(schedule, time.Now())
+		if err != nil {
+			return err
 		}
 		batch = append(batch, &proto.Cron{
 			Hash:      job.Hash,
@@ -33,7 +37,7 @@ func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, strea
 			Status:    string(job.Status),
 			Id:        job.ID,
 			LastRunAt: job.LastRunAt.Format(time.RFC3339),
-			NextRunAt: job.NextRunAt.Format(time.RFC3339),
+			NextRunAt: nextRunAt.Format(time.RFC3339),
 			Schedule:  schedule,
 			Command:   command,
 		})

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -10,15 +10,18 @@ import (
 	"hazyio.com/servergram/agent/internal"
 	"hazyio.com/servergram/agent/internal/db"
 	"hazyio.com/servergram/agent/internal/wrapper"
+	"hazyio.com/servergram/shared"
 )
 
 func main() {
+	h := slog.NewJSONHandler(os.Stderr, nil)
+	slog.SetDefault(slog.New(h))
 	if len(os.Args) < 2 {
-		log.Fatal("usage: agent <serve|run-job> ...")
+		shared.Fatal("usage: agent <serve|run-job> ...")
 	}
 	database, err := db.InitDatabase()
 	if err != nil {
-		log.Fatalf("failed to initialize database: %v", err)
+		shared.Fatal("failed to initialize database: %v", err)
 	}
 
 	switch os.Args[1] {
@@ -51,7 +54,7 @@ func main() {
 		internal.Serve(database)
 
 	default:
-		log.Fatalf("unknown command: %s", os.Args[1])
+		shared.Fatal("unknown command: %s", os.Args[1])
 	}
 
 }

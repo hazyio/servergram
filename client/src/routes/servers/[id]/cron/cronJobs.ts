@@ -488,25 +488,17 @@ export async function duplicateCronJob(
 
 export async function wrapCronJobsWithAgent(
   serverId: number,
-  jobIds: number[],
-): Promise<CronApiResponse<{ items: CronJob[] }>> {
-  return simulateRequest(() => {
-    const jobs = jobsFor(serverId);
-    const wrapped = jobs.filter(
-      (job) => jobIds.includes(job.id) && job.status === "unmanaged",
-    );
+): Promise<CronApiResponse<{ fixed: number }>> {
+  const { data, error } = await NewRequestClient().POST(
+    "/api/cron/{id}/fix-unmanaged",
+    { params: { path: { id: serverId } } },
+  );
 
-    if (wrapped.length === 0) {
-      throw new Error("No unmanaged cron jobs were found");
-    }
+  if (error) {
+    return { error };
+  }
 
-    for (const job of wrapped) {
-      job.status = "scheduled";
-      job.next_run = iso(minutes(5));
-    }
-
-    return { items: wrapped };
-  });
+  return { data: data ?? { fixed: 0 } };
 }
 
 export async function deleteCronJob(

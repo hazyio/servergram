@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/fix-unmanaged": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post by ID fix unmanaged */
+        post: operations["post-cron--id-fix-unmanaged"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/list": {
         parameters: {
             query?: never;
@@ -866,6 +883,13 @@ export interface components {
             /** Format: int32 */
             uid?: number;
         };
+        FixUnmanagedCronJobsResponseBody: {
+            /**
+             * Format: int32
+             * @description Number of unmanaged cron jobs fixed
+             */
+            fixed: number;
+        };
         GetServerInfoResponse: {
             architecture?: string;
             cpu_model?: string;
@@ -1183,6 +1207,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-cron--id-fix-unmanaged": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FixUnmanagedCronJobsResponseBody"];
+                };
             };
             /** @description Error */
             default: {

@@ -26,7 +26,7 @@
     open: boolean;
     serverId: number;
     jobs: CronJob[];
-    onWrapped?: (jobs: CronJob[]) => void;
+    onWrapped?: (fixed: number) => void;
   } = $props();
 
   let submitting = $state(false);
@@ -40,12 +40,8 @@
 
     submitting = true;
     error = "";
-    wrappedCount = jobs.length;
 
-    const { data, error: requestError } = await wrapCronJobsWithAgent(
-      serverId,
-      jobs.map((job) => job.id),
-    );
+    const { data, error: requestError } = await wrapCronJobsWithAgent(serverId);
     submitting = false;
 
     if (requestError || !data) {
@@ -55,7 +51,13 @@
       return;
     }
 
-    onWrapped?.(data.items);
+    if (data.fixed === 0) {
+      error = "No unmanaged cron jobs were found";
+      return;
+    }
+
+    wrappedCount = data.fixed;
+    onWrapped?.(data.fixed);
     toast.success(
       `${wrappedCount} cron ${wrappedCount === 1 ? "job" : "jobs"} wrapped with the agent`,
     );

@@ -372,20 +372,7 @@
   bind:open={wrapDialogOpen}
   {serverId}
   jobs={unmanagedJobs}
-  onWrapped={(wrapped) => {
-    const updated = new Map(wrapped.map((job) => [job.id, job]));
-    jobs = jobs.map((job) => {
-      const next = updated.get(job.id);
-      return next
-        ? {
-            ...next,
-            key: job.key,
-            hash: job.hash ?? next.hash,
-            duplicate: job.duplicate,
-          }
-        : job;
-    });
-  }}
+  onWrapped={() => loadJobs()}
 />
 
 <CronDuplicateDialog

@@ -131,7 +131,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 		}
 		var command string
 		if req.Wrap {
-			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(req.Command), newCronJob.ID)
+			command = addIDAndAgentPrefix(shQuote(req.Command), newCronJob.ID)
 		} else {
 			command = fmt.Sprintf("%s", req.Command)
 		}
@@ -157,14 +157,8 @@ func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB) (*proto.
 	count := uint32(0)
 	file := make([]byte, 0)
 	err := readCronJobEach(ctx, database, func(job *db.CronJob, schedule, command string) error {
-		if job.Managed {
-			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(command), job.ID)
-		} else {
-			count++
-			command = fmt.Sprintf("%s run-job %s id=%d", common.GetAgentPath(), shQuote(command), job.ID)
-
-		}
-		line, err := BuildLine(schedule, command)
+	
+		line, err := BuildLine(schedule, addIDAndAgentPrefix(command, job.ID))
 		if err != nil {
 			return err
 		}

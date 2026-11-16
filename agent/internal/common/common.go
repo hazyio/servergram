@@ -98,9 +98,12 @@ func UnWrapLogErr[T any](data T, e error) *T {
 }
 
 func GetAgentPath() string {
-	exe, err := os.Executable()
+	if p := os.Getenv("SERVERGRAM_AGENT_PATH"); p != "" {
+		return p
+	}
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return exe
+	return filepath.Join(home, ".servergram", "agent")
 }

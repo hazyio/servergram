@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -18,9 +18,9 @@ import (
 )
 
 func Serve(database *gorm.DB) {
-	
+
 	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
-	log.Println("starting agent connection")
+	slog.Info("starting agent connection")
 	srv := grpc.NewServer(grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 		MinTime:             15 * time.Second,
 		PermitWithoutStream: true,
@@ -30,7 +30,7 @@ func Serve(database *gorm.DB) {
 	pb.RegisterCronServiceServer(srv, cron.NewCronServer(database))
 
 	lis := &oneConnListener{ch: make(chan net.Conn, 1), done: make(chan struct{})}
-	log.Println("agent ready")
+	slog.Info("agent ready")
 
 	lis.ch <- conn // hand the single connection to Accept
 
@@ -40,7 +40,7 @@ func Serve(database *gorm.DB) {
 		srv.Stop()
 	}()
 	if err := srv.Serve(lis); err != nil {
-		log.Println("serve ended:", err)
-		log.Println("agent connection closed")
+		slog.Info("serve ended", "error", err)
+		slog.Info("agent connection closed")
 	}
 }

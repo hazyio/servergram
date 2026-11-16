@@ -11,7 +11,7 @@ type Result struct {
 	ExitCode int
 	Stdout   string
 	Stderr   string
-	Duration time.Duration
+	Duration time.Duration 
 	TimedOut bool
 }
 

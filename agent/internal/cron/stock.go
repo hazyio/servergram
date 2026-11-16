@@ -8,9 +8,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -34,7 +35,7 @@ func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
 		line := sc.Text()
 		schedule, command, err := ParseLine(line)
 		if err != nil {
-			log.Printf("failed to parse cron line: %s", err)
+			slog.Error("failed to parse cron line", "error", err)
 			continue
 		}
 		h := hashCronJob(schedule, command)
@@ -46,9 +47,9 @@ func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
 	return "", fmt.Errorf("Could not find command for cron job with hash %q", hash)
 }
 func validateName(name string) error {
-	// if name == "" {
-	// 	return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
-	// }
+	if name == "" {
+		return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
+	}
 	if name == "." || name == ".." {
 		return status.Errorf(codes.InvalidArgument, "invalid cron job name %q", name)
 	}
@@ -74,7 +75,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		line := sc.Text()
 		schedule, command, err := ParseLine(line)
 		if err != nil {
-			log.Printf("failed to parse cron line: %s", err)
+			slog.Error("failed to parse cron line", "error", err)
 			continue
 		}
 		hash := hashCronJob(schedule, command)
@@ -85,23 +86,33 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 					Hash:    hash,
 					Name:    "",
 					Status:  db.CronJobStatusScheduled,
-					Managed: strings.HasSuffix(command, fmt.Sprintf("%s run-job", common.GetAgentPath())),
+					Managed: false,
 				}
 				if err := database.Create(newCronJob).Error; err != nil {
-					log.Printf("failed to create cron job: %s", err)
+					slog.Error("failed to create cron job", "error", err)
 					return status.Errorf(codes.Internal, "create cron job: %s", err.Error())
 				}
 				job = newCronJob
 
 			} else {
-				log.Printf("failed to find cron job by hash: %s", err)
+				slog.Error("failed to find cron job by hash", "error", err)
 				return status.Errorf(codes.Internal, "find cron job: %s", err.Error())
 			}
 		}
 		// update managed status
-		job.Managed = strings.HasSuffix(command, fmt.Sprintf("%s run-job", common.GetAgentPath()))
+		job.Managed = strings.HasPrefix(command, fmt.Sprintf("%s run-job", common.GetAgentPath()))
+		command, id := splitID(trimAgentPrefix(command))
+		if job.Managed {
+			if id != job.ID {
+				// update crontab with new ID
+				if err := updateJob(ctx, job.Hash, schedule, addIDAndAgentPrefix(command, job.ID)); err != nil {
+					slog.Error("failed to update crontab", "error", err)
+					return status.Errorf(codes.Internal, "update crontab: %s", err.Error())
+				}
+			}
+		}
 		if err := database.Save(job).Error; err != nil {
-			log.Printf("failed to update cron job: %s", err)
+			slog.Error("failed to update cron job", "error", err)
 			return status.Errorf(codes.Internal, "update cron job: %s", err.Error())
 		}
 		if err := onLine(job, schedule, command); err != nil {
@@ -109,6 +120,47 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		}
 	}
 
+	return nil
+}
+
+func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error {
+	data, err := readCrontab(ctx)
+	if err != nil {
+		return fmt.Errorf("read crontab: %w", err)
+	}
+	lines := strings.Split(string(data), "\n")
+	out := make([]string, 0, len(lines))
+	removed := false
+	newLine, err := BuildLine(newSchedule, newCommand)
+	if err != nil {
+		return fmt.Errorf("build line: %w", err)
+	}
+	for _, line := range lines {
+		schedule, command, err := ParseLine(line)
+		if err != nil {
+			// error, skip parsing but preserve line
+			out = append(out, line)
+			continue
+		}
+
+		if hashCronJob(schedule, command) == hash {
+			removed = true
+			out = append(out, newLine)
+			continue
+		}
+		// add lines
+		out = append(out, line)
+	}
+
+	if !removed {
+		slog.Info("cron job not found, adding new.", "hash", hash)
+		out = append(out, newLine)
+	}
+
+	content := []byte(strings.Join(out, "\n"))
+	if err := installCrontab(ctx, content); err != nil {
+		return fmt.Errorf("install crontab: %w", err)
+	}
 	return nil
 }
 
@@ -128,8 +180,26 @@ func readCrontab(ctx context.Context) ([]byte, error) {
 	}
 	return out.Bytes(), nil
 }
-
+func addAgentPrefix(command string) string {
+	agentPath := common.GetAgentPath()
+	prefix := fmt.Sprintf("%s run-job", agentPath)
+	return prefix + " " + command
+}
+func addIDAndAgentPrefix(command string, id uint64) string {
+	return addAgentPrefix(addID(command, id))
+}
+func addID(command string, id uint64) string {
+	return fmt.Sprintf("%s id=%d", command, id)
+}
+func trimAgentPrefix(command string) string {
+	agentPath := common.GetAgentPath()
+	prefix := fmt.Sprintf("%s run-job", agentPath)
+	return strings.TrimPrefix(command, prefix)
+}
 func hashCronJob(schedule, command string) string {
+	// remove agent prefix and trailing ID
+	command = trimAgentPrefix(command)
+	command, _ = splitID(command)
 	h := sha256.New()
 	for _, s := range []string{
 		strings.Join(strings.Fields(schedule), " "), // normalize whitespace
@@ -192,4 +262,16 @@ func appendLine(cur []byte, line string) []byte {
 
 func shQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+func splitID(s string) (string, uint64) {
+	before, after, ok := strings.CutLast(s, " id=")
+	if !ok {
+		return strings.TrimSpace(s), 0
+	}
+	id, err := strconv.ParseUint(strings.TrimSpace(after), 10, 64)
+	if err != nil {
+		return strings.TrimSpace(s), 0 // " id=" wasn't a real trailing ID, leave the text alone
+	}
+	return strings.TrimSpace(before), id
 }

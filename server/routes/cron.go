@@ -14,12 +14,14 @@ import (
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
+	"hazyio.com/servergram/server/routes/models"
 	"hazyio.com/servergram/shared/gen/proto"
 )
 
 func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHManager, allowedOrigins []string, polls *internal.Polls) {
 	server := internal.NewGroup("/cron", api, database, []string{"Cron"}, ssh, allowedOrigins, polls)
 	server.SSE("/{id}/list", http.StatusOK, listCronJobs)
+	server.Post("/{id}/create", http.StatusOK, createCronJob)
 
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
@@ -73,4 +75,26 @@ func listCronJobs(data internal.RouteData[PathIdRequest], send sse.Sender) *prot
 			return nil
 		}
 	}
+}
+func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*models.CreateCronJobResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	res, err := resource.CreateCronJob(ctx, &proto.CreateCronJobRequest{
+		Schedule:          data.Input.Body.Schedule,
+		Command:           data.Input.Body.Command,
+		Name:              data.Input.Body.Name,
+		MetaKeepCount:     data.Input.Body.MetaKeepCount,
+		RunLogsKeepCount:  data.Input.Body.RunLogsKeepCount,
+		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays,
+		Wrap:              data.Input.Body.Wrap,
+	})
+	if err != nil {
+		slog.Error("Failed to create cron job", "error", err)
+		return nil, err
+	}
+	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created cron job in server \"%d\"", data.Input.ID), data.Database)
+	return &models.CreateCronJobResponse{Body: res.Job}, nil
 }

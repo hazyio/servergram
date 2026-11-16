@@ -9,19 +9,21 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
+	"hazyio.com/servergram/agent/internal/common"
 	"hazyio.com/servergram/agent/internal/db"
 )
 
 func validateName(name string) error {
-	if name == "" {
-		return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
-	}
+	// if name == "" {
+	// 	return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
+	// }
 	if name == "." || name == ".." {
 		return status.Errorf(codes.InvalidArgument, "invalid cron job name %q", name)
 	}
@@ -42,7 +44,6 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		return status.Errorf(codes.Internal, "read crontab: %s", err.Error())
 	}
 	sc := bufio.NewScanner(bytes.NewReader(data))
-	hashes := make([]string, 0)
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
 	for sc.Scan() {
 		line := sc.Text()
@@ -59,7 +60,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 					Hash:    hash,
 					Name:    "",
 					Status:  db.CronJobStatusScheduled,
-					Managed: strings.HasSuffix(command, "agent run-job"),
+					Managed: strings.HasSuffix(command, fmt.Sprintf("%s run-job", common.GetAgentPath())),
 				}
 				if err := database.Create(newCronJob).Error; err != nil {
 					log.Printf("failed to create cron job: %s", err)
@@ -73,7 +74,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 			}
 		}
 		// update managed status
-		job.Managed = strings.HasSuffix(command, "agent run-job")
+		job.Managed = strings.HasSuffix(command, fmt.Sprintf("%s run-job", common.GetAgentPath()))
 		if err := database.Save(job).Error; err != nil {
 			log.Printf("failed to update cron job: %s", err)
 			return status.Errorf(codes.Internal, "update cron job: %s", err.Error())
@@ -81,17 +82,8 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		if err := onLine(job, schedule, command); err != nil {
 			return err
 		}
-		hashes = append(hashes, hash)
 	}
-	go func() {
-		if len(hashes) > 0 {
-			// delete orphaned jobs
-			err := database.Where("hash NOT IN ?", hashes).Delete(&db.CronJob{}).Error
-			if err != nil {
-				log.Printf("failed to delete orphaned cron jobs: %s", err)
-			}
-		}
-	}()
+
 	return nil
 }
 
@@ -121,4 +113,25 @@ func hashCronJob(schedule, command string) string {
 		fmt.Fprintf(h, "%d:%s", len(s), s) // length prefix, no ambiguity
 	}
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// installCrontab replaces the user's crontab with content, via stdin.
+func installCrontab(ctx context.Context, content []byte) error {
+	var stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, "crontab", "-")
+	cmd.Stdin = bytes.NewReader(content)
+	cmd.Stderr = &stderr
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("crontab install: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+func appendLine(cur []byte, line string) []byte {
+	out := append([]byte(nil), cur...)
+	if len(out) > 0 && out[len(out)-1] != '\n' {
+		out = append(out, '\n')
+	}
+	return append(out, line+"\n"...)
 }

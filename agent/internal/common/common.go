@@ -89,3 +89,11 @@ func UnWrapLogErr[T any](data T, e error) *T {
 	}
 	return &data
 }
+
+func GetAgentPath() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	return exe
+}

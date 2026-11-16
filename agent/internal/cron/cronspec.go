@@ -187,12 +187,20 @@ func ParseLine(line string) (schedule, command string, err error) {
 
 // BuildLine is what your New Job flow should use: the line is built from a
 // validated schedule and an integer id, so no free text reaches the crontab.
-func BuildLine(schedule string, id uint64, agentPath string) (string, error) {
+func BuildLine(schedule, command string) (string, error) {
 	if err := ValidateSchedule(schedule); err != nil {
 		return "", err
 	}
-	schedule = strings.Join(strings.Fields(schedule), " ") // normalize
-	line := fmt.Sprintf("%s %s run-job %d", schedule, agentPath, id)
+	if err := ValidateCommand(command); err != nil { // rejects \n, \r, NUL, control chars
+		return "", err
+	}
+	schedule = strings.Join(strings.Fields(schedule), " ")
+	command = strings.TrimSpace(command)
+
+	// cron turns every unescaped % into a newline, so store them as \%
+	command = strings.ReplaceAll(command, "%", `\%`)
+
+	line := schedule + " " + command
 	if len(line) > maxLineLen {
 		return "", fmt.Errorf("line longer than %d characters", maxLineLen)
 	}

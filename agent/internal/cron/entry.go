@@ -1,6 +1,8 @@
 package cron
 
 import (
+	"context"
+
 	"gorm.io/gorm"
 
 	"hazyio.com/servergram/shared/gen/proto"
@@ -21,6 +23,6 @@ func (s *CronServer) ListCronJobs(req *proto.ListCronJobsRequest, stream proto.C
 	return handleListCronJobs(s.database, req, stream)
 }
 
-func (s *CronServer) CreateCronJob(req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
-	return handleCreateCronJob(s.database, req)
+func (s *CronServer) CreateCronJob(ctx context.Context, req *proto.CreateCronJobRequest) (*proto.CreateCronJobResponse, error) {
+	return handleCreateCronJob(ctx, s.database, req)
 }

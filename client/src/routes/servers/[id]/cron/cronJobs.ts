@@ -1,3 +1,5 @@
+import { NewRequestClient } from "#lib/api/request.ts";
+
 export type CronJobStatus =
   "running" | "scheduled" | "paused" | "failed" | "unmanaged";
 
@@ -22,8 +24,10 @@ export type CreateCronJobInput = {
   name: string;
   command: string;
   schedule: string;
-  wrap_with_agent: boolean;
-  retention?: CronRetention;
+  wrap: boolean;
+  meta_keep_count: number;
+  run_logs_keep_count: number;
+  error_logs_keep_days: number;
 };
 
 export type UpdateCronJobInput = {
@@ -204,33 +208,17 @@ export function getPrimaryCronAction(status: CronJobStatus): {
 export async function createCronJob(
   serverId: number,
   input: CreateCronJobInput,
-): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const name = input.name.trim();
-    const command = input.command.trim();
-    const schedule = input.schedule.trim();
-
-    if (!name) throw new Error("Name is required");
-    if (!command) throw new Error("Command is required");
-    if (!schedule) throw new Error("Run schedule is required");
-
-    const job: CronJob = {
-      id: nextJobId++,
-      name,
-      command,
-      schedule,
-      status: input.wrap_with_agent ? "scheduled" : "unmanaged",
-      last_run: null,
-      next_run: input.wrap_with_agent ? iso(minutes(5)) : null,
-    };
-
-    if (input.wrap_with_agent && input.retention) {
-      job.retention = input.retention;
-    }
-
-    jobsFor(serverId).push(job);
-    return job;
+): Promise<CronApiResponse<CreateCronJobInput>> {
+  const { error } = await NewRequestClient().POST("/api/cron/{id}/create", {
+    params: { path: { id: serverId } },
+    body: input,
   });
+
+  if (error) {
+    return { error };
+  }
+
+  return { data: input };
 }
 
 export async function updateCronJob(

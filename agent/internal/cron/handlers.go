@@ -19,7 +19,7 @@ import (
 func handleListCronJobs(database *gorm.DB, req *proto.ListCronJobsRequest, stream proto.CronService_ListCronJobsServer) error {
 	hashes := make([]string, 0)
 
-	batch := make([]*proto.Cron, 0, 500)
+	batch := make([]*proto.Cron, 0, 50)
 	err := readCronJobEach(stream.Context(), database, func(job *db.CronJob, schedule, command string) error {
 		if len(batch) == 500 {
 			stream.Send(&proto.ListCronJobsResponse{Jobs: batch})
@@ -106,7 +106,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 		}
 		var command string
 		if req.Wrap {
-			command = fmt.Sprintf("%s run %d", common.GetAgentPath(), newCronJob.ID)
+			command = fmt.Sprintf("%s run-command %s  id=%d", common.GetAgentPath(), req.Command, newCronJob.ID)
 		} else {
 			command = fmt.Sprintf("%s", req.Command)
 		}

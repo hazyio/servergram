@@ -85,14 +85,10 @@
       name: result.data.name,
       command: result.data.command,
       schedule: result.data.schedule,
-      wrap_with_agent: wrapWithAgent,
-      retention: wrapWithAgent
-        ? {
-            metadata_runs: Number(metadataRuns),
-            run_logs: Number(runLogs),
-            error_log_days: Number(errorLogDays),
-          }
-        : undefined,
+      wrap: wrapWithAgent,
+      meta_keep_count: Number(metadataRuns),
+      run_logs_keep_count: Number(runLogs),
+      error_logs_keep_days: Number(errorLogDays),
     });
     submitting = false;
 

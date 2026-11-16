@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -80,6 +81,19 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 		ErrorLogKeepDays: req.GetErrorLogsKeepDays(),
 		RunLogKeepCount:  req.GetRunLogsKeepCount(),
 	}
+	bound1 := []int{5, 10, 20, 40, 80, 160, 240, 480, 960}
+	errorDaysBounds := []int{1, 7, 14, 30, 60, 90, 180, 365}
+	if req.Wrap {
+		if !slices.Contains(bound1, int(req.GetMetaKeepCount())) {
+			return nil, status.Errorf(codes.InvalidArgument, "meta_keep_count must be one of 5, 10, 20, 40, 80, 160, 240, 480, or 960")
+		}
+		if !slices.Contains(bound1, int(req.GetRunLogsKeepCount())) {
+			return nil, status.Errorf(codes.InvalidArgument, "run_logs_keep_count must be one of 5, 10, 20, 40, 80, 160, 240, 480, or 960")
+		}
+		if !slices.Contains(errorDaysBounds, int(req.GetErrorLogsKeepDays())) {
+			return nil, status.Errorf(codes.InvalidArgument, "error_logs_keep_days must be one of 1, 7, 14, 30, 60, 90, 180, or 365")
+		}
+	}
 	var ErrDuplicateJob = errors.New("a cron job with this schedule and command already exists")
 
 	txErr := database.Transaction(func(tx *gorm.DB) error {
@@ -110,16 +124,6 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 	if txErr != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create new cron job: %v", txErr)
 	}
-	return &proto.CreateCronJobResponse{
-		Job: &proto.Cron{
-			Id:       newCronJob.ID,
-			Hash:     newCronJob.Hash,
-			Name:     newCronJob.Name,
-			Managed:  newCronJob.Managed,
-			Status:   string(newCronJob.Status),
-			Schedule: req.Schedule,
-			Command:  newCronJobLine,
-		},
-	}, nil
+	return &proto.CreateCronJobResponse{}, nil
 
 }

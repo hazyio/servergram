@@ -76,13 +76,13 @@ func listCronJobs(data internal.RouteData[PathIdRequest], send sse.Sender) *prot
 		}
 	}
 }
-func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*models.CreateCronJobResponse, error) {
+func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*EmptyRR, error) {
 	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer cancel()
-	res, err := resource.CreateCronJob(ctx, &proto.CreateCronJobRequest{
+	_, err = resource.CreateCronJob(ctx, &proto.CreateCronJobRequest{
 		Schedule:          data.Input.Body.Schedule,
 		Command:           data.Input.Body.Command,
 		Name:              data.Input.Body.Name,
@@ -96,5 +96,5 @@ func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*model
 		return nil, err
 	}
 	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created cron job in server \"%d\"", data.Input.ID), data.Database)
-	return &models.CreateCronJobResponse{Body: res.Job}, nil
+	return &EmptyRR{}, nil
 }

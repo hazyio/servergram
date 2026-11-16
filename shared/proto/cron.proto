@@ -32,9 +32,7 @@ message CreateCronJobRequest {
   bool wrap = 7;
 }
 
-message CreateCronJobResponse {
-  Cron job = 1;
-}
+message CreateCronJobResponse {}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);

@@ -311,7 +311,6 @@ func (x *CreateCronJobRequest) GetWrap() bool {
 
 type CreateCronJobResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Job           *Cron                  `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -346,13 +345,6 @@ func (*CreateCronJobResponse) Descriptor() ([]byte, []int) {
 	return file_proto_cron_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CreateCronJobResponse) GetJob() *Cron {
-	if x != nil {
-		return x.Job
-	}
-	return nil
-}
-
 var File_proto_cron_proto protoreflect.FileDescriptor
 
 const file_proto_cron_proto_rawDesc = "" +
@@ -379,9 +371,8 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x0fmeta_keep_count\x18\x04 \x01(\x05R\rmetaKeepCount\x12-\n" +
 	"\x13run_logs_keep_count\x18\x05 \x01(\x05R\x10runLogsKeepCount\x12/\n" +
 	"\x14error_logs_keep_days\x18\x06 \x01(\x05R\x11errorLogsKeepDays\x12\x12\n" +
-	"\x04wrap\x18\a \x01(\bR\x04wrap\"6\n" +
-	"\x15CreateCronJobResponse\x12\x1d\n" +
-	"\x03job\x18\x01 \x01(\v2\v.proto.CronR\x03job2\xa4\x01\n" +
+	"\x04wrap\x18\a \x01(\bR\x04wrap\"\x17\n" +
+	"\x15CreateCronJobResponse2\xa4\x01\n" +
 	"\vCronService\x12I\n" +
 	"\fListCronJobs\x12\x1a.proto.ListCronJobsRequest\x1a\x1b.proto.ListCronJobsResponse0\x01\x12J\n" +
 	"\rCreateCronJob\x12\x1b.proto.CreateCronJobRequest\x1a\x1c.proto.CreateCronJobResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
@@ -408,16 +399,15 @@ var file_proto_cron_proto_goTypes = []any{
 }
 var file_proto_cron_proto_depIdxs = []int32{
 	0, // 0: proto.ListCronJobsResponse.jobs:type_name -> proto.Cron
-	0, // 1: proto.CreateCronJobResponse.job:type_name -> proto.Cron
-	1, // 2: proto.CronService.ListCronJobs:input_type -> proto.ListCronJobsRequest
-	3, // 3: proto.CronService.CreateCronJob:input_type -> proto.CreateCronJobRequest
-	2, // 4: proto.CronService.ListCronJobs:output_type -> proto.ListCronJobsResponse
-	4, // 5: proto.CronService.CreateCronJob:output_type -> proto.CreateCronJobResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1, // 1: proto.CronService.ListCronJobs:input_type -> proto.ListCronJobsRequest
+	3, // 2: proto.CronService.CreateCronJob:input_type -> proto.CreateCronJobRequest
+	2, // 3: proto.CronService.ListCronJobs:output_type -> proto.ListCronJobsResponse
+	4, // 4: proto.CronService.CreateCronJob:output_type -> proto.CreateCronJobResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_cron_proto_init() }

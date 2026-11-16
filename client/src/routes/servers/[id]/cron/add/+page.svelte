@@ -27,7 +27,7 @@
   const serverId = $derived(Number(params.id));
 
   const runCountOptions = [5, 10, 20, 40, 80, 160, 240, 480, 960];
-  const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 365];
+  const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 180, 365];
 
   let name = $state("");
   let command = $state("");

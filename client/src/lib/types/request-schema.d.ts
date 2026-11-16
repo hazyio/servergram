@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post by ID create */
+        post: operations["post-cron--id-create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/list": {
         parameters: {
             query?: never;
@@ -727,6 +744,18 @@ export interface components {
         BooleanResponseBody: {
             value: boolean;
         };
+        CreateCronJobRequestBody: {
+            command: string;
+            /** Format: int32 */
+            error_logs_keep_days: number;
+            /** Format: int32 */
+            meta_keep_count: number;
+            name: string;
+            /** Format: int32 */
+            run_logs_keep_count: number;
+            schedule: string;
+            wrap: boolean;
+        };
         CreateDirectoryRequestBody: {
             /** @description The name of the new directory */
             name: string;
@@ -1093,6 +1122,40 @@ export interface operations {
             201: {
                 headers: {
                     "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-cron--id-create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCronJobRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content?: never;

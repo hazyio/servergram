@@ -12,6 +12,7 @@ import (
 func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunTrigger) error {
 	job, err := db.FindCronJobByID(database, jobID)
 	if err != nil {
+		slog.Error("failed to find cron job", "error", err, "job_id", jobID)
 		// TODO: implement a better way to handle this error
 		return err
 	}
@@ -47,6 +48,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 			case <-ticker.C:
 				statusErr := newRun.RetrieveStatus(database)
 				if statusErr != nil {
+					slog.Error("failed to retrieve cron run status", "error", statusErr)
 					return
 				}
 				if newRun.Status != db.RunStatusRunning {
@@ -57,7 +59,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 			}
 		}
 	}()
-
+	slog.Info("starting cron job", "job_id", jobID)
 	result, err := Run(ctx, command)
 	job.LastRunAt = time.Now()
 

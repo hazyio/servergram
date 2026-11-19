@@ -1,7 +1,6 @@
 import { NewRequestClient } from "#lib/api/request.ts";
 
-export type CronJobStatus =
-  "running" | "scheduled" | "paused" | "failed" | "unmanaged";
+export type CronJobStatus = "active" | "inactive" | "unmanaged";
 
 export type CronRetention = {
   metadata_runs: number;
@@ -46,8 +45,6 @@ export type UpdateCronJobInput = {
   retention?: CronRetention;
 };
 
-export type CronAction = "run" | "resume" | "stop";
-
 export type CronRunStatus = "running" | "succeeded" | "failed" | "canceled";
 
 export type CronRun = {
@@ -85,7 +82,7 @@ function seedJobs(): CronJob[] {
       name: "Database backup",
       command: "/usr/local/bin/backup-db.sh",
       schedule: "0 2 * * *",
-      status: "scheduled",
+      status: "active",
       last_run: iso(minutes(-1_420)),
       next_run: iso(minutes(20)),
     },
@@ -94,7 +91,7 @@ function seedJobs(): CronJob[] {
       name: "Log rotation",
       command: "/usr/sbin/logrotate /etc/logrotate.conf",
       schedule: "*/30 * * * *",
-      status: "running",
+      status: "active",
       last_run: iso(minutes(-10)),
       next_run: iso(minutes(20)),
     },
@@ -103,16 +100,16 @@ function seedJobs(): CronJob[] {
       name: "Cache warmup",
       command: "php /var/www/app/artisan cache:warm",
       schedule: "*/5 * * * *",
-      status: "failed",
+      status: "inactive",
       last_run: iso(minutes(-12)),
-      next_run: iso(minutes(3)),
+      next_run: null,
     },
     {
       id: 4,
       name: "Report generator",
       command: "/opt/reports/generate --weekly",
       schedule: "0 8 * * 1",
-      status: "paused",
+      status: "inactive",
       last_run: iso(minutes(-2_880)),
       next_run: null,
     },
@@ -121,7 +118,7 @@ function seedJobs(): CronJob[] {
       name: "Health check",
       command: "curl -fsS http://localhost/health",
       schedule: "*/1 * * * *",
-      status: "running",
+      status: "active",
       last_run: iso(seconds(-30)),
       next_run: iso(seconds(30)),
     },
@@ -130,9 +127,9 @@ function seedJobs(): CronJob[] {
       name: "Temp cleanup",
       command: "/usr/bin/find /tmp -mtime +7 -delete",
       schedule: "0 3 * * 0",
-      status: "failed",
+      status: "inactive",
       last_run: iso(minutes(-7_200)),
-      next_run: iso(minutes(2_880)),
+      next_run: null,
     },
     {
       id: 7,
@@ -198,20 +195,6 @@ async function simulateRequest<T>(run: () => T): Promise<CronApiResponse<T>> {
 
 export function cronJobDisplayName(job: Pick<CronJob, "name">): string {
   return job.name.trim() || "Unnamed job";
-}
-
-export function getPrimaryCronAction(status: CronJobStatus): {
-  kind: CronAction;
-  label: string;
-} {
-  switch (status) {
-    case "running":
-      return { kind: "stop", label: "Stop" };
-    case "paused":
-      return { kind: "resume", label: "Resume" };
-    default:
-      return { kind: "run", label: "Run" };
-  }
 }
 
 export async function createCronJob(
@@ -310,7 +293,7 @@ function seedRuns(job: CronJob): CronRun[] {
   ];
 
   return Array.from({ length: 12 }, (_, index) => {
-    const live = index === 0 && job.status === "running";
+    const live = index === 0 && job.status === "active";
     const status: CronRunStatus = live
       ? "running"
       : statuses[(index + job.id) % statuses.length];
@@ -432,36 +415,27 @@ export async function getCronRunLog(
   });
 }
 
-export async function performCronAction(
+export async function runCronJob(
   serverId: number,
   jobId: number,
-  action: CronAction,
-): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
-    if (job.status === "unmanaged") {
-      throw new Error("Wrap this cron job with the agent before managing it");
-    }
+): Promise<CronApiResponse<Record<string, never>>> {
+  const { data, error } = await NewRequestClient().GET(
+    "/api/cron/{id}/run/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+      },
+    },
+  );
 
-    switch (action) {
-      case "run":
-        job.status = "running";
-        job.last_run = iso(0);
-        job.next_run = iso(minutes(1));
-        break;
-      case "resume":
-        job.status = "scheduled";
-        job.next_run = iso(minutes(5));
-        break;
-      case "stop":
-        job.status = "paused";
-        job.next_run = null;
-        break;
-    }
+  if (error) {
+    return { error };
+  }
 
-    return job;
-  });
+  return { data: (data ?? {}) as Record<string, never> };
 }
 
 export async function duplicateCronJob(
@@ -477,9 +451,9 @@ export async function duplicateCronJob(
       ...source,
       id: nextJobId++,
       name: source.name.trim() ? `${source.name} copy` : "",
-      status: source.status === "running" ? "scheduled" : source.status,
+      status: source.status,
       last_run: null,
-      next_run: source.status === "paused" ? null : iso(minutes(5)),
+      next_run: source.status === "inactive" ? null : iso(minutes(5)),
     };
     jobs.push(copy);
     return copy;

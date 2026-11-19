@@ -39,3 +39,11 @@ type RunJobRequest struct {
 type RunJobResponse struct {
 	Body *proto.RunCronJobResponse
 }
+type CronJobInfoRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	JobID uint64 `path:"job_id" minimum:"1" doc:"The ID of the cron job to run"`
+}
+
+type CronJobInfoResponse struct {
+	Body *proto.Cron
+}

@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/info/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get by ID info by job ID */
+        get: operations["get-cron--id-info-job_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/list": {
         parameters: {
             query?: never;
@@ -83,6 +100,23 @@ export interface paths {
         put?: never;
         /** Post by ID remove duplicates */
         post: operations["post-cron--id-remove-duplicates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cron/{id}/run/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get by ID run by job ID */
+        get: operations["get-cron--id-run-job_id"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1001,6 +1035,7 @@ export interface components {
             /** @description The current path of the file/directory */
             path: string;
         };
+        RunCronJobResponse: Record<string, never>;
         SSEError: {
             message: string;
             /** Format: int64 */
@@ -1251,6 +1286,40 @@ export interface operations {
             };
         };
     };
+    "get-cron--id-info-job_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job to run */
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cron"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "sse-cron--id-list": {
         parameters: {
             query?: never;
@@ -1324,6 +1393,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RemoveDuplicateCronJobsResponseBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-cron--id-run-job_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job to run */
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunCronJobResponse"];
                 };
             };
             /** @description Error */

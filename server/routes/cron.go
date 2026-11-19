@@ -11,6 +11,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/sse"
 	"gorm.io/gorm"
+
 	"hazyio.com/servergram/server/db"
 	"hazyio.com/servergram/server/internal"
 	"hazyio.com/servergram/server/internal/sshmanager"
@@ -25,6 +26,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Post("/{id}/remove-duplicates", http.StatusOK, removeDuplicateCronJobs)
 	server.Post("/{id}/fix-unmanaged", http.StatusOK, fixUnmanagedCronJobs)
 	server.Get("/{id}/run/{job_id}", http.StatusOK, runCronJob)
+	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -154,5 +156,24 @@ func runCronJob(data internal.RouteData[models.RunJobRequest]) (*models.RunJobRe
 	response := &models.RunJobResponse{}
 	response.Body = result
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Ran cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
+	return response, nil
+}
+
+func getCronJobInfo(data internal.RouteData[models.CronJobInfoRequest]) (*models.CronJobInfoResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	result, err := resource.CronInfo(ctx, &proto.CronInfoRequest{
+		Id: data.Input.JobID,
+	})
+	if err != nil {
+		slog.Error("Failed to get cron job info", "error", err)
+		return nil, err
+	}
+	response := &models.CronJobInfoResponse{}
+	response.Body = result.Job
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Retrieved cron job %d info in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return response, nil
 }

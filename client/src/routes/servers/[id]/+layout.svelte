@@ -22,7 +22,7 @@
   ]);
   $effect(() => {
     if (server) {
-            updatePageServerInfo(server.id, server.name);
+      updatePageServerInfo(server.id, server.name);
     }
   });
 </script>

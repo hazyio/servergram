@@ -3,7 +3,7 @@ tmp_dir = "tmp"
 
 [build]
 cmd = "CGO_ENABLED=0 go build -o /tmp/servergram-agent . && ../scripts/build-agent-to-server.sh"
-entrypoint = ["LOG_LEVEL=debug", "../scripts/run-agent.sh"]
+entrypoint = [ "../scripts/run-agent.sh"]
 include_dir = ["internal", "../shared/proto"]
 include_ext = ["go", "proto"]
 exclude_regex = ["_test\\.go$"]

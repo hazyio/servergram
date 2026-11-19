@@ -1,5 +1,6 @@
 <script lang="ts">
   import { unWrapErrorMessage } from "#lib/api/request.ts";
+  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import * as Popover from "#lib/components/ui/popover/index.js";
@@ -10,7 +11,6 @@
     Loader,
     Pencil,
     Play,
-    Square,
     Trash2,
   } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
@@ -18,9 +18,7 @@
     cronJobDisplayName,
     deleteCronJob,
     duplicateCronJob,
-    getPrimaryCronAction,
-    performCronAction,
-    type CronAction,
+    runCronJob,
     type CronJob,
   } from "../cronJobs.ts";
   import CronEditDialog from "../CronEditDialog.svelte";
@@ -39,39 +37,32 @@
     onDeleted?: (id: number) => void;
   } = $props();
 
-  let pending = $state<CronAction | "duplicate" | "delete" | null>(null);
+  let pending = $state<"run" | "duplicate" | "delete" | null>(null);
   let confirmDelete = $state(false);
   let editOpen = $state(false);
+  let runErrorOpen = $state(false);
+  let runError = $state("");
 
-  const primary = $derived(getPrimaryCronAction(job.status));
   const busy = $derived(pending !== null);
   const displayName = $derived(cronJobDisplayName(job));
   const isUnmanaged = $derived(job.status === "unmanaged");
 
-  const actionMessage: Record<CronAction, string> = {
-    run: "started",
-    resume: "resumed",
-    stop: "stopped",
-  };
-
-  async function applyAction(action: CronAction) {
+  async function runJob() {
     if (busy) return;
-    pending = action;
+    pending = "run";
+    runError = "";
 
-    const { data, error } = await performCronAction(serverId, job.id, action);
+    const { error } = await runCronJob(serverId, job.id);
     pending = null;
 
-    if (error || !data) {
-      toast.error(
-        error
-          ? unWrapErrorMessage(error, `Failed to ${action} ${displayName}`)
-          : `Failed to ${action} ${displayName}`,
-      );
+    if (error) {
+      runError = unWrapErrorMessage(error, `Failed to run ${displayName}`);
+      runErrorOpen = true;
       return;
     }
 
-    onUpdated?.(data);
-    toast.success(`${displayName} ${actionMessage[action]}`);
+    runErrorOpen = false;
+    toast.success(`${displayName} started`);
   }
 
   async function duplicate() {
@@ -129,17 +120,15 @@
     disabled={busy || isUnmanaged}
     title={isUnmanaged
       ? "Wrap this job with the agent to manage it"
-      : `${primary.label} ${displayName}`}
-    onclick={() => applyAction(primary.kind)}
+      : `Run ${displayName}`}
+    onclick={runJob}
   >
-    {#if pending === primary.kind}
+    {#if pending === "run"}
       <Loader class="size-3.5 animate-spin" />
-    {:else if primary.kind === "stop"}
-      <Square class="size-3.5" />
     {:else}
       <Play class="size-3.5" />
     {/if}
-    <span class="hidden md:inline">{primary.label}</span>
+    <span class="hidden md:inline">Run</span>
   </Button>
 
   <Popover.Root>
@@ -238,6 +227,23 @@
           Delete
         {/if}
       </Button>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+
+<AlertDialog.Root bind:open={runErrorOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Could not run cron job</AlertDialog.Title>
+    </AlertDialog.Header>
+    <ErrorSection
+      title="Failed to run cron job"
+      message={runError}
+      onRetry={runJob}
+    />
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel disabled={pending === "run"}>Close</AlertDialog.Cancel
+      >
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog.Root>

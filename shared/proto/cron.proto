@@ -56,6 +56,13 @@ message StopCronJobRequest {
 }
 
 message StopCronJobResponse {}
+message CronInfoRequest {
+  uint64 id = 1;
+}
+
+message CronInfoResponse {
+  Cron job = 1;
+}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
@@ -64,4 +71,5 @@ service CronService {
   rpc FixUnmanagedCronJobs(FixUnmanagedCronJobsRequest) returns (FixUnmanagedCronJobsResponse);
   rpc RunCronJob(RunCronJobRequest) returns (RunCronJobResponse);
   rpc StopCronJob(StopCronJobRequest) returns (StopCronJobResponse);
+  rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
 }

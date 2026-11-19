@@ -41,3 +41,7 @@ func (s *CronServer) RunCronJob(ctx context.Context, req *proto.RunCronJobReques
 func (s *CronServer) StopCronJob(ctx context.Context, req *proto.StopCronJobRequest) (*proto.StopCronJobResponse, error) {
 	return handleStopCronJob(ctx, s.database, req)
 }
+
+func (s *CronServer) CronInfo(ctx context.Context, req *proto.CronInfoRequest) (*proto.CronInfoResponse, error) {
+	return handleInfo(ctx, s.database, req)
+}

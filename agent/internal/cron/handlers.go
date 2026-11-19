@@ -31,10 +31,7 @@ func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobs
 			}
 			batch = make([]*proto.Cron, 0, 50) // new slice, never reuse after Send
 		}
-		nextRunAt, err := NextRun(schedule, time.Now())
-		if err != nil {
-			return err
-		}
+
 		batch = append(batch, &proto.Cron{
 			Hash:      job.Hash,
 			Name:      job.Name,
@@ -42,7 +39,7 @@ func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobs
 			Status:    string(job.Status),
 			Id:        job.ID,
 			LastRunAt: job.LastRunAt.Format(time.RFC3339),
-			NextRunAt: nextRunAt.Format(time.RFC3339),
+			NextRunAt: job.NextRunAt.Format(time.RFC3339),
 			Schedule:  schedule,
 			Command:   command,
 		})
@@ -191,10 +188,11 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 	if !job.Managed {
 		return nil, status.Errorf(codes.FailedPrecondition, "cron job is not managed by agent")
 	}
-	command, err := GetCronJobCommandByHash(ctx, job.Hash)
+	jobCommand, err := GetCronJobCommandByHash(ctx, job.Hash)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
+	command, _ := splitID(jobCommand)
 
 	cmd := exec.Command(addIDAndAgentPrefix(command, job.ID))
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
@@ -222,4 +220,39 @@ func handleStopCronJob(ctx context.Context, database *gorm.DB, req *proto.StopCr
 		return nil, status.Errorf(codes.Internal, "failed to update cron job status: %v", err)
 	}
 	return &proto.StopCronJobResponse{}, nil
+}
+func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoRequest) (*proto.CronInfoResponse, error) {
+	var job *proto.Cron
+	var FoundErr = errors.New("not found")
+
+	err := readCronJobEach(ctx, database, func(j *db.CronJob, schedule, command string) error {
+		if j.ID != req.Id {
+			return nil
+		}
+		job = &proto.Cron{
+			Hash:      j.Hash,
+			Name:      j.Name,
+			Managed:   j.Managed,
+			Status:    string(j.Status),
+			Id:        j.ID,
+			LastRunAt: j.LastRunAt.Format(time.RFC3339),
+			Schedule:  schedule,
+			Command:   command,
+			NextRunAt: j.NextRunAt.Format(time.RFC3339),
+		}
+
+		return FoundErr
+	})
+
+	if err != nil && !errors.Is(err, FoundErr) {
+
+		return nil, status.Errorf(codes.Internal, "failed to calculate next run time: %v", err)
+	}
+	if job == nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
+	}
+
+	return &proto.CronInfoResponse{
+		Job: job,
+	}, nil
 }

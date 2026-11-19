@@ -38,13 +38,7 @@ export const getColumns = (
         if (filterValue === "unmanaged") {
           return row.original.status === "unmanaged";
         }
-        if (filterValue === "active") {
-          return (
-            row.original.status !== "paused" &&
-            row.original.status !== "unmanaged"
-          );
-        }
-        return row.original.status === "paused";
+        return row.original.status === filterValue;
       },
       cell: (info) =>
         renderComponent(CronStatusBadge, { status: info.getValue() }),

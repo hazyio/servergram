@@ -56,11 +56,10 @@
 
   const totalJobs = $derived(jobs.length);
   const activeJobs = $derived(
-    jobs.filter((job) => job.status !== "paused" && job.status !== "unmanaged")
-      .length,
+    jobs.filter((job) => job.status === "active").length,
   );
-  const failedJobs = $derived(
-    jobs.filter((job) => job.status === "failed").length,
+  const inactiveJobs = $derived(
+    jobs.filter((job) => job.status === "inactive").length,
   );
   const unmanagedJobs = $derived(
     jobs.filter((job) => job.status === "unmanaged"),
@@ -78,19 +77,14 @@
 
   type CronChunk = components["schemas"]["ListCronJobsResponse"];
 
-  const knownStatuses = new Set<CronJobStatus>([
-    "running",
-    "scheduled",
-    "paused",
-    "failed",
-  ]);
+  const knownStatuses = new Set<CronJobStatus>(["active", "inactive"]);
 
   function toCronJob(cron: components["schemas"]["Cron"]): CronJob {
     const status: CronJobStatus = !cron.managed
       ? "unmanaged"
       : knownStatuses.has(cron.status as CronJobStatus)
         ? (cron.status as CronJobStatus)
-        : "scheduled";
+        : "inactive";
 
     return {
       id: cron.id ?? 0,
@@ -242,10 +236,10 @@
     </Card.Root>
     <Card.Root class="grow">
       <Card.Header>
-        <Card.Title class="text-foreground/30">Failed</Card.Title>
+        <Card.Title class="text-foreground/30">Inactive</Card.Title>
       </Card.Header>
       <Card.Content>
-        <p class="text-destructive text-lg">{failedJobs}</p>
+        <p class="text-muted-foreground text-lg">{inactiveJobs}</p>
       </Card.Content>
     </Card.Root>
     <Card.Root class="grow">

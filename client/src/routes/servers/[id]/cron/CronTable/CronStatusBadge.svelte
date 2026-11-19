@@ -8,25 +8,15 @@
     CronJobStatus,
     { label: string; variant: BadgeVariant; class: string }
   > = {
-    running: {
-      label: "Running",
+    active: {
+      label: "Active",
       variant: "secondary",
       class: "text-emerald-600 dark:text-emerald-400",
     },
-    scheduled: {
-      label: "Scheduled",
-      variant: "outline",
-      class: "text-sky-600 dark:text-sky-400",
-    },
-    paused: {
-      label: "Paused",
+    inactive: {
+      label: "Inactive",
       variant: "outline",
       class: "text-muted-foreground",
-    },
-    failed: {
-      label: "Failed",
-      variant: "destructive",
-      class: "",
     },
     unmanaged: {
       label: "Unmanaged",

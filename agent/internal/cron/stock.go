@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -114,6 +115,13 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 				}
 			}
 		}
+		nextRunAt, err := NextRun(schedule, time.Now())
+		if err != nil {
+			slog.Error("failed to calculate next run time", "error", err)
+			continue
+		}
+		job.NextRunAt = nextRunAt
+
 		if err := database.Save(job).Error; err != nil {
 			slog.Error("failed to update cron job", "error", err)
 			return status.Errorf(codes.Internal, "update cron job: %s", err.Error())

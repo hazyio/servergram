@@ -61,13 +61,14 @@ message CronInfoRequest {
 }
 
 message CronInfoResponse {
-  bool managed = 1;
-  uint64 id = 2;
-  string schedule = 3;
-  string command = 4;
-  int32 meta_keep_count = 5;
-  int32 run_logs_keep_count = 6;
-  int32 error_logs_keep_days = 7;
+  string name = 1;
+  bool managed = 2;
+  uint64 id = 3;
+  string schedule = 4;
+  string command = 5;
+  int32 meta_keep_count = 6;
+  int32 run_logs_keep_count = 7;
+  int32 error_logs_keep_days = 8;
 }
 
 service CronService {

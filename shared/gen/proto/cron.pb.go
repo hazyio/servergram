@@ -711,13 +711,14 @@ func (x *CronInfoRequest) GetId() uint64 {
 
 type CronInfoResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	Managed           bool                   `protobuf:"varint,1,opt,name=managed,proto3" json:"managed,omitempty"`
-	Id                uint64                 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
-	Schedule          string                 `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	Command           string                 `protobuf:"bytes,4,opt,name=command,proto3" json:"command,omitempty"`
-	MetaKeepCount     int32                  `protobuf:"varint,5,opt,name=meta_keep_count,json=metaKeepCount,proto3" json:"meta_keep_count,omitempty"`
-	RunLogsKeepCount  int32                  `protobuf:"varint,6,opt,name=run_logs_keep_count,json=runLogsKeepCount,proto3" json:"run_logs_keep_count,omitempty"`
-	ErrorLogsKeepDays int32                  `protobuf:"varint,7,opt,name=error_logs_keep_days,json=errorLogsKeepDays,proto3" json:"error_logs_keep_days,omitempty"`
+	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Managed           bool                   `protobuf:"varint,2,opt,name=managed,proto3" json:"managed,omitempty"`
+	Id                uint64                 `protobuf:"varint,3,opt,name=id,proto3" json:"id,omitempty"`
+	Schedule          string                 `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	Command           string                 `protobuf:"bytes,5,opt,name=command,proto3" json:"command,omitempty"`
+	MetaKeepCount     int32                  `protobuf:"varint,6,opt,name=meta_keep_count,json=metaKeepCount,proto3" json:"meta_keep_count,omitempty"`
+	RunLogsKeepCount  int32                  `protobuf:"varint,7,opt,name=run_logs_keep_count,json=runLogsKeepCount,proto3" json:"run_logs_keep_count,omitempty"`
+	ErrorLogsKeepDays int32                  `protobuf:"varint,8,opt,name=error_logs_keep_days,json=errorLogsKeepDays,proto3" json:"error_logs_keep_days,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -750,6 +751,13 @@ func (x *CronInfoResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CronInfoResponse.ProtoReflect.Descriptor instead.
 func (*CronInfoResponse) Descriptor() ([]byte, []int) {
 	return file_proto_cron_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CronInfoResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *CronInfoResponse) GetManaged() bool {
@@ -842,15 +850,16 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\"\x15\n" +
 	"\x13StopCronJobResponse\"!\n" +
 	"\x0fCronInfoRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\"\xfa\x01\n" +
-	"\x10CronInfoResponse\x12\x18\n" +
-	"\amanaged\x18\x01 \x01(\bR\amanaged\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\x04R\x02id\x12\x1a\n" +
-	"\bschedule\x18\x03 \x01(\tR\bschedule\x12\x18\n" +
-	"\acommand\x18\x04 \x01(\tR\acommand\x12&\n" +
-	"\x0fmeta_keep_count\x18\x05 \x01(\x05R\rmetaKeepCount\x12-\n" +
-	"\x13run_logs_keep_count\x18\x06 \x01(\x05R\x10runLogsKeepCount\x12/\n" +
-	"\x14error_logs_keep_days\x18\a \x01(\x05R\x11errorLogsKeepDays2\xb5\x04\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\"\x8e\x02\n" +
+	"\x10CronInfoResponse\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
+	"\amanaged\x18\x02 \x01(\bR\amanaged\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\x04R\x02id\x12\x1a\n" +
+	"\bschedule\x18\x04 \x01(\tR\bschedule\x12\x18\n" +
+	"\acommand\x18\x05 \x01(\tR\acommand\x12&\n" +
+	"\x0fmeta_keep_count\x18\x06 \x01(\x05R\rmetaKeepCount\x12-\n" +
+	"\x13run_logs_keep_count\x18\a \x01(\x05R\x10runLogsKeepCount\x12/\n" +
+	"\x14error_logs_keep_days\x18\b \x01(\x05R\x11errorLogsKeepDays2\xb5\x04\n" +
 	"\vCronService\x12I\n" +
 	"\fListCronJobs\x12\x1a.proto.ListCronJobsRequest\x1a\x1b.proto.ListCronJobsResponse0\x01\x12J\n" +
 	"\rCreateCronJob\x12\x1b.proto.CreateCronJobRequest\x1a\x1c.proto.CreateCronJobResponse\x12h\n" +

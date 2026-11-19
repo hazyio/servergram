@@ -230,6 +230,7 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 			return nil
 		}
 		job = &proto.CronInfoResponse{
+			Name:              j.Name,
 			Managed:           j.Managed,
 			Id:                j.ID,
 			Schedule:          schedule,

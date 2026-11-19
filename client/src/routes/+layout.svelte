@@ -2,6 +2,7 @@
   import appPaths from "#lib/appPaths.ts";
   import favicon from "#lib/assets/favicon.svg";
   import SideBarContainer from "#lib/components/base/sidebar/SideBarContainer.svelte";
+  import OfflineNotice from "#lib/components/base/pwa/OfflineNotice.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.ts";
   import { page } from "$app/state";
   import type { LayoutProps } from "./$types";
@@ -118,6 +119,7 @@
   <link rel="icon" href={favicon} />
 </svelte:head>
 <Toaster />
+<OfflineNotice />
 
 {#if page.url.pathname === appPaths.account.login}
   {@render children()}

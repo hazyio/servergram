@@ -65,12 +65,14 @@ func validateName(name string) error {
 
 // Read and process each cron job from the crontab.
 func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db.CronJob, schedule, command string) error) error {
+	slog.Debug("reading crontab for processing")
 	data, err := readCrontab(ctx)
 	if err != nil {
 		return status.Errorf(codes.Internal, "read crontab: %s", err.Error())
 	}
 	sc := bufio.NewScanner(bytes.NewReader(data))
 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
+	slog.Debug("Now scanning crontab lines", "data_size", len(data))
 	for sc.Scan() {
 		line := sc.Text()
 		schedule, command, err := ParseLine(line)
@@ -104,6 +106,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		command, id := splitID(trimAgentPrefix(command))
 		if job.Managed {
 			if id != job.ID {
+				slog.Info("cron job ID mismatch, updating crontab", "job_id", job.ID, "line_id", id)
 				// update crontab with new ID
 				if err := updateJob(ctx, job.Hash, schedule, addIDAndAgentPrefix(command, job.ID)); err != nil {
 					slog.Error("failed to update crontab", "error", err)
@@ -124,6 +127,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 }
 
 func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error {
+	slog.Debug("updating cron job", "hash", hash)
 	data, err := readCrontab(ctx)
 	if err != nil {
 		return fmt.Errorf("read crontab: %w", err)
@@ -135,6 +139,7 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 	if err != nil {
 		return fmt.Errorf("build line: %w", err)
 	}
+	slog.Debug("Now looping cron jobs in update, ", "lines", len(lines))
 	for _, line := range lines {
 		schedule, command, err := ParseLine(line)
 		if err != nil {
@@ -165,6 +170,7 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 }
 
 func readCrontab(ctx context.Context) ([]byte, error) {
+	slog.Debug("reading crontab")
 	var out, errb bytes.Buffer
 	cmd := exec.CommandContext(ctx, "crontab", "-l")
 	cmd.Stdout = &out
@@ -178,6 +184,7 @@ func readCrontab(ctx context.Context) ([]byte, error) {
 		}
 		return nil, fmt.Errorf("crontab -l: %w: %s", err, strings.TrimSpace(errb.String()))
 	}
+	slog.Debug("read crontab successfully")
 	return out.Bytes(), nil
 }
 func addAgentPrefix(command string) string {
@@ -197,6 +204,7 @@ func trimAgentPrefix(command string) string {
 	return strings.TrimPrefix(command, prefix)
 }
 func hashCronJob(schedule, command string) string {
+	slog.Debug("hashing cron job", "schedule", schedule)
 	// remove agent prefix and trailing ID
 	command = trimAgentPrefix(command)
 	command, _ = splitID(command)
@@ -207,6 +215,7 @@ func hashCronJob(schedule, command string) string {
 	} {
 		fmt.Fprintf(h, "%d:%s", len(s), s) // length prefix, no ambiguity
 	}
+
 	return hex.EncodeToString(h.Sum(nil))
 }
 

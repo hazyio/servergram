@@ -17,12 +17,13 @@ import (
 )
 
 func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobsServer) error {
+	slog.Debug("listing cron jobs")
 	hashes := make([]string, 0)
 
 	batch := make([]*proto.Cron, 0, 50)
 	err := readCronJobEach(stream.Context(), database, func(job *db.CronJob, schedule, command string) error {
 		if len(batch) == 50 {
-			slog.Debug("sending batch of cron jobs")
+			slog.Debug("sending batch of 50 cron jobs")
 			if err := common.LogError(stream.Send(&proto.ListCronJobsResponse{Jobs: batch})); err != nil {
 				return err
 			}

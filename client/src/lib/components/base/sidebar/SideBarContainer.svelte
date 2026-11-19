@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import * as Breadcrumb from "#lib/components/ui/breadcrumb/index.js";
-  import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
-  import AppSidebar from "./AppSideBar.svelte";
+  import * as Sidebar from "#lib/components/ui/sidebar/index.js";
+  import { page } from "$app/state";
   import type { Snippet } from "svelte";
-  import type { SideBarItem } from "./AppSideBar.svelte";
   import ConnectedServices from "../services/ServiceManager.svelte";
-  import InstallPWA from "../pwa/InstallPWA.svelte";
+  import type { SideBarItem } from "./AppSideBar.svelte";
+  import AppSidebar from "./AppSideBar.svelte";
   import Notifications from "./Notifications.svelte";
 
   let {
@@ -86,7 +85,6 @@
       <div class="ms-auto gap-3 flex items-center">
         <ConnectedServices />
 
-        <InstallPWA />
 
         <Notifications />
       </div>

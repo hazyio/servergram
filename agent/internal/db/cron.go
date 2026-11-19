@@ -1,6 +1,7 @@
 package db
 
 import (
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -41,6 +42,8 @@ func FindCronJobByID(db *gorm.DB, id uint64) (*CronJob, error) {
 }
 
 func FindCronJobByHash(db *gorm.DB, hash string) (*CronJob, error) {
+	slog.Debug("finding cron job by hash", "hash", hash)
+	
 	var job CronJob
 	if err := db.Where("hash = ?", hash).First(&job).Error; err != nil {
 		return nil, err

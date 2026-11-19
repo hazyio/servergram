@@ -15,7 +15,10 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		// TODO: implement a better way to handle this error
 		return err
 	}
-
+	if job.Status == db.CronJobStatusInactive {
+		slog.Info("skipping inactive cron job", "job_id", job.ID)
+		return nil
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var newRun *db.CronRun
@@ -57,18 +60,12 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 
 	result, err := Run(ctx, command)
 	job.LastRunAt = time.Now()
-	if err != nil {
-		job.Status = db.CronJobStatusFailed
 
-	} else {
-		job.Status = db.CronJobStatusSuccess
-
-	}
 	if err := database.Save(job).Error; err != nil {
 		slog.Error("failed to save cron job", "error", err)
 	}
 
-	if job.MetaKeepCount > 0 && newRun != nil {
+	if newRun != nil {
 		if err != nil {
 			newRun.Status = db.RunStatusFailed
 		} else {

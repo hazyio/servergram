@@ -10,11 +10,8 @@ import (
 type CronJobStatus string
 
 const (
-	CronJobStatusFailed    CronJobStatus = "failed"
-	CronJobStatusSuccess   CronJobStatus = "success"
-	CronJobStatusPaused    CronJobStatus = "paused"
-	CronJobStatusRunning   CronJobStatus = "running"
-	CronJobStatusScheduled CronJobStatus = "scheduled"
+	CronJobStatusInactive CronJobStatus = "inactive"
+	CronJobStatusActive    CronJobStatus = "active"
 )
 
 type CronJob struct {
@@ -43,7 +40,7 @@ func FindCronJobByID(db *gorm.DB, id uint64) (*CronJob, error) {
 
 func FindCronJobByHash(db *gorm.DB, hash string) (*CronJob, error) {
 	slog.Debug("finding cron job by hash", "hash", hash)
-	
+
 	var job CronJob
 	if err := db.Where("hash = ?", hash).First(&job).Error; err != nil {
 		return nil, err

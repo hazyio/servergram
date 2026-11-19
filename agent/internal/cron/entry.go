@@ -38,3 +38,6 @@ func (s *CronServer) FixUnmanagedCronJobs(ctx context.Context, req *proto.FixUnm
 func (s *CronServer) RunCronJob(ctx context.Context, req *proto.RunCronJobRequest) (*proto.RunCronJobResponse, error) {
 	return handleRunCronJob(ctx, s.database, req)
 }
+func (s *CronServer) StopCronJob(ctx context.Context, req *proto.StopCronJobRequest) (*proto.StopCronJobResponse, error) {
+	return handleStopCronJob(ctx, s.database, req)
+}

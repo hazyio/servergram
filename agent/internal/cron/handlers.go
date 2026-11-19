@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os/exec"
 	"slices"
+	"syscall"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -102,7 +104,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 		Name:             req.GetName(),
 		Hash:             cronJobHash,
 		Managed:          req.GetWrap(),
-		Status:           db.CronJobStatusScheduled,
+		Status:           db.CronJobStatusActive,
 		MetaKeepCount:    req.GetMetaKeepCount(),
 		ErrorLogKeepDays: req.GetErrorLogsKeepDays(),
 		RunLogKeepCount:  req.GetRunLogsKeepCount(),
@@ -178,4 +180,46 @@ func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB) (*proto.
 		}
 	}
 	return &proto.FixUnmanagedCronJobsResponse{Fixed: count}, nil
+}
+
+func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCronJobRequest) (*proto.RunCronJobResponse, error) {
+	job, err := db.FindCronJobByID(database, uint64(req.Id))
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
+	}
+	if !job.Managed {
+		return nil, status.Errorf(codes.FailedPrecondition, "cron job is not managed by agent")
+	}
+	command, err := GetCronJobCommandByHash(ctx, job.Hash)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
+	}
+
+	cmd := exec.Command(addIDAndAgentPrefix(command, job.ID))
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
+
+	if err := cmd.Start(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to start cron job: %v", err)
+	}
+	if err := cmd.Process.Release(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to release cron job process: %v", err)
+	}
+	return &proto.RunCronJobResponse{}, nil
+}
+
+func handleStopCronJob(ctx context.Context, database *gorm.DB, req *proto.StopCronJobRequest) (*proto.StopCronJobResponse, error) {
+	job, err := db.FindCronJobByID(database, uint64(req.Id))
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
+	}
+	if !job.Managed {
+		return nil, status.Errorf(codes.FailedPrecondition, "cron job is not managed by agent")
+	}
+	job.Status = db.CronJobStatusInactive
+	if err := database.Save(job).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update cron job status: %v", err)
+	}
+	return &proto.StopCronJobResponse{}, nil
 }

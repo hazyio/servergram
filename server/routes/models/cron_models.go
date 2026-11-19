@@ -30,3 +30,12 @@ type FixUnmanagedCronJobsResponse struct {
 		Fixed uint32 `json:"fixed" doc:"Number of unmanaged cron jobs fixed"`
 	}
 }
+
+type RunJobRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	JobID uint64 `path:"job_id" minimum:"1" doc:"The ID of the cron job to run"`
+}
+
+type RunJobResponse struct {
+	Body *proto.RunCronJobResponse
+}

@@ -6,7 +6,6 @@ import fs from "fs";
 
 export default defineConfig({
   server: {
- 
     proxy: {
       "/api/": {
         target: "https://localhost:9788",
@@ -23,11 +22,6 @@ export default defineConfig({
     https: {
       cert: fs.readFileSync("../certs/localhost+2.pem"),
       key: fs.readFileSync("../certs/localhost+2-key.pem"),
-    },
-    hmr: {
-      protocol: "wss",
-      host: "localhost",
-      clientPort: 443,
     },
   },
   plugins: [

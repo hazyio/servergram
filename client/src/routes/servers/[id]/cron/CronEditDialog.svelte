@@ -18,7 +18,12 @@
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import * as z from "zod";
-  import { getCronJob, updateCronJob, type CronJob } from "./cronJobs.ts";
+  import {
+    getCronJobInfo,
+    updateCronJob,
+    type CronJob,
+    type CronJobInfo,
+  } from "./cronJobs.ts";
 
   let {
     open = $bindable(false),
@@ -32,21 +37,21 @@
     onUpdated?: (job: CronJob) => void;
   } = $props();
 
-  const runCountOptions = [5, 10, 20, 40, 80, 160, 240, 480, 960];
-  const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 365];
+  const runCountOptions = [0, 5, 10, 20, 40, 80, 160, 240, 480, 960];
+  const errorLogDayOptions = [0, 1, 7, 14, 30, 60, 90, 365];
 
   let name = $state("");
   let command = $state("");
   let schedule = $state("");
   let scheduleDescription = $state("");
-  let metadataRuns = $state("20");
-  let runLogs = $state("20");
-  let errorLogDays = $state("14");
+  let metadataRuns = $state("0");
+  let runLogs = $state("0");
+  let errorLogDays = $state("0");
   let scheduleDialogOpen = $state(false);
   let submitting = $state(false);
   let loading = $state(false);
   let loadError = $state("");
-  let loadedJob = $state<CronJob | null>(null);
+  let loadedInfo = $state<CronJobInfo | null>(null);
   let requestError = $state("");
   let requestToken = 0;
   let formError = $state({
@@ -55,7 +60,9 @@
     schedule: "",
   });
 
-  const isManaged = $derived((loadedJob ?? job).status !== "unmanaged");
+  const isManaged = $derived(
+    loadedInfo ? loadedInfo.managed : job.status !== "unmanaged",
+  );
 
   const formSchema = z.object({
     name: z
@@ -81,7 +88,7 @@
     loadError = "";
     requestError = "";
 
-    const { data, error } = await getCronJob(serverId, job.id);
+    const { data, error } = await getCronJobInfo(serverId, job.id);
 
     if (token !== requestToken) return;
 
@@ -94,16 +101,16 @@
       return;
     }
 
-    loadedJob = data;
-    name = data.name;
+    loadedInfo = data;
+    name = data.name || job.name;
     command = data.command;
     schedule = data.schedule;
     scheduleDescription = data.schedule
       ? describeCronExpression(data.schedule)
       : "";
-    metadataRuns = String(data.retention?.metadata_runs ?? 20);
-    runLogs = String(data.retention?.run_logs ?? 20);
-    errorLogDays = String(data.retention?.error_log_days ?? 14);
+    metadataRuns = String(data.retention.metadata_runs);
+    runLogs = String(data.retention.run_logs);
+    errorLogDays = String(data.retention.error_log_days);
     formError.name = "";
     formError.command = "";
     formError.schedule = "";
@@ -114,7 +121,7 @@
       requestToken++;
       loading = false;
       loadError = "";
-      loadedJob = null;
+      loadedInfo = null;
       return;
     }
 

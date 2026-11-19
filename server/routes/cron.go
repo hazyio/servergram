@@ -27,6 +27,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Post("/{id}/fix-unmanaged", http.StatusOK, fixUnmanagedCronJobs)
 	server.Get("/{id}/run/{job_id}", http.StatusOK, runCronJob)
 	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
+	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -176,4 +177,26 @@ func getCronJobInfo(data internal.RouteData[models.CronJobInfoRequest]) (*models
 	response.Body = result
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Retrieved cron job %d info in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return response, nil
+}
+
+func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.UpdateCronJob(ctx, &proto.UpdateCronJobRequest{
+		Id:                data.Input.JobID,
+		Schedule:          data.Input.Body.Schedule,
+		Command:           data.Input.Body.Command,
+		Name:              data.Input.Body.Name,
+		MetaKeepCount:     data.Input.Body.MetaKeepCount,
+		RunLogsKeepCount:  data.Input.Body.RunLogsKeepCount,
+		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays})
+	if err != nil {
+		slog.Error("Failed to update cron job", "error", err)
+		return nil, err
+	}
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Updated cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
 }

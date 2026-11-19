@@ -253,3 +253,39 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 
 	return job, nil
 }
+
+func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.UpdateCronJobRequest) (*proto.UpdateCronJobResponse, error) {
+	job, err := db.FindCronJobByID(database, uint64(req.Id))
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
+	}
+	command, schedule, err := ParseLine(fmt.Sprintf("%s %s", req.Schedule, req.Command))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule or command: %v", err)
+	}
+	if err := validateName(req.Name); err != nil {
+		return nil, err
+	}
+	err = database.Transaction(func(tx *gorm.DB) error {
+		job.Name = req.Name
+		job.MetaKeepCount = req.MetaKeepCount
+		job.RunLogKeepCount = req.RunLogsKeepCount
+		job.ErrorLogKeepDays = req.ErrorLogsKeepDays
+		if err := tx.Save(job).Error; err != nil {
+			return err
+		}
+		if job.Managed {
+			command = addIDAndAgentPrefix(command, job.ID)
+		}
+		if err := updateJob(ctx, job.Hash, schedule, command); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update cron job: %v", err)
+	}
+
+	return &proto.UpdateCronJobResponse{}, nil
+}

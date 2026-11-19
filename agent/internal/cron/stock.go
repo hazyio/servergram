@@ -48,9 +48,7 @@ func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
 	return "", fmt.Errorf("Could not find command for cron job with hash %q", hash)
 }
 func validateName(name string) error {
-	if name == "" {
-		return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
-	}
+
 	if name == "." || name == ".." {
 		return status.Errorf(codes.InvalidArgument, "invalid cron job name %q", name)
 	}

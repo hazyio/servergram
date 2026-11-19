@@ -23,6 +23,15 @@ export type CronJob = {
   retention?: CronRetention;
 };
 
+export type CronJobInfo = {
+  id: number;
+  name: string;
+  command: string;
+  schedule: string;
+  managed: boolean;
+  retention: CronRetention;
+};
+
 export type CronDuplicateGroup = {
   hash: string;
   job: CronJob;
@@ -293,6 +302,21 @@ export async function getCronJob(
   serverId: number,
   jobId: number,
 ): Promise<CronApiResponse<CronJob>> {
+  return simulateRequest(() => {
+    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
+    if (!job) throw new Error("Cron job no longer exists");
+    return job;
+  });
+}
+
+type CronInfoApi = components["schemas"]["CronInfoResponse"] & {
+  name?: string;
+};
+
+export async function getCronJobInfo(
+  serverId: number,
+  jobId: number,
+): Promise<CronApiResponse<CronJobInfo>> {
   const { data, error } = await NewRequestClient().GET(
     "/api/cron/{id}/info/{job_id}",
     {
@@ -320,7 +344,22 @@ export async function getCronJob(
     };
   }
 
-  return { data: cronJobFromApi(data) };
+  const info = data as CronInfoApi;
+
+  return {
+    data: {
+      id: info.id ?? jobId,
+      name: info.name ?? "",
+      command: info.command ?? "",
+      schedule: info.schedule ?? "",
+      managed: info.managed ?? false,
+      retention: {
+        metadata_runs: info.meta_keep_count ?? 0,
+        run_logs: info.run_logs_keep_count ?? 0,
+        error_log_days: info.error_logs_keep_days ?? 0,
+      },
+    },
+  };
 }
 
 const runsByJob = new Map<number, CronRun[]>();

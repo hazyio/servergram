@@ -26,6 +26,7 @@ const (
 	CronService_RunCronJob_FullMethodName              = "/proto.CronService/RunCronJob"
 	CronService_StopCronJob_FullMethodName             = "/proto.CronService/StopCronJob"
 	CronService_CronInfo_FullMethodName                = "/proto.CronService/CronInfo"
+	CronService_UpdateCronJob_FullMethodName           = "/proto.CronService/UpdateCronJob"
 )
 
 // CronServiceClient is the client API for CronService service.
@@ -39,6 +40,7 @@ type CronServiceClient interface {
 	RunCronJob(ctx context.Context, in *RunCronJobRequest, opts ...grpc.CallOption) (*RunCronJobResponse, error)
 	StopCronJob(ctx context.Context, in *StopCronJobRequest, opts ...grpc.CallOption) (*StopCronJobResponse, error)
 	CronInfo(ctx context.Context, in *CronInfoRequest, opts ...grpc.CallOption) (*CronInfoResponse, error)
+	UpdateCronJob(ctx context.Context, in *UpdateCronJobRequest, opts ...grpc.CallOption) (*UpdateCronJobResponse, error)
 }
 
 type cronServiceClient struct {
@@ -128,6 +130,16 @@ func (c *cronServiceClient) CronInfo(ctx context.Context, in *CronInfoRequest, o
 	return out, nil
 }
 
+func (c *cronServiceClient) UpdateCronJob(ctx context.Context, in *UpdateCronJobRequest, opts ...grpc.CallOption) (*UpdateCronJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateCronJobResponse)
+	err := c.cc.Invoke(ctx, CronService_UpdateCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CronServiceServer is the server API for CronService service.
 // All implementations must embed UnimplementedCronServiceServer
 // for forward compatibility.
@@ -139,6 +151,7 @@ type CronServiceServer interface {
 	RunCronJob(context.Context, *RunCronJobRequest) (*RunCronJobResponse, error)
 	StopCronJob(context.Context, *StopCronJobRequest) (*StopCronJobResponse, error)
 	CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error)
+	UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error)
 	mustEmbedUnimplementedCronServiceServer()
 }
 
@@ -169,6 +182,9 @@ func (UnimplementedCronServiceServer) StopCronJob(context.Context, *StopCronJobR
 }
 func (UnimplementedCronServiceServer) CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CronInfo not implemented")
+}
+func (UnimplementedCronServiceServer) UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateCronJob not implemented")
 }
 func (UnimplementedCronServiceServer) mustEmbedUnimplementedCronServiceServer() {}
 func (UnimplementedCronServiceServer) testEmbeddedByValue()                     {}
@@ -310,6 +326,24 @@ func _CronService_CronInfo_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CronService_UpdateCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCronJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CronServiceServer).UpdateCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CronService_UpdateCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CronServiceServer).UpdateCronJob(ctx, req.(*UpdateCronJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CronService_ServiceDesc is the grpc.ServiceDesc for CronService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -340,6 +374,10 @@ var CronService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CronInfo",
 			Handler:    _CronService_CronInfo_Handler,
+		},
+		{
+			MethodName: "UpdateCronJob",
+			Handler:    _CronService_UpdateCronJob_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

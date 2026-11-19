@@ -47,3 +47,17 @@ type CronJobInfoRequest struct {
 type CronJobInfoResponse struct {
 	Body *proto.CronInfoResponse
 }
+
+type UpdateCronJobRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	JobID uint64 `path:"job_id" minimum:"1" doc:"The ID of the cron job to update"`
+	Body struct {
+		Schedule          string `json:"schedule" validate:"required"`
+		Command           string `json:"command" validate:"required"`
+		Name              string `json:"name"`
+		MetaKeepCount     int32  `json:"meta_keep_count" validate:"gte=0,lte=960"`
+		RunLogsKeepCount  int32  `json:"run_logs_keep_count" validate:"gte=0,lte=960"`
+		ErrorLogsKeepDays int32  `json:"error_logs_keep_days" validate:"gte=0,lte=365"`
+		Wrap              bool   `json:"wrap"`
+	}
+}

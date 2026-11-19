@@ -70,6 +70,16 @@ message CronInfoResponse {
   int32 run_logs_keep_count = 7;
   int32 error_logs_keep_days = 8;
 }
+message UpdateCronJobRequest {
+  uint64 id = 1;
+  string name = 2;
+  string schedule = 3;
+  string command = 4;
+  int32 meta_keep_count = 5;
+  int32 run_logs_keep_count = 6;
+  int32 error_logs_keep_days = 7;
+}
+message UpdateCronJobResponse {}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
@@ -79,4 +89,5 @@ service CronService {
   rpc RunCronJob(RunCronJobRequest) returns (RunCronJobResponse);
   rpc StopCronJob(StopCronJobRequest) returns (StopCronJobResponse);
   rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
+  rpc UpdateCronJob(UpdateCronJobRequest) returns (UpdateCronJobResponse);
 }

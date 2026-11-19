@@ -35,6 +35,7 @@
   let scheduleDescription = $state("");
   let scheduleDialogOpen = $state(false);
   let wrapWithAgent = $state(false);
+  let retentionEnabled = $state(true);
   let metadataRuns = $state("20");
   let runLogs = $state("20");
   let errorLogDays = $state("14");
@@ -81,18 +82,20 @@
     }
 
     submitting = true;
+    const keepRetention = wrapWithAgent && retentionEnabled;
     const { data, error } = await createCronJob(serverId, {
       name: result.data.name,
       command: result.data.command,
       schedule: result.data.schedule,
       wrap: wrapWithAgent,
-      meta_keep_count: Number(metadataRuns),
-      run_logs_keep_count: Number(runLogs),
-      error_logs_keep_days: Number(errorLogDays),
+      meta_keep_count: keepRetention ? Number(metadataRuns) : 0,
+      run_logs_keep_count: keepRetention ? Number(runLogs) : 0,
+      error_logs_keep_days: keepRetention ? Number(errorLogDays) : 0,
     });
-    submitting = false;
 
     if (error || !data) {
+      submitting = false;
+
       toast.error(
         error
           ? unWrapErrorMessage(error, "Failed to add cron job")
@@ -101,8 +104,12 @@
       return;
     }
 
-    toast.success(`Cron job "${data.name}" added`);
-    await goto(appPaths.servers.cron(serverId));
+    setTimeout(async () => {
+      // there is a issue where add a new cron job then immediately reading it causes agent to fail, this is probably due to crontab not being updated yet
+      submitting = false;
+      toast.success(`Cron job "${data.name}" added`);
+      await goto(appPaths.servers.cron(serverId));
+    }, 1000);
   }
 </script>
 
@@ -114,7 +121,7 @@
   />
 </svelte:head>
 
-<div class="mx-auto w-full max-w-5xl p-3 sm:p-5">
+<div class="mx-auto w-full max-w-6xl p-3 sm:p-5">
   <Card class="mt-2 w-full p-4 sm:p-6">
     <div class="mb-5">
       <h1 class="text-lg font-semibold">Add Cron Job</h1>
@@ -129,7 +136,7 @@
       onsubmit={handleSubmit}
       class="flex flex-col gap-5"
     >
-      <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+      <div class="grid gap-x-4 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
         <Field.Field data-invalid={!!formError.name}>
           <Field.Label for="cron-job-name">Name</Field.Label>
           <Input
@@ -180,50 +187,72 @@
             </Field.Description>
           {/if}
         </Field.Field>
-      </div>
 
-      <Field.Field data-invalid={!!formError.command}>
-        <Field.Label for="cron-command">Command</Field.Label>
-        <Input
-          id="cron-command"
-          type="text"
-          bind:value={command}
-          oninput={() => (formError.command = "")}
-          placeholder="/usr/local/bin/backup-db.sh"
-          class="font-mono"
-          disabled={submitting}
-          required
-          aria-invalid={formError.command ? "true" : "false"}
-        />
-        {#if formError.command}
-          <Field.Error>{formError.command}</Field.Error>
-        {:else}
-          <Field.Description>
-            The command or script the job runs on the server, for example
-            <code>/usr/bin/rsync -a /var/www /backup/www</code>.
-          </Field.Description>
-        {/if}
-      </Field.Field>
+        <Field.Field
+          data-invalid={!!formError.command}
+          class="md:col-span-2 xl:col-span-1"
+        >
+          <Field.Label for="cron-command">Command</Field.Label>
+          <Input
+            id="cron-command"
+            type="text"
+            bind:value={command}
+            oninput={() => (formError.command = "")}
+            placeholder="/usr/local/bin/backup-db.sh"
+            class="font-mono"
+            disabled={submitting}
+            required
+            aria-invalid={formError.command ? "true" : "false"}
+          />
+          {#if formError.command}
+            <Field.Error>{formError.command}</Field.Error>
+          {:else}
+            <Field.Description>
+              The command or script the job runs on the server, for example
+              <code>/usr/bin/rsync -a /var/www /backup/www</code>.
+            </Field.Description>
+          {/if}
+        </Field.Field>
+      </div>
 
       <Separator />
 
-      <Field.Label>
-        <Field.Field orientation="horizontal">
-          <Checkbox
-            id="wrap-with-agent"
-            name="wrap-with-agent"
-            bind:checked={wrapWithAgent}
-            disabled={submitting}
-          />
-          <Field.Content>
-            <Field.Title>Wrap with agent</Field.Title>
-            <Field.Description>
-              Let ServerGram manage this job so you get logging, status
-              tracking, and run history.
-            </Field.Description>
-          </Field.Content>
-        </Field.Field>
-      </Field.Label>
+      <div class="grid gap-3 md:grid-cols-2">
+        <Field.Label>
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id="wrap-with-agent"
+              name="wrap-with-agent"
+              bind:checked={wrapWithAgent}
+              disabled={submitting}
+            />
+            <Field.Content>
+              <Field.Title>Wrap with agent</Field.Title>
+              <Field.Description>
+                Let ServerGram manage this job so you get logging, status
+                tracking, and run history.
+              </Field.Description>
+            </Field.Content>
+          </Field.Field>
+        </Field.Label>
+
+        <Field.Label class={wrapWithAgent ? "" : "opacity-60"}>
+          <Field.Field orientation="horizontal">
+            <Checkbox
+              id="cron-retention"
+              name="cron-retention"
+              bind:checked={retentionEnabled}
+              disabled={submitting || !wrapWithAgent}
+            />
+            <Field.Content>
+              <Field.Title>Retention</Field.Title>
+              <Field.Description>
+                Keep run metadata, output logs, and error logs for this job.
+              </Field.Description>
+            </Field.Content>
+          </Field.Field>
+        </Field.Label>
+      </div>
 
       {#if wrapWithAgent}
         <Alert class="border-amber-500/40 bg-amber-500/5">
@@ -235,32 +264,39 @@
           </AlertDescription>
         </Alert>
 
-        <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-          <CronRetentionSelect
-            id="metadata-runs"
-            label="Runs metadata to keep"
-            description="Stores status, start time, end time, and exit code for recent runs."
-            bind:value={metadataRuns}
-            options={runCountOptions}
-            unit="run"
-          />
-          <CronRetentionSelect
-            id="run-logs"
-            label="Run logs to keep"
-            description="Stores stdout and stderr for recent runs."
-            bind:value={runLogs}
-            options={runCountOptions}
-            unit="run"
-          />
-          <CronRetentionSelect
-            id="error-log-days"
-            label="Error logs to keep"
-            description="Stores error logs for the selected number of days."
-            bind:value={errorLogDays}
-            options={errorLogDayOptions}
-            unit="day"
-          />
-        </div>
+        {#if retentionEnabled}
+          <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+            <CronRetentionSelect
+              id="metadata-runs"
+              label="Runs metadata to keep"
+              description="Stores status, start time, end time, and exit code for recent runs."
+              bind:value={metadataRuns}
+              options={runCountOptions}
+              unit="run"
+            />
+            <CronRetentionSelect
+              id="run-logs"
+              label="Run logs to keep"
+              description="Stores stdout and stderr for recent runs."
+              bind:value={runLogs}
+              options={runCountOptions}
+              unit="run"
+            />
+            <CronRetentionSelect
+              id="error-log-days"
+              label="Error logs to keep"
+              description="Stores error logs for the selected number of days."
+              bind:value={errorLogDays}
+              options={errorLogDayOptions}
+              unit="day"
+            />
+          </div>
+        {:else}
+          <p class="text-sm text-muted-foreground">
+            Retention is disabled. No run history or logs will be kept for this
+            job.
+          </p>
+        {/if}
       {/if}
 
       <div class="flex justify-end gap-2 pt-2">

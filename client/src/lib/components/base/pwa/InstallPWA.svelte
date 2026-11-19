@@ -19,6 +19,7 @@
   let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 
   const canPrompt = $derived(deferredPrompt !== null);
+  const visible = $derived(mounted && !installed && (canPrompt || isIOS));
 
   function isStandalone() {
     return (
@@ -73,44 +74,43 @@
   });
 </script>
 
-{#if mounted && !installed}
-  <Popover.Root>
-    <Popover.Trigger>
-      <Button
-        variant="outline"
-        class="h-9 gap-2"
-        title="Install ServerGram"
-        aria-label="Install ServerGram"
-      >
-        <Download class="size-4" />
-        <span class="hidden sm:inline">Install</span>
-      </Button>
-    </Popover.Trigger>
-    <Popover.Content align="end" class="w-80">
-      <Popover.Header>
-        <Popover.Title>Install ServerGram</Popover.Title>
-        <Popover.Description>
-          Keep ServerGram one tap away and open it in its own window.
-        </Popover.Description>
-      </Popover.Header>
-
-      {#if canPrompt}
-        <Button class="mt-1 w-full" onclick={install}>
+{#if visible}
+  {#if canPrompt}
+    <Button
+      variant="ghost"
+      size="icon"
+      class="size-9 rounded-md text-muted-foreground hover:text-foreground"
+      title="Install ServerGram"
+      aria-label="Install ServerGram"
+      onclick={install}
+    >
+      <Download class="size-4" />
+    </Button>
+  {:else if isIOS}
+    <Popover.Root>
+      <Popover.Trigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="size-9 rounded-md text-muted-foreground hover:text-foreground"
+          title="Install ServerGram"
+          aria-label="Install ServerGram"
+        >
           <Download class="size-4" />
-          Install now
         </Button>
-      {:else if isIOS}
+      </Popover.Trigger>
+      <Popover.Content align="end" class="w-80">
+        <Popover.Header>
+          <Popover.Title>Install ServerGram</Popover.Title>
+          <Popover.Description>
+            Keep ServerGram one tap away and open it in its own window.
+          </Popover.Description>
+        </Popover.Header>
         <p class="mt-1 text-sm leading-6 text-muted-foreground">
           In Safari, tap <Share class="inline size-4 align-text-bottom" /> then
           <span class="font-medium text-foreground">Add to Home Screen</span>.
         </p>
-      {:else}
-        <p class="mt-1 text-sm leading-6 text-muted-foreground">
-          Open your browser menu and choose
-          <span class="font-medium text-foreground">Install app</span> (or
-          <span class="font-medium text-foreground">Add to Home Screen</span>).
-        </p>
-      {/if}
-    </Popover.Content>
-  </Popover.Root>
+      </Popover.Content>
+    </Popover.Root>
+  {/if}
 {/if}

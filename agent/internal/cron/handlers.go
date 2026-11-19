@@ -158,12 +158,14 @@ func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB) (*proto.
 	count := uint32(0)
 	file := make([]byte, 0)
 	err := readCronJobEach(ctx, database, func(job *db.CronJob, schedule, command string) error {
-	
-		line, err := BuildLine(schedule, addIDAndAgentPrefix(command, job.ID))
-		if err != nil {
-			return err
+		if !job.Managed {
+			line, err := BuildLine(schedule, addIDAndAgentPrefix(command, job.ID))
+			if err != nil {
+				return err
+			}
+			file = appendLine(file, line)
+			count++
 		}
-		file = appendLine(file, line)
 
 		return nil
 	})

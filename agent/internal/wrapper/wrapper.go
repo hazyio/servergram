@@ -2,10 +2,10 @@ package wrapper
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
-	"hazyio.com/servergram/agent/internal/cron"
 	"hazyio.com/servergram/agent/internal/db"
 )
 
@@ -15,24 +15,26 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		// TODO: implement a better way to handle this error
 		return err
 	}
-	newRun := &db.CronRun{
-		CronJobID:     int64(jobID),
-		Status:    db.RunStatusRunning,
-		Trigger:   trigger,
-		StartedAt: time.Now(),
-	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	if err := database.Create(newRun).Error; err != nil {
-		return err
+	var newRun *db.CronRun
+	if job.MetaKeepCount > 0 {
+		newRun = &db.CronRun{
+			CronJobID: int64(jobID),
+			Status:    db.RunStatusRunning,
+			Trigger:   trigger,
+			StartedAt: time.Now(),
+		}
+		if err := database.Create(newRun).Error; err != nil {
+			return err
+		}
 	}
-	cmd, err := cron.GetCronJobCommandByHash(ctx, job.Hash)
-	if err != nil {
-		return err
-	}
-
 	go func() {
+		// remove old cron runs
+		if err := db.PruneCronRuns(database, job.MetaKeepCount, job.ID); err != nil {
+			slog.Error("failed to prune cron runs", "error", err)
+		}
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -52,13 +54,33 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 			}
 		}
 	}()
-	result, err := Run(ctx, cmd)
+
+	result, err := Run(ctx, command)
+	job.LastRunAt = time.Now()
 	if err != nil {
-		newRun.UpdateStatus(database, db.RunStatusFailed)
-		return err
+		job.Status = db.CronJobStatusFailed
+
+	} else {
+		job.Status = db.CronJobStatusSuccess
+
 	}
-	newRun.FinishedAt = time.Now()
-	newRun.ExitCode = result.ExitCode
-	newRun.UpdateStatus(database, db.RunStatusSuccess)
+	if err := database.Save(job).Error; err != nil {
+		slog.Error("failed to save cron job", "error", err)
+	}
+
+	if job.MetaKeepCount > 0 && newRun != nil {
+		if err != nil {
+			newRun.Status = db.RunStatusFailed
+		} else {
+			newRun.Status = db.RunStatusSuccess
+		}
+		newRun.FinishedAt = time.Now()
+		newRun.ExitCode = result.ExitCode
+		if err := database.Save(newRun).Error; err != nil {
+			return err
+		}
+
+	}
+
 	return nil
 }

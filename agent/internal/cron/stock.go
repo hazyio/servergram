@@ -21,31 +21,31 @@ import (
 	"hazyio.com/servergram/agent/internal/db"
 )
 
-func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
-	data, err := readCrontab(ctx)
-	if err != nil {
-		return "", err
-	}
-	sc := bufio.NewScanner(bytes.NewReader(data))
-	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
-	for sc.Scan() {
-		if ctx.Err() != nil {
-			return "", ctx.Err()
-		}
-		line := sc.Text()
-		schedule, command, err := ParseLine(line)
-		if err != nil {
-			slog.Error("failed to parse cron line", "error", err)
-			continue
-		}
-		h := hashCronJob(schedule, command)
-		if h == hash {
-			return command, nil
-		}
-	}
+// func GetCronJobCommandByHash(ctx context.Context, hash string) (string, error) {
+// 	data, err := readCrontab(ctx)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	sc := bufio.NewScanner(bytes.NewReader(data))
+// 	sc.Buffer(make([]byte, 0, 64*1024), 1<<20) // default 64 KB line limit; set it to 1MB
+// 	for sc.Scan() {
+// 		if ctx.Err() != nil {
+// 			return "", ctx.Err()
+// 		}
+// 		line := sc.Text()
+// 		schedule, command, err := ParseLine(line)
+// 		if err != nil {
+// 			slog.Error("failed to parse cron line", "error", err)
+// 			continue
+// 		}
+// 		h := hashCronJob(schedule, command)
+// 		if h == hash {
+// 			return command, nil
+// 		}
+// 	}
 
-	return "", fmt.Errorf("Could not find command for cron job with hash %q", hash)
-}
+// 	return "", fmt.Errorf("Could not find command for cron job with hash %q", hash)
+// }
 func validateName(name string) error {
 	if name == "" {
 		return status.Error(codes.InvalidArgument, "cron job name cannot be empty")
@@ -188,9 +188,8 @@ func readCrontab(ctx context.Context) ([]byte, error) {
 	return out.Bytes(), nil
 }
 func addAgentPrefix(command string) string {
-	agentPath := common.GetAgentPath()
-	prefix := fmt.Sprintf("%s run-job", agentPath)
-	return prefix + " " + command
+	prefix := getAgentPrefix()
+	return fmt.Sprintf("%s %s", prefix, command)
 }
 func addIDAndAgentPrefix(command string, id uint64) string {
 	return addAgentPrefix(addID(command, id))
@@ -198,9 +197,11 @@ func addIDAndAgentPrefix(command string, id uint64) string {
 func addID(command string, id uint64) string {
 	return fmt.Sprintf("%s id=%d", command, id)
 }
+func getAgentPrefix() string {
+	return fmt.Sprintf("%s run-job", common.GetAgentPath())
+}
 func trimAgentPrefix(command string) string {
-	agentPath := common.GetAgentPath()
-	prefix := fmt.Sprintf("%s run-job", agentPath)
+	prefix := getAgentPrefix()
 	return strings.TrimPrefix(command, prefix)
 }
 func hashCronJob(schedule, command string) string {

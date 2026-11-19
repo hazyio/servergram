@@ -131,7 +131,6 @@ func fixUnmanagedCronJobs(data internal.RouteData[PathIdRequest]) (*models.FixUn
 		slog.Error("Failed to fix unmanaged cron jobs", "error", err)
 		return nil, err
 	}
-
 	response := &models.FixUnmanagedCronJobsResponse{}
 	response.Body.Fixed = result.Fixed
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Fixed %d unmanaged cron jobs in server \"%d\"", result.Fixed, data.Input.ID), data.Database)

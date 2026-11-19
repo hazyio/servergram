@@ -45,10 +45,16 @@ message FixUnmanagedCronJobsRequest {}
 message FixUnmanagedCronJobsResponse {
   uint32 fixed = 1;
 }
+message RunCronJobRequest {
+  uint64 id = 1;
+}
+
+message RunCronJobResponse {}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
   rpc CreateCronJob(CreateCronJobRequest) returns (CreateCronJobResponse);
   rpc RemoveDuplicateCronJobs(RemoveDuplicateCronJobsRequest) returns (RemoveDuplicateCronJobsResponse);
   rpc FixUnmanagedCronJobs(FixUnmanagedCronJobsRequest) returns (FixUnmanagedCronJobsResponse);
+  rpc RunCronJob(RunCronJobRequest) returns (RunCronJobResponse);
 }

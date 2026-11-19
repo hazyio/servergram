@@ -5,6 +5,7 @@
   import { page } from "$app/state";
   import type { Snippet } from "svelte";
   import ConnectedServices from "../services/ServiceManager.svelte";
+  import InstallPWA from "../pwa/InstallPWA.svelte";
   import type { SideBarItem } from "./AppSideBar.svelte";
   import AppSidebar from "./AppSideBar.svelte";
   import Notifications from "./Notifications.svelte";
@@ -85,6 +86,7 @@
       <div class="ms-auto gap-3 flex items-center">
         <ConnectedServices />
 
+        <InstallPWA />
 
         <Notifications />
       </div>

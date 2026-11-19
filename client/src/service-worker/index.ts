@@ -2,7 +2,28 @@ import { self } from "$app/service-worker";
 import { assets, immutable, prerendered } from "$app/manifest";
 
 const CACHE_PREFIX = "servergram-";
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+
+/**
+ * Derive the cache name from the build's immutable assets so that a new deploy
+ * installs into a fresh cache and the `activate` handler can safely drop the
+ * previous one. A fixed name would keep serving assets from older builds.
+ */
+function buildVersion() {
+  const fingerprint = immutable
+    .map(({ path }) => path)
+    .sort()
+    .join("|");
+
+  let hash = 2166136261;
+  for (let index = 0; index < fingerprint.length; index += 1) {
+    hash ^= fingerprint.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(36);
+}
+
+const CACHE_NAME = `${CACHE_PREFIX}${buildVersion()}`;
 
 // The service worker lives at `<base>/service-worker.js`, so this resolves the
 // base path without importing `$app/paths`, which is not available here.
@@ -111,6 +132,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Never cache the worker script itself; the browser must always be able to
+  // fetch the newest build's worker.
+  if (requestUrl.pathname === `${BASE}/service-worker.js`) return;
+
   if (request.mode === "navigate") {
     event.respondWith(handleNavigation(request));
     return;
@@ -118,6 +143,13 @@ self.addEventListener("fetch", (event) => {
 
   // Data payloads are not safe to serve stale, so leave them to the network.
   if (requestUrl.pathname.endsWith("/__data.json")) return;
-
+  if (
+    requestUrl.pathname.startsWith("/@") ||
+    requestUrl.pathname.startsWith("/node_modules/") ||
+    requestUrl.pathname.startsWith("/src/") ||
+    requestUrl.searchParams.has("v") ||
+    requestUrl.searchParams.has("t")
+  )
+    return;
   event.respondWith(handleAsset(request));
 });

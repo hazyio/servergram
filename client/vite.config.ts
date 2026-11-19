@@ -6,6 +6,7 @@ import fs from "fs";
 
 export default defineConfig({
   server: {
+ 
     proxy: {
       "/api/": {
         target: "https://localhost:9788",
@@ -15,13 +16,18 @@ export default defineConfig({
       "/ws/": {
         target: "https://localhost:9788",
         changeOrigin: true,
-        secure: false, // accept your self-signed cert
+        secure: false, // accept self-signed cert
         ws: true, // proxy the Upgrade request
       },
     },
     https: {
       cert: fs.readFileSync("../certs/localhost+2.pem"),
       key: fs.readFileSync("../certs/localhost+2-key.pem"),
+    },
+    hmr: {
+      protocol: "wss",
+      host: "localhost",
+      clientPort: 443,
     },
   },
   plugins: [

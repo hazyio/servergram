@@ -149,6 +149,7 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 	for _, line := range lines {
 		schedule, command, err := ParseLine(line)
 		if err != nil {
+			slog.Error("failed to parse cron line", "error", err)
 			// error, skip parsing but preserve line
 			out = append(out, line)
 			continue

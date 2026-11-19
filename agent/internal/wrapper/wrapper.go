@@ -23,7 +23,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var newRun *db.CronRun
-	if job.MetaKeepCount > 0 {
+	if job.MetaKeepCount > 0 && job.Managed {
 		newRun = &db.CronRun{
 			CronJobID: int64(jobID),
 			Status:    db.RunStatusRunning,
@@ -59,7 +59,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 			}
 		}
 	}()
-	slog.Info("starting cron job", "job_id", jobID)
+	slog.Info("starting cron job", "job_id", jobID, "command", command)
 	result, err := Run(ctx, command)
 	job.LastRunAt = time.Now()
 

@@ -185,14 +185,13 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
 	}
-	if !job.Managed {
-		return nil, status.Errorf(codes.FailedPrecondition, "cron job is not managed by agent")
-	}
+
 	jobCommand, err := GetCronJobCommandByHash(ctx, job.Hash)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
-	cmd := exec.Command(jobCommand)
+	slog.Debug("running cron job", "job_id", job.ID, "command", jobCommand)
+	cmd := exec.Command(common.GetAgentPath(), "run-job", jobCommand, fmt.Sprintf("id=%d", job.ID))
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
 
 	if err := cmd.Start(); err != nil {

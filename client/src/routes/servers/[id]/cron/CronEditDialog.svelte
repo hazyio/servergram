@@ -19,6 +19,7 @@
   import { toast } from "svelte-sonner";
   import * as z from "zod";
   import {
+    cronJobDisplayName,
     getCronJobInfo,
     updateCronJob,
     type CronJob,
@@ -150,30 +151,37 @@
       return;
     }
 
+    const retention = {
+      metadata_runs: Number(metadataRuns),
+      run_logs: Number(runLogs),
+      error_log_days: Number(errorLogDays),
+    };
+
     submitting = true;
-    const { data, error } = await updateCronJob(serverId, job.id, {
+    const { error } = await updateCronJob(serverId, job.id, {
       name: result.data.name,
       command: result.data.command,
       schedule: result.data.schedule,
-      retention: isManaged
-        ? {
-            metadata_runs: Number(metadataRuns),
-            run_logs: Number(runLogs),
-            error_log_days: Number(errorLogDays),
-          }
-        : undefined,
+      wrap: isManaged,
+      retention,
     });
     submitting = false;
 
-    if (error || !data) {
-      requestError = error
-        ? unWrapErrorMessage(error, "Failed to update cron job")
-        : "Failed to update cron job";
+    if (error) {
+      requestError = unWrapErrorMessage(error, "Failed to update cron job");
       return;
     }
 
-    onUpdated?.(data);
-    toast.success(`"${data.name}" updated`);
+    const updated: CronJob = {
+      ...job,
+      name: result.data.name,
+      command: result.data.command,
+      schedule: result.data.schedule,
+      ...(isManaged ? { retention } : {}),
+    };
+
+    onUpdated?.(updated);
+    toast.success(`"${cronJobDisplayName(updated)}" updated`);
     open = false;
   }
 

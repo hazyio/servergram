@@ -52,7 +52,8 @@ export type UpdateCronJobInput = {
   name: string;
   command: string;
   schedule: string;
-  retention?: CronRetention;
+  wrap: boolean;
+  retention: CronRetention;
 };
 
 export type CronRunStatus = "running" | "succeeded" | "failed" | "canceled";
@@ -273,28 +274,33 @@ export async function updateCronJob(
   serverId: number,
   jobId: number,
   input: UpdateCronJobInput,
-): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
+): Promise<CronApiResponse<Record<string, never>>> {
+  const { error } = await NewRequestClient().POST(
+    "/api/cron/{id}/update/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+      },
+      body: {
+        name: input.name,
+        command: input.command,
+        schedule: input.schedule,
+        wrap: input.wrap,
+        meta_keep_count: input.retention.metadata_runs,
+        run_logs_keep_count: input.retention.run_logs,
+        error_logs_keep_days: input.retention.error_log_days,
+      },
+    },
+  );
 
-    const name = input.name.trim();
-    const command = input.command.trim();
-    const schedule = input.schedule.trim();
+  if (error) {
+    return { error };
+  }
 
-    if (!command) throw new Error("Command is required");
-    if (!schedule) throw new Error("Run schedule is required");
-
-    job.name = name;
-    job.command = command;
-    job.schedule = schedule;
-
-    if (input.retention && job.status !== "unmanaged") {
-      job.retention = input.retention;
-    }
-
-    return job;
-  });
+  return { data: {} };
 }
 
 export async function listCronJobs(

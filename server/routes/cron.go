@@ -184,6 +184,7 @@ func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*Empty
 	if err != nil {
 		return nil, err
 	}
+
 	defer cancel()
 	_, err = resource.UpdateCronJob(ctx, &proto.UpdateCronJobRequest{
 		Id:                data.Input.JobID,

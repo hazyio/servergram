@@ -116,11 +116,9 @@
   <Button
     variant="outline"
     size="sm"
-    class="gap-1.5 w-10"
-    disabled={busy || isUnmanaged}
-    title={isUnmanaged
-      ? "Wrap this job with the agent to manage it"
-      : `Run ${displayName}`}
+    class="gap-1.5 "
+    disabled={busy }
+    title={`Run ${displayName}`}
     onclick={runJob}
   >
     {#if pending === "run"}

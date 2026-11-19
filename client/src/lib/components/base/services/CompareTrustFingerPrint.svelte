@@ -34,7 +34,7 @@
     if (error) {
       toast.error(
         unWrapErrorMessage(error, "Failed to trust host fingerprint"),
-      );success
+      );
     } else {
       toast.success(
         `Successfully trusted host fingerprint for server ${edit.name}`,

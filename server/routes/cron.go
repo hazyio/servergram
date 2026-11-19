@@ -173,7 +173,7 @@ func getCronJobInfo(data internal.RouteData[models.CronJobInfoRequest]) (*models
 		return nil, err
 	}
 	response := &models.CronJobInfoResponse{}
-	response.Body = result.Job
+	response.Body = result
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Retrieved cron job %d info in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return response, nil
 }

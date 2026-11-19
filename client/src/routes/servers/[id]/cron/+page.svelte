@@ -25,9 +25,9 @@
   import CronDuplicateDialog from "./CronDuplicateDialog.svelte";
   import CronWrapUnmanagedDialog from "./CronWrapUnmanagedDialog.svelte";
   import {
+    cronJobFromApi,
     type CronDuplicateGroup,
     type CronJob,
-    type CronJobStatus,
   } from "./cronJobs.ts";
 
   let { params }: PageProps = $props();
@@ -77,27 +77,6 @@
 
   type CronChunk = components["schemas"]["ListCronJobsResponse"];
 
-  const knownStatuses = new Set<CronJobStatus>(["active", "inactive"]);
-
-  function toCronJob(cron: components["schemas"]["Cron"]): CronJob {
-    const status: CronJobStatus = !cron.managed
-      ? "unmanaged"
-      : knownStatuses.has(cron.status as CronJobStatus)
-        ? (cron.status as CronJobStatus)
-        : "inactive";
-
-    return {
-      id: cron.id ?? 0,
-      hash: cron.hash ?? "",
-      name: cron.name ?? "",
-      command: cron.command ?? "",
-      schedule: cron.schedule ?? "",
-      status,
-      last_run: cron.last_run_at || null,
-      next_run: cron.next_run_at || null,
-    };
-  }
-
   function stop() {
     eventSource?.close();
     eventSource = undefined;
@@ -131,7 +110,7 @@
           const incoming: CronJob[] = [];
 
           for (const cron of chunk.jobs) {
-            const job = toCronJob(cron);
+            const job = cronJobFromApi(cron);
             job.key = `${job.id}:${job.hash || "no-hash"}:${nextKey++}`;
             incoming.push(job);
 

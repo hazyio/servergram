@@ -852,6 +852,19 @@ export interface components {
             schedule?: string;
             status?: string;
         };
+        CronInfoResponse: {
+            command?: string;
+            /** Format: int32 */
+            error_logs_keep_days?: number;
+            /** Format: int64 */
+            id?: number;
+            managed?: boolean;
+            /** Format: int32 */
+            meta_keep_count?: number;
+            /** Format: int32 */
+            run_logs_keep_count?: number;
+            schedule?: string;
+        };
         DeleteFileRequestBody: {
             /** @description The name of the file to delete */
             name: string;
@@ -1306,7 +1319,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Cron"];
+                    "application/json": components["schemas"]["CronInfoResponse"];
                 };
             };
             /** @description Error */

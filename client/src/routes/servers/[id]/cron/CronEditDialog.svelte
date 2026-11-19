@@ -1,5 +1,7 @@
 <script lang="ts">
   import { unWrapErrorMessage } from "#lib/api/request.ts";
+  import ErrorSection from "#lib/components/base/ErrorSection.svelte";
+  import Loading from "#lib/components/base/loading.svelte";
   import CronRetentionSelect from "#lib/components/base/cron/CronRetentionSelect.svelte";
   import CronScheduleDialog from "#lib/components/base/cron/CronScheduleDialog.svelte";
   import {
@@ -13,9 +15,10 @@
   import { Separator } from "#lib/components/ui/separator/index.js";
   import { CalendarClock } from "@lucide/svelte";
   import Loader from "@lucide/svelte/icons/loader";
+  import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import * as z from "zod";
-  import { updateCronJob, type CronJob } from "./cronJobs.ts";
+  import { getCronJob, updateCronJob, type CronJob } from "./cronJobs.ts";
 
   let {
     open = $bindable(false),
@@ -41,14 +44,18 @@
   let errorLogDays = $state("14");
   let scheduleDialogOpen = $state(false);
   let submitting = $state(false);
+  let loading = $state(false);
+  let loadError = $state("");
+  let loadedJob = $state<CronJob | null>(null);
   let requestError = $state("");
+  let requestToken = 0;
   let formError = $state({
     name: "",
     command: "",
     schedule: "",
   });
 
-  const isManaged = $derived(job.status !== "unmanaged");
+  const isManaged = $derived((loadedJob ?? job).status !== "unmanaged");
 
   const formSchema = z.object({
     name: z
@@ -67,22 +74,53 @@
       ),
   });
 
-  $effect(() => {
-    if (!open) return;
+  async function load() {
+    const token = ++requestToken;
 
-    name = job.name;
-    command = job.command;
-    schedule = job.schedule;
-    scheduleDescription = job.schedule
-      ? describeCronExpression(job.schedule)
+    loading = true;
+    loadError = "";
+    requestError = "";
+
+    const { data, error } = await getCronJob(serverId, job.id);
+
+    if (token !== requestToken) return;
+
+    loading = false;
+
+    if (error || !data) {
+      loadError = error
+        ? unWrapErrorMessage(error, "Failed to load cron job")
+        : "Failed to load cron job";
+      return;
+    }
+
+    loadedJob = data;
+    name = data.name;
+    command = data.command;
+    schedule = data.schedule;
+    scheduleDescription = data.schedule
+      ? describeCronExpression(data.schedule)
       : "";
-    metadataRuns = String(job.retention?.metadata_runs ?? 20);
-    runLogs = String(job.retention?.run_logs ?? 20);
-    errorLogDays = String(job.retention?.error_log_days ?? 14);
+    metadataRuns = String(data.retention?.metadata_runs ?? 20);
+    runLogs = String(data.retention?.run_logs ?? 20);
+    errorLogDays = String(data.retention?.error_log_days ?? 14);
     formError.name = "";
     formError.command = "";
     formError.schedule = "";
-    requestError = "";
+  }
+
+  $effect.pre(() => {
+    if (!open) {
+      requestToken++;
+      loading = false;
+      loadError = "";
+      loadedJob = null;
+      return;
+    }
+
+    untrack(() => {
+      void load();
+    });
   });
 
   function close() {
@@ -91,8 +129,9 @@
     requestError = "";
   }
 
-  async function handleSubmit(event: SubmitEvent) {
-    event.preventDefault();
+  async function save() {
+    if (submitting) return;
+
     formError.name = "";
     formError.command = "";
     formError.schedule = "";
@@ -134,6 +173,11 @@
     toast.success(`"${data.name}" updated`);
     open = false;
   }
+
+  function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    void save();
+  }
 </script>
 
 <Dialog.Root bind:open>
@@ -146,132 +190,149 @@
       </Dialog.Description>
     </Dialog.Header>
 
-    <form
-      id="edit-cron-job-form"
-      onsubmit={handleSubmit}
-      class="flex flex-col gap-4"
-    >
-      <Field.Field data-invalid={!!formError.name}>
-        <Field.Label for="edit-cron-name">Name</Field.Label>
-        <Input
-          id="edit-cron-name"
-          type="text"
-          bind:value={name}
-          oninput={() => (formError.name = "")}
-          placeholder="e.g. Database backup"
-          disabled={submitting}
-          aria-invalid={formError.name ? "true" : "false"}
-        />
-        {#if formError.name}
-          <Field.Error>{formError.name}</Field.Error>
-        {/if}
-      </Field.Field>
-
-      <Field.Field data-invalid={!!formError.command}>
-        <Field.Label for="edit-cron-command">Command</Field.Label>
-        <Input
-          id="edit-cron-command"
-          type="text"
-          bind:value={command}
-          oninput={() => (formError.command = "")}
-          placeholder="/usr/local/bin/backup-db.sh"
-          class="font-mono"
-          disabled={submitting}
-          aria-invalid={formError.command ? "true" : "false"}
-        />
-        {#if formError.command}
-          <Field.Error>{formError.command}</Field.Error>
-        {/if}
-      </Field.Field>
-
-      <Field.Field data-invalid={!!formError.schedule}>
-        <Field.Label for="edit-cron-schedule">Run schedule</Field.Label>
-        <Button
-          id="edit-cron-schedule"
-          variant="outline"
-          class="h-auto w-full justify-between gap-2 px-2.5 py-2 text-left font-normal"
-          onclick={() => {
-            formError.schedule = "";
-            scheduleDialogOpen = true;
-          }}
-          disabled={submitting}
-          aria-invalid={formError.schedule ? "true" : "false"}
-        >
-          {#if schedule}
-            <span class="min-w-0 flex-1">
-              <span class="block truncate font-mono text-xs">{schedule}</span>
-              <span class="block truncate text-xs text-muted-foreground">
-                {scheduleDescription}
-              </span>
-            </span>
-          {:else}
-            <span class="flex-1 text-muted-foreground">Set a schedule</span>
-          {/if}
-          <CalendarClock class="shrink-0 text-muted-foreground" />
-        </Button>
-        {#if formError.schedule}
-          <Field.Error>{formError.schedule}</Field.Error>
-        {/if}
-      </Field.Field>
-
-      {#if isManaged}
-        <Separator />
-
-        <div>
-          <p class="text-sm font-medium">Retention</p>
-          <p class="text-xs text-muted-foreground">
-            How much run history the agent keeps for this job.
-          </p>
-        </div>
-
-        <div class="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-          <CronRetentionSelect
-            id="edit-metadata-runs"
-            label="Runs metadata to keep"
-            bind:value={metadataRuns}
-            options={runCountOptions}
-            unit="run"
-          />
-          <CronRetentionSelect
-            id="edit-run-logs"
-            label="Run logs to keep"
-            bind:value={runLogs}
-            options={runCountOptions}
-            unit="run"
-          />
-          <CronRetentionSelect
-            id="edit-error-log-days"
-            label="Error logs to keep"
-            bind:value={errorLogDays}
-            options={errorLogDayOptions}
-            unit="day"
-          />
-        </div>
-      {/if}
-
-      {#if requestError}
-        <p class="text-sm text-destructive" role="alert">{requestError}</p>
-      {/if}
-
+    {#if loading}
+      <Loading loading class="h-50" text="Loading cron job..." />
+    {:else if loadError}
+      <ErrorSection
+        title="Failed to load cron job"
+        message={loadError}
+        onRetry={load}
+      />
       <Dialog.Footer>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={submitting}
-          onclick={close}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={submitting}>
-          {#if submitting}
-            <Loader class="animate-spin" />
-            Saving...
-          {:else}
-            Save changes
-          {/if}
-        </Button>
+        <Button variant="outline" onclick={() => (open = false)}>Close</Button>
       </Dialog.Footer>
-    </form>
+    {:else}
+      <form
+        id="edit-cron-job-form"
+        onsubmit={handleSubmit}
+        class="flex flex-col gap-4"
+      >
+        <Field.Field data-invalid={!!formError.name}>
+          <Field.Label for="edit-cron-name">Name</Field.Label>
+          <Input
+            id="edit-cron-name"
+            type="text"
+            bind:value={name}
+            oninput={() => (formError.name = "")}
+            placeholder="e.g. Database backup"
+            disabled={submitting}
+            aria-invalid={formError.name ? "true" : "false"}
+          />
+          {#if formError.name}
+            <Field.Error>{formError.name}</Field.Error>
+          {/if}
+        </Field.Field>
+
+        <Field.Field data-invalid={!!formError.command}>
+          <Field.Label for="edit-cron-command">Command</Field.Label>
+          <Input
+            id="edit-cron-command"
+            type="text"
+            bind:value={command}
+            oninput={() => (formError.command = "")}
+            placeholder="/usr/local/bin/backup-db.sh"
+            class="font-mono"
+            disabled={submitting}
+            aria-invalid={formError.command ? "true" : "false"}
+          />
+          {#if formError.command}
+            <Field.Error>{formError.command}</Field.Error>
+          {/if}
+        </Field.Field>
+
+        <Field.Field data-invalid={!!formError.schedule}>
+          <Field.Label for="edit-cron-schedule">Run schedule</Field.Label>
+          <Button
+            id="edit-cron-schedule"
+            variant="outline"
+            class="h-auto w-full justify-between gap-2 px-2.5 py-2 text-left font-normal"
+            onclick={() => {
+              formError.schedule = "";
+              scheduleDialogOpen = true;
+            }}
+            disabled={submitting}
+            aria-invalid={formError.schedule ? "true" : "false"}
+          >
+            {#if schedule}
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-mono text-xs">{schedule}</span>
+                <span class="block truncate text-xs text-muted-foreground">
+                  {scheduleDescription}
+                </span>
+              </span>
+            {:else}
+              <span class="flex-1 text-muted-foreground">Set a schedule</span>
+            {/if}
+            <CalendarClock class="shrink-0 text-muted-foreground" />
+          </Button>
+          {#if formError.schedule}
+            <Field.Error>{formError.schedule}</Field.Error>
+          {/if}
+        </Field.Field>
+
+        {#if isManaged}
+          <Separator />
+
+          <div>
+            <p class="text-sm font-medium">Retention</p>
+            <p class="text-xs text-muted-foreground">
+              How much run history the agent keeps for this job.
+            </p>
+          </div>
+
+          <div class="grid gap-x-4 gap-y-4 sm:grid-cols-2">
+            <CronRetentionSelect
+              id="edit-metadata-runs"
+              label="Runs metadata to keep"
+              bind:value={metadataRuns}
+              options={runCountOptions}
+              unit="run"
+            />
+            <CronRetentionSelect
+              id="edit-run-logs"
+              label="Run logs to keep"
+              bind:value={runLogs}
+              options={runCountOptions}
+              unit="run"
+            />
+            <CronRetentionSelect
+              id="edit-error-log-days"
+              label="Error logs to keep"
+              bind:value={errorLogDays}
+              options={errorLogDayOptions}
+              unit="day"
+            />
+          </div>
+        {/if}
+
+        {#if requestError}
+          <ErrorSection
+            title="Failed to update cron job"
+            message={requestError}
+            onRetry={save}
+          />
+        {/if}
+
+        <Dialog.Footer>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={submitting}
+            onclick={close}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {#if submitting}
+              <Loader class="animate-spin" />
+              Saving...
+            {:else}
+              Save changes
+            {/if}
+          </Button>
+        </Dialog.Footer>
+      </form>
+    {/if}
   </Dialog.Content>
 </Dialog.Root>
 

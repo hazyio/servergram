@@ -222,23 +222,21 @@ func handleStopCronJob(ctx context.Context, database *gorm.DB, req *proto.StopCr
 	return &proto.StopCronJobResponse{}, nil
 }
 func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoRequest) (*proto.CronInfoResponse, error) {
-	var job *proto.Cron
+	var job *proto.CronInfoResponse
 	var FoundErr = errors.New("not found")
 
 	err := readCronJobEach(ctx, database, func(j *db.CronJob, schedule, command string) error {
 		if j.ID != req.Id {
 			return nil
 		}
-		job = &proto.Cron{
-			Hash:      j.Hash,
-			Name:      j.Name,
-			Managed:   j.Managed,
-			Status:    string(j.Status),
-			Id:        j.ID,
-			LastRunAt: j.LastRunAt.Format(time.RFC3339),
-			Schedule:  schedule,
-			Command:   command,
-			NextRunAt: j.NextRunAt.Format(time.RFC3339),
+		job = &proto.CronInfoResponse{
+			Managed:           j.Managed,
+			Id:                j.ID,
+			Schedule:          schedule,
+			Command:           command,
+			MetaKeepCount:     j.MetaKeepCount,
+			RunLogsKeepCount:  j.RunLogKeepCount,
+			ErrorLogsKeepDays: j.ErrorLogKeepDays,
 		}
 
 		return FoundErr
@@ -252,7 +250,5 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 		return nil, status.Errorf(codes.NotFound, "cron job not found")
 	}
 
-	return &proto.CronInfoResponse{
-		Job: job,
-	}, nil
+	return job, nil
 }

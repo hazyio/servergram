@@ -45,5 +45,5 @@ type CronJobInfoRequest struct {
 }
 
 type CronJobInfoResponse struct {
-	Body *proto.Cron
+	Body *proto.CronInfoResponse
 }

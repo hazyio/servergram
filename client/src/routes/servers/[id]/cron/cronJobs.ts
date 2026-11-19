@@ -1,4 +1,5 @@
 import { NewRequestClient } from "#lib/api/request.ts";
+import type { components } from "#lib/types/request-schema.d.ts";
 
 export type CronJobStatus = "active" | "inactive" | "unmanaged";
 
@@ -68,6 +69,27 @@ export type CronApiResponse<T> = {
   data?: T;
   error?: CronApiError;
 };
+
+const knownCronStatuses = new Set<CronJobStatus>(["active", "inactive"]);
+
+export function cronJobFromApi(cron: components["schemas"]["Cron"]): CronJob {
+  const status: CronJobStatus = !cron.managed
+    ? "unmanaged"
+    : knownCronStatuses.has(cron.status as CronJobStatus)
+      ? (cron.status as CronJobStatus)
+      : "inactive";
+
+  return {
+    id: cron.id ?? 0,
+    hash: cron.hash ?? "",
+    name: cron.name ?? "",
+    command: cron.command ?? "",
+    schedule: cron.schedule ?? "",
+    status,
+    last_run: cron.last_run_at || null,
+    next_run: cron.next_run_at || null,
+  };
+}
 
 const requestDelayMs = 550;
 
@@ -271,11 +293,34 @@ export async function getCronJob(
   serverId: number,
   jobId: number,
 ): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
-    return job;
-  });
+  const { data, error } = await NewRequestClient().GET(
+    "/api/cron/{id}/info/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+      },
+    },
+  );
+
+  if (error) {
+    return { error };
+  }
+
+  if (!data) {
+    return {
+      error: {
+        type: "about:blank",
+        status: 404,
+        title: "Cron job not found",
+        detail: "The cron job no longer exists",
+      },
+    };
+  }
+
+  return { data: cronJobFromApi(data) };
 }
 
 const runsByJob = new Map<number, CronRun[]>();

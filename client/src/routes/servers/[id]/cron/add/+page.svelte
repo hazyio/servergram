@@ -47,11 +47,7 @@
   });
 
   const formSchema = z.object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Job name is required")
-      .max(100, "Job name is too long"),
+    name: z.string().trim().max(100, "Job name is too long"),
     command: z.string().trim().min(1, "Command is required"),
     schedule: z
       .string()
@@ -146,7 +142,6 @@
             oninput={() => (formError.name = "")}
             placeholder="e.g. Database backup"
             disabled={submitting}
-            required
             aria-invalid={formError.name ? "true" : "false"}
           />
           {#if formError.name}

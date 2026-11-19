@@ -81,6 +81,16 @@ export type CronApiResponse<T> = {
 
 const knownCronStatuses = new Set<CronJobStatus>(["active", "inactive"]);
 
+export function isCronDateSet(
+  value: string | null | undefined,
+): value is string {
+  if (!value) return false;
+
+  const date = new Date(value);
+
+  return !Number.isNaN(date.getTime()) && date.getUTCFullYear() > 1;
+}
+
 export function cronJobFromApi(cron: components["schemas"]["Cron"]): CronJob {
   const status: CronJobStatus = !cron.managed
     ? "unmanaged"
@@ -95,8 +105,8 @@ export function cronJobFromApi(cron: components["schemas"]["Cron"]): CronJob {
     command: cron.command ?? "",
     schedule: cron.schedule ?? "",
     status,
-    last_run: cron.last_run_at || null,
-    next_run: cron.next_run_at || null,
+    last_run: isCronDateSet(cron.last_run_at) ? cron.last_run_at : null,
+    next_run: isCronDateSet(cron.next_run_at) ? cron.next_run_at : null,
   };
 }
 
@@ -272,7 +282,6 @@ export async function updateCronJob(
     const command = input.command.trim();
     const schedule = input.schedule.trim();
 
-    if (!name) throw new Error("Name is required");
     if (!command) throw new Error("Command is required");
     if (!schedule) throw new Error("Run schedule is required");
 

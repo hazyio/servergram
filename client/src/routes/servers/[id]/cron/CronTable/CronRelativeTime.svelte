@@ -1,5 +1,6 @@
 <script lang="ts">
   import TimeAgo from "#lib/components/base/TimeAgo.svelte";
+  import { isCronDateSet } from "../cronJobs.ts";
 
   let {
     datetime,
@@ -10,7 +11,7 @@
   } = $props();
 </script>
 
-{#if datetime}
+{#if isCronDateSet(datetime)}
   <TimeAgo {datetime} />
 {:else}
   <span class="text-muted-foreground">{empty}</span>

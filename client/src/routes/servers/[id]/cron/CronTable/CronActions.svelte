@@ -116,7 +116,7 @@
   <Button
     variant="outline"
     size="sm"
-    class="gap-1.5 w-20"
+    class="gap-1.5 w-10"
     disabled={busy || isUnmanaged}
     title={isUnmanaged
       ? "Wrap this job with the agent to manage it"

@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/update/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post by ID update by job ID */
+        post: operations["post-cron--id-update-job_id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/create-dir-in-server/{id}": {
         parameters: {
             query?: never;
@@ -861,6 +878,7 @@ export interface components {
             managed?: boolean;
             /** Format: int32 */
             meta_keep_count?: number;
+            name?: string;
             /** Format: int32 */
             run_logs_keep_count?: number;
             schedule?: string;
@@ -1159,6 +1177,18 @@ export interface components {
             /** Format: int32 */
             pid?: number;
         };
+        UpdateCronJobRequestBody: {
+            command: string;
+            /** Format: int32 */
+            error_logs_keep_days: number;
+            /** Format: int32 */
+            meta_keep_count: number;
+            name: string;
+            /** Format: int32 */
+            run_logs_keep_count: number;
+            schedule: string;
+            wrap: boolean;
+        };
         UpdateServerFingerPrintRequestBody: {
             /** @description The new host fingerprint for the server */
             fingerprint: string;
@@ -1441,6 +1471,42 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RunCronJobResponse"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-cron--id-update-job_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job to update */
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCronJobRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

@@ -28,6 +28,8 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Get("/{id}/run/{job_id}", http.StatusOK, runCronJob)
 	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
 	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
+	server.Delete("/{id}/delete/{job_id}", http.StatusOK, deleteCronJob)
+	server.Put("/{id}/duplicate/{job_id}", http.StatusOK, duplicateCronJob)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -199,5 +201,38 @@ func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*Empty
 		return nil, err
 	}
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Updated cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
+}
+
+func deleteCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.DeleteCronJob(ctx, &proto.DeleteCronJobRequest{
+		Id: data.Input.JobID,
+	})
+	if err != nil {
+		slog.Error("Failed to delete cron job", "error", err)
+		return nil, err
+	}
+	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted cron job %d from server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
+}
+func duplicateCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.DuplicateCronJob(ctx, &proto.DuplicateCronJobRequest{
+		Id: data.Input.JobID,
+	})
+	if err != nil {
+		slog.Error("Failed to duplicate cron job", "error", err)
+		return nil, err
+	}
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Duplicated cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
 }

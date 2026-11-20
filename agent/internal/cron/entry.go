@@ -50,3 +50,11 @@ func (s *CronServer) CronInfo(ctx context.Context, req *proto.CronInfoRequest) (
 func (s *CronServer) UpdateCronJob(ctx context.Context, req *proto.UpdateCronJobRequest) (*proto.UpdateCronJobResponse, error) {
 	return handleUpdateCronJob(ctx, s.database, req)
 }
+
+func (s *CronServer) DeleteCronJob(ctx context.Context, req *proto.DeleteCronJobRequest) (*proto.DeleteCronJobResponse, error) {
+	return handleDeleteCronJob(ctx, s.database, req)
+}
+
+func (s *CronServer) DuplicateCronJob(ctx context.Context, req *proto.DuplicateCronJobRequest) (*proto.DuplicateCronJobResponse, error) {
+	return handleDuplicateCronJob(ctx, s.database, req)
+}

@@ -1,11 +1,14 @@
 package db
 
 import (
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func InitDatabase() (*gorm.DB, error) {
@@ -18,7 +21,14 @@ func InitDatabase() (*gorm.DB, error) {
 		return nil, err
 	}
 	url := filepath.Join(dir, "servergram.db")
-	database, err := gorm.Open(sqlite.Open(url), &gorm.Config{TranslateError: true})
+	database, err := gorm.Open(sqlite.Open(url), &gorm.Config{TranslateError: true, Logger: logger.New(
+		log.New(os.Stderr, "", log.LstdFlags), // stderr, never the transport
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true, // NotFound is a normal result here
+		},
+	)})
 	if err != nil {
 		return nil, err
 	}

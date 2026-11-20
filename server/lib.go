@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -21,6 +22,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
+	"gorm.io/gorm/logger"
 
 	"gorm.io/gorm"
 
@@ -106,7 +108,6 @@ func NewRouter(_ context.Context, database *gorm.DB, polls *internal.Polls) *htt
 	return srv
 }
 
-
 func skipAuthForRoutes(path string) bool {
 	// Add routes that should skip authentication here
 	skipRoutes := []string{
@@ -150,7 +151,14 @@ func InitDatabase() *gorm.DB {
 	if err != nil {
 		shared.Fatal("failed to create database dialector: %v", err)
 	}
-	database, err := gorm.Open(dialector, &gorm.Config{TranslateError: true})
+	database, err := gorm.Open(dialector, &gorm.Config{TranslateError: true, Logger: logger.New(
+		log.New(os.Stderr, "", log.LstdFlags), // stderr, never the transport
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true, // NotFound is a normal result here
+		},
+	)})
 	if err != nil {
 		shared.Fatal("failed to open database: %v", err)
 	}

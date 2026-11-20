@@ -158,13 +158,13 @@ func handleFixUnmanagedCronJobs(ctx context.Context, database *gorm.DB) (*proto.
 	file := make([]byte, 0)
 	err := readCronJobEach(ctx, database, func(job *db.CronJob, schedule, command string) error {
 		if !job.Managed {
-			line, err := BuildLine(schedule, addIDAndAgentPrefix(command, job.ID))
-			if err != nil {
-				return err
-			}
-			file = appendLine(file, line)
 			count++
 		}
+		line, err := BuildLine(schedule, addIDAndAgentPrefix(command, job.ID))
+		if err != nil {
+			return err
+		}
+		file = appendLine(file, line)
 
 		return nil
 	})
@@ -241,8 +241,8 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 	})
 
 	if err != nil && !errors.Is(err, FoundErr) {
-
-		return nil, status.Errorf(codes.Internal, "failed to calculate next run time: %v", err)
+		slog.Error("failed to calculate next run time", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to calculate next run time")
 	}
 	if job == nil {
 		return nil, status.Errorf(codes.NotFound, "cron job not found")
@@ -250,16 +250,16 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 
 	return job, nil
 }
-
 func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.UpdateCronJobRequest) (*proto.UpdateCronJobResponse, error) {
 	job, err := db.FindCronJobByID(database, uint64(req.Id))
 
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
+		slog.Error("failed to find cron job", "error", err)
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
 	}
-	command, schedule, err := ParseLine(fmt.Sprintf("%s %s", req.Schedule, req.Command))
+	schedule, command, err := ParseLine(fmt.Sprintf("%s %s", req.Schedule, req.Command))
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule or command: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule or command")
 	}
 	if err := validateName(req.Name); err != nil {
 		return nil, err
@@ -281,8 +281,100 @@ func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.Upda
 		return nil
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update cron job: %v", err)
+		slog.Error("failed to update cron job", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to update cron job")
 	}
 
 	return &proto.UpdateCronJobResponse{}, nil
+}
+
+func handleDeleteCronJob(ctx context.Context, database *gorm.DB, req *proto.DeleteCronJobRequest) (*proto.DeleteCronJobResponse, error) {
+	job, err := db.FindCronJobByID(database, uint64(req.Id))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
+	}
+	err = database.Transaction(func(tx *gorm.DB) error {
+		var file []byte
+		found := false
+
+		readErr := readCronJobEach(ctx, tx, func(curJob *db.CronJob, schedule, command string) error {
+			if curJob.Hash == job.Hash {
+				// found target job, skip it
+				found = true
+				return nil
+			}
+			if curJob.Managed {
+				command = addIDAndAgentPrefix(command, curJob.ID)
+			}
+			line, err := BuildLine(schedule, command)
+			if err != nil {
+				return err
+			}
+			file = appendLine(file, line)
+
+			return nil
+		})
+		if readErr != nil {
+			return readErr
+		}
+		if !found {
+			return fmt.Errorf("cron job not found in crontab")
+		}
+		if err := database.Delete(job).Error; err != nil {
+			return err
+		}
+		if err := installCrontab(ctx, file); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		slog.Error("failed to delete cron job", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to delete cron job: %v", err)
+	}
+
+	return &proto.DeleteCronJobResponse{}, nil
+}
+
+func handleDuplicateCronJob(ctx context.Context, database *gorm.DB, req *proto.DuplicateCronJobRequest) (*proto.DuplicateCronJobResponse, error) {
+	job, err := db.FindCronJobByID(database, uint64(req.Id))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
+	}
+	var file []byte
+	found := false
+	duplicated := false
+	err = readCronJobEach(ctx, database, func(curJob *db.CronJob, schedule, command string) error {
+		if curJob.Hash == job.Hash {
+			// found target job,
+			found = true
+		}
+		if curJob.Managed {
+			command = addIDAndAgentPrefix(command, curJob.ID)
+		}
+		line, err := BuildLine(schedule, command)
+		if err != nil {
+			return err
+		}
+		file = appendLine(file, line)
+		if found && !duplicated {
+			duplicated = true
+			file = appendLine(file, line)
+
+		}
+
+		return nil
+	})
+	if err != nil {
+		slog.Error("failed to read cron jobs", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to duplicate cron job: %v", err)
+	}
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
+	}
+
+	if err := installCrontab(ctx, file); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to install crontab: %v", err)
+	}
+	return &proto.DuplicateCronJobResponse{}, nil
 }

@@ -937,6 +937,174 @@ func (*UpdateCronJobResponse) Descriptor() ([]byte, []int) {
 	return file_proto_cron_proto_rawDescGZIP(), []int{16}
 }
 
+type DeleteCronJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteCronJobRequest) Reset() {
+	*x = DeleteCronJobRequest{}
+	mi := &file_proto_cron_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteCronJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteCronJobRequest) ProtoMessage() {}
+
+func (x *DeleteCronJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_cron_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteCronJobRequest.ProtoReflect.Descriptor instead.
+func (*DeleteCronJobRequest) Descriptor() ([]byte, []int) {
+	return file_proto_cron_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DeleteCronJobRequest) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type DeleteCronJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteCronJobResponse) Reset() {
+	*x = DeleteCronJobResponse{}
+	mi := &file_proto_cron_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteCronJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteCronJobResponse) ProtoMessage() {}
+
+func (x *DeleteCronJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_cron_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteCronJobResponse.ProtoReflect.Descriptor instead.
+func (*DeleteCronJobResponse) Descriptor() ([]byte, []int) {
+	return file_proto_cron_proto_rawDescGZIP(), []int{18}
+}
+
+type DuplicateCronJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DuplicateCronJobRequest) Reset() {
+	*x = DuplicateCronJobRequest{}
+	mi := &file_proto_cron_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DuplicateCronJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DuplicateCronJobRequest) ProtoMessage() {}
+
+func (x *DuplicateCronJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_cron_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DuplicateCronJobRequest.ProtoReflect.Descriptor instead.
+func (*DuplicateCronJobRequest) Descriptor() ([]byte, []int) {
+	return file_proto_cron_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *DuplicateCronJobRequest) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type DuplicateCronJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DuplicateCronJobResponse) Reset() {
+	*x = DuplicateCronJobResponse{}
+	mi := &file_proto_cron_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DuplicateCronJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DuplicateCronJobResponse) ProtoMessage() {}
+
+func (x *DuplicateCronJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_cron_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DuplicateCronJobResponse.ProtoReflect.Descriptor instead.
+func (*DuplicateCronJobResponse) Descriptor() ([]byte, []int) {
+	return file_proto_cron_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DuplicateCronJobResponse) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
 var File_proto_cron_proto protoreflect.FileDescriptor
 
 const file_proto_cron_proto_rawDesc = "" +
@@ -996,7 +1164,14 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x0fmeta_keep_count\x18\x05 \x01(\x05R\rmetaKeepCount\x12-\n" +
 	"\x13run_logs_keep_count\x18\x06 \x01(\x05R\x10runLogsKeepCount\x12/\n" +
 	"\x14error_logs_keep_days\x18\a \x01(\x05R\x11errorLogsKeepDays\"\x17\n" +
-	"\x15UpdateCronJobResponse2\x81\x05\n" +
+	"\x15UpdateCronJobResponse\"&\n" +
+	"\x14DeleteCronJobRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\"\x17\n" +
+	"\x15DeleteCronJobResponse\")\n" +
+	"\x17DuplicateCronJobRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id\"*\n" +
+	"\x18DuplicateCronJobResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x04R\x02id2\xa2\x06\n" +
 	"\vCronService\x12I\n" +
 	"\fListCronJobs\x12\x1a.proto.ListCronJobsRequest\x1a\x1b.proto.ListCronJobsResponse0\x01\x12J\n" +
 	"\rCreateCronJob\x12\x1b.proto.CreateCronJobRequest\x1a\x1c.proto.CreateCronJobResponse\x12h\n" +
@@ -1006,7 +1181,9 @@ const file_proto_cron_proto_rawDesc = "" +
 	"RunCronJob\x12\x18.proto.RunCronJobRequest\x1a\x19.proto.RunCronJobResponse\x12D\n" +
 	"\vStopCronJob\x12\x19.proto.StopCronJobRequest\x1a\x1a.proto.StopCronJobResponse\x12;\n" +
 	"\bCronInfo\x12\x16.proto.CronInfoRequest\x1a\x17.proto.CronInfoResponse\x12J\n" +
-	"\rUpdateCronJob\x12\x1b.proto.UpdateCronJobRequest\x1a\x1c.proto.UpdateCronJobResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
+	"\rUpdateCronJob\x12\x1b.proto.UpdateCronJobRequest\x1a\x1c.proto.UpdateCronJobResponse\x12J\n" +
+	"\rDeleteCronJob\x12\x1b.proto.DeleteCronJobRequest\x1a\x1c.proto.DeleteCronJobResponse\x12S\n" +
+	"\x10DuplicateCronJob\x12\x1e.proto.DuplicateCronJobRequest\x1a\x1f.proto.DuplicateCronJobResponseB*Z(hazyio.com/servergram/shared/proto;protob\x06proto3"
 
 var (
 	file_proto_cron_proto_rawDescOnce sync.Once
@@ -1020,7 +1197,7 @@ func file_proto_cron_proto_rawDescGZIP() []byte {
 	return file_proto_cron_proto_rawDescData
 }
 
-var file_proto_cron_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_proto_cron_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_cron_proto_goTypes = []any{
 	(*Cron)(nil),                            // 0: proto.Cron
 	(*ListCronJobsRequest)(nil),             // 1: proto.ListCronJobsRequest
@@ -1039,6 +1216,10 @@ var file_proto_cron_proto_goTypes = []any{
 	(*CronInfoResponse)(nil),                // 14: proto.CronInfoResponse
 	(*UpdateCronJobRequest)(nil),            // 15: proto.UpdateCronJobRequest
 	(*UpdateCronJobResponse)(nil),           // 16: proto.UpdateCronJobResponse
+	(*DeleteCronJobRequest)(nil),            // 17: proto.DeleteCronJobRequest
+	(*DeleteCronJobResponse)(nil),           // 18: proto.DeleteCronJobResponse
+	(*DuplicateCronJobRequest)(nil),         // 19: proto.DuplicateCronJobRequest
+	(*DuplicateCronJobResponse)(nil),        // 20: proto.DuplicateCronJobResponse
 }
 var file_proto_cron_proto_depIdxs = []int32{
 	0,  // 0: proto.ListCronJobsResponse.jobs:type_name -> proto.Cron
@@ -1050,16 +1231,20 @@ var file_proto_cron_proto_depIdxs = []int32{
 	11, // 6: proto.CronService.StopCronJob:input_type -> proto.StopCronJobRequest
 	13, // 7: proto.CronService.CronInfo:input_type -> proto.CronInfoRequest
 	15, // 8: proto.CronService.UpdateCronJob:input_type -> proto.UpdateCronJobRequest
-	2,  // 9: proto.CronService.ListCronJobs:output_type -> proto.ListCronJobsResponse
-	4,  // 10: proto.CronService.CreateCronJob:output_type -> proto.CreateCronJobResponse
-	6,  // 11: proto.CronService.RemoveDuplicateCronJobs:output_type -> proto.RemoveDuplicateCronJobsResponse
-	8,  // 12: proto.CronService.FixUnmanagedCronJobs:output_type -> proto.FixUnmanagedCronJobsResponse
-	10, // 13: proto.CronService.RunCronJob:output_type -> proto.RunCronJobResponse
-	12, // 14: proto.CronService.StopCronJob:output_type -> proto.StopCronJobResponse
-	14, // 15: proto.CronService.CronInfo:output_type -> proto.CronInfoResponse
-	16, // 16: proto.CronService.UpdateCronJob:output_type -> proto.UpdateCronJobResponse
-	9,  // [9:17] is the sub-list for method output_type
-	1,  // [1:9] is the sub-list for method input_type
+	17, // 9: proto.CronService.DeleteCronJob:input_type -> proto.DeleteCronJobRequest
+	19, // 10: proto.CronService.DuplicateCronJob:input_type -> proto.DuplicateCronJobRequest
+	2,  // 11: proto.CronService.ListCronJobs:output_type -> proto.ListCronJobsResponse
+	4,  // 12: proto.CronService.CreateCronJob:output_type -> proto.CreateCronJobResponse
+	6,  // 13: proto.CronService.RemoveDuplicateCronJobs:output_type -> proto.RemoveDuplicateCronJobsResponse
+	8,  // 14: proto.CronService.FixUnmanagedCronJobs:output_type -> proto.FixUnmanagedCronJobsResponse
+	10, // 15: proto.CronService.RunCronJob:output_type -> proto.RunCronJobResponse
+	12, // 16: proto.CronService.StopCronJob:output_type -> proto.StopCronJobResponse
+	14, // 17: proto.CronService.CronInfo:output_type -> proto.CronInfoResponse
+	16, // 18: proto.CronService.UpdateCronJob:output_type -> proto.UpdateCronJobResponse
+	18, // 19: proto.CronService.DeleteCronJob:output_type -> proto.DeleteCronJobResponse
+	20, // 20: proto.CronService.DuplicateCronJob:output_type -> proto.DuplicateCronJobResponse
+	11, // [11:21] is the sub-list for method output_type
+	1,  // [1:11] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -1076,7 +1261,7 @@ func file_proto_cron_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_cron_proto_rawDesc), len(file_proto_cron_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"io"
 	"log/slog"
 	"os"
 	"time"
@@ -17,9 +18,8 @@ import (
 	pb "hazyio.com/servergram/shared/gen/proto"
 )
 
-func Serve(database *gorm.DB) {
-
-	conn := shared.NewStdioConn(os.Stdin, os.Stdout, func() error { return os.Stdin.Close() })
+func Serve(database *gorm.DB, transportOut io.Writer) {
+	conn := shared.NewStdioConn(os.Stdin, transportOut, func() error { return os.Stdin.Close() })
 	slog.Info("starting agent connection")
 	srv := grpc.NewServer(grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
 		MinTime:             15 * time.Second,

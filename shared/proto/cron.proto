@@ -81,6 +81,19 @@ message UpdateCronJobRequest {
 }
 message UpdateCronJobResponse {}
 
+message DeleteCronJobRequest {
+  uint64 id = 1;
+}
+
+message DeleteCronJobResponse {}
+
+message DuplicateCronJobRequest {
+  uint64 id = 1;
+}
+
+message DuplicateCronJobResponse {
+}
+
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
   rpc CreateCronJob(CreateCronJobRequest) returns (CreateCronJobResponse);
@@ -90,4 +103,6 @@ service CronService {
   rpc StopCronJob(StopCronJobRequest) returns (StopCronJobResponse);
   rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
   rpc UpdateCronJob(UpdateCronJobRequest) returns (UpdateCronJobResponse);
+  rpc DeleteCronJob(DeleteCronJobRequest) returns (DeleteCronJobResponse);
+  rpc DuplicateCronJob(DuplicateCronJobRequest) returns (DuplicateCronJobResponse);
 }

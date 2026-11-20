@@ -62,6 +62,10 @@
     }
 
     runErrorOpen = false;
+    onUpdated?.({
+      ...job,
+      last_run: new Date().toISOString(),
+    });
     toast.success(`${displayName} started`);
   }
 
@@ -117,7 +121,7 @@
     variant="outline"
     size="sm"
     class="gap-1.5 "
-    disabled={busy }
+    disabled={busy}
     title={`Run ${displayName}`}
     onclick={runJob}
   >

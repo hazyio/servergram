@@ -140,7 +140,7 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 	}
 	lines := strings.Split(string(data), "\n")
 	out := make([]string, 0, len(lines))
-	removed := false
+	updated := false
 	newLine, err := BuildLine(newSchedule, newCommand)
 	if err != nil {
 		return fmt.Errorf("build line: %w", err)
@@ -154,9 +154,11 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 			out = append(out, line)
 			continue
 		}
+		h := hashCronJob(schedule, command)
+		slog.Debug("compare", "line_hash", h, "want", hash, "schedule", schedule, "command", command)
 
-		if hashCronJob(schedule, command) == hash {
-			removed = true
+		if h == hash && !updated {
+			updated = true
 			out = append(out, newLine)
 			continue
 		}
@@ -164,7 +166,7 @@ func updateJob(ctx context.Context, hash, newSchedule, newCommand string) error 
 		out = append(out, line)
 	}
 
-	if !removed {
+	if !updated {
 		slog.Info("cron job not found, adding new.", "hash", hash)
 		out = append(out, newLine)
 	}
@@ -258,6 +260,9 @@ func dedupeCronLines(data []byte) ([]byte, uint32) {
 
 // installCrontab replaces the user's crontab with content, via stdin.
 func installCrontab(ctx context.Context, content []byte) error {
+	if len(content) > 0 && content[len(content)-1] != '\n' {
+		content = append(content, '\n')
+	}
 	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "crontab", "-")
 	cmd.Stdin = bytes.NewReader(content)

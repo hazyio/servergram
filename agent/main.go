@@ -14,6 +14,7 @@ import (
 )
 
 var logLevel slog.LevelVar
+var transportOut = os.Stdout
 
 func setupLogging() {
 	if os.Getenv("LOG_LEVEL") == "debug" {
@@ -24,6 +25,8 @@ func setupLogging() {
 }
 
 func main() {
+	os.Stdout = os.Stderr
+
 	setupLogging()
 	if len(os.Args) < 2 {
 		shared.Fatal("usage: agent <serve|run-job> ...")
@@ -58,9 +61,9 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-
+		os.Exit(0)
 	case "serve":
-		internal.Serve(database)
+		internal.Serve(database, transportOut)
 
 	default:
 		shared.Fatal("unknown command: %s", os.Args[1])

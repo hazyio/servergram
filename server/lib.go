@@ -58,6 +58,7 @@ func NewRouter(_ context.Context, database *gorm.DB, polls *internal.Polls) *htt
 	}
 	ssh_manager := sshmanager.NewSSHManager()
 	config := huma.DefaultConfig("Sever Gram Api", "1.0.0")
+	config.DocsRenderer = huma.DocsRendererScalar
 	config.CreateHooks = nil // drops the "$schema" field, whose scheme/host is derived from the request
 	api := humago.New(mux, config)
 	apiUmbrella := huma.NewGroup(api, "/api")

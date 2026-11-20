@@ -6,7 +6,6 @@
   import * as Popover from "#lib/components/ui/popover/index.js";
   import {
     Copy,
-    CopyPlus,
     EllipsisVertical,
     Loader,
     Pencil,
@@ -17,7 +16,6 @@
   import {
     cronJobDisplayName,
     deleteCronJob,
-    duplicateCronJob,
     runCronJob,
     type CronJob,
   } from "../cronJobs.ts";
@@ -27,17 +25,15 @@
     serverId,
     job,
     onUpdated,
-    onDuplicated,
     onDeleted,
   }: {
     serverId: number;
     job: CronJob;
     onUpdated?: (job: CronJob) => void;
-    onDuplicated?: () => void;
     onDeleted?: (id: number) => void;
   } = $props();
 
-  let pending = $state<"run" | "duplicate" | "delete" | null>(null);
+  let pending = $state<"run" | "delete" | null>(null);
   let confirmDelete = $state(false);
   let editOpen = $state(false);
   let runErrorOpen = $state(false);
@@ -67,24 +63,6 @@
       last_run: new Date().toISOString(),
     });
     toast.success(`${displayName} started`);
-  }
-
-  async function duplicate() {
-    if (busy) return;
-    pending = "duplicate";
-
-    const { error } = await duplicateCronJob(serverId, job.id);
-    pending = null;
-
-    if (error) {
-      toast.error(
-        unWrapErrorMessage(error, `Failed to duplicate ${displayName}`),
-      );
-      return;
-    }
-
-    onDuplicated?.();
-    toast.success(`${displayName} duplicated`);
   }
 
   async function remove() {
@@ -167,21 +145,6 @@
           >
             <Pencil class="size-4" />
             Edit
-          </Button>
-        </Popover.Close>
-        <Popover.Close>
-          <Button
-            variant="ghost"
-            class="w-full cursor-pointer justify-start gap-2 py-5"
-            disabled={busy}
-            onclick={duplicate}
-          >
-            {#if pending === "duplicate"}
-              <Loader class="size-4 animate-spin" />
-            {:else}
-              <CopyPlus class="size-4" />
-            {/if}
-            Duplicate
           </Button>
         </Popover.Close>
         <Popover.Close>

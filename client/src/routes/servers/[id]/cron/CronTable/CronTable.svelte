@@ -13,7 +13,6 @@
     statusFilter = "all",
     visibleColumns,
     onUpdated,
-    onDuplicated,
     onDeleted,
   }: {
     jobs: CronJob[];
@@ -22,13 +21,10 @@
     statusFilter?: string;
     visibleColumns: Record<string, boolean>;
     onUpdated: (job: CronJob) => void;
-    onDuplicated: () => void;
     onDeleted: (id: number) => void;
   } = $props();
 
-  const columns = untrack(() =>
-    getColumns(serverId, onUpdated, onDuplicated, onDeleted),
-  );
+  const columns = untrack(() => getColumns(serverId, onUpdated, onDeleted));
   const table = createTable({
     features: dataTableFeatures,
     get data() {

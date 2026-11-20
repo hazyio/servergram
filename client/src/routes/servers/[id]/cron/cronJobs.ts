@@ -536,29 +536,6 @@ export async function runCronJob(
   return { data: (data ?? {}) as Record<string, never> };
 }
 
-export async function duplicateCronJob(
-  serverId: number,
-  jobId: number,
-): Promise<CronApiResponse<Record<string, never>>> {
-  const { data, error } = await NewRequestClient().PUT(
-    "/api/cron/{id}/duplicate/{job_id}",
-    {
-      params: {
-        path: {
-          id: serverId,
-          job_id: jobId,
-        },
-      },
-    },
-  );
-
-  if (error) {
-    return { error };
-  }
-
-  return { data: (data ?? {}) as Record<string, never> };
-}
-
 export async function wrapCronJobsWithAgent(
   serverId: number,
 ): Promise<CronApiResponse<{ fixed: number }>> {

@@ -327,7 +327,6 @@
               : job,
           );
         }}
-        onDuplicated={loadJobs}
         onDeleted={(id) => {
           jobs = jobs.filter((job) => job.id !== id);
         }}

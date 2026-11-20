@@ -29,7 +29,6 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
 	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
 	server.Delete("/{id}/delete/{job_id}", http.StatusOK, deleteCronJob)
-	server.Put("/{id}/duplicate/{job_id}", http.StatusOK, duplicateCronJob)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {

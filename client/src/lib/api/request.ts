@@ -2,6 +2,25 @@ import type { paths } from "#lib/types/request-schema.js";
 import { goto } from "$app/navigation";
 import createClient, { type Middleware } from "openapi-fetch";
 
+const REQUEST_TIMEOUT_MS = 3_000;
+
+const fetchWithTimeout = (input: Request): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  const abort = () => controller.abort();
+  if (input.signal.aborted) {
+    abort();
+  } else {
+    input.signal.addEventListener("abort", abort, { once: true });
+  }
+
+  return globalThis.fetch(input, { signal: controller.signal }).finally(() => {
+    clearTimeout(timer);
+    input.signal.removeEventListener("abort", abort);
+  });
+};
+
 const authMiddleware: Middleware = {
   async onResponse({ response }) {
     console.log(response);
@@ -18,7 +37,7 @@ const authMiddleware: Middleware = {
 };
 
 export function NewRequestClient() {
-  const client = createClient<paths>();
+  const client = createClient<paths>({ fetch: fetchWithTimeout });
   client.use(authMiddleware);
   return client;
 }

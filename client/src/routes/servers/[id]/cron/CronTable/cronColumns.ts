@@ -27,7 +27,7 @@ const sortableHeader =
 export const getColumns = (
   serverId: number,
   onUpdated: (job: CronJob) => void,
-  onCreated: (job: CronJob) => void,
+  onDuplicated: () => void,
   onDeleted: (id: number) => void,
 ) =>
   columnHelper.columns([
@@ -93,7 +93,7 @@ export const getColumns = (
           serverId,
           job: info.row.original,
           onUpdated,
-          onCreated,
+          onDuplicated,
           onDeleted,
         }),
     }),

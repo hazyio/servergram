@@ -220,19 +220,3 @@ func deleteCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR
 	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted cron job %d from server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
 }
-func duplicateCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR, error) {
-	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-	_, err = resource.DuplicateCronJob(ctx, &proto.DuplicateCronJobRequest{
-		Id: data.Input.JobID,
-	})
-	if err != nil {
-		slog.Error("Failed to duplicate cron job", "error", err)
-		return nil, err
-	}
-	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Duplicated cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
-	return &EmptyRR{}, nil
-}

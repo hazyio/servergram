@@ -27,13 +27,13 @@
     serverId,
     job,
     onUpdated,
-    onCreated,
+    onDuplicated,
     onDeleted,
   }: {
     serverId: number;
     job: CronJob;
     onUpdated?: (job: CronJob) => void;
-    onCreated?: (job: CronJob) => void;
+    onDuplicated?: () => void;
     onDeleted?: (id: number) => void;
   } = $props();
 
@@ -73,19 +73,17 @@
     if (busy) return;
     pending = "duplicate";
 
-    const { data, error } = await duplicateCronJob(serverId, job.id);
+    const { error } = await duplicateCronJob(serverId, job.id);
     pending = null;
 
-    if (error || !data) {
+    if (error) {
       toast.error(
-        error
-          ? unWrapErrorMessage(error, `Failed to duplicate ${displayName}`)
-          : `Failed to duplicate ${displayName}`,
+        unWrapErrorMessage(error, `Failed to duplicate ${displayName}`),
       );
       return;
     }
 
-    onCreated?.(data);
+    onDuplicated?.();
     toast.success(`${displayName} duplicated`);
   }
 

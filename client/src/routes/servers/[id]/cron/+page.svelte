@@ -327,12 +327,7 @@
               : job,
           );
         }}
-        onCreated={(created) => {
-          jobs = [
-            ...jobs,
-            { ...created, key: `created:${created.id}:${jobs.length}` },
-          ];
-        }}
+        onDuplicated={loadJobs}
         onDeleted={(id) => {
           jobs = jobs.filter((job) => job.id !== id);
         }}

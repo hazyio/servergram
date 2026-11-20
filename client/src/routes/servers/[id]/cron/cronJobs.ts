@@ -195,7 +195,6 @@ function seedJobs(): CronJob[] {
 }
 
 const jobsByServer = new Map<number, CronJob[]>();
-let nextJobId = 1_000;
 
 function jobsFor(serverId: number): CronJob[] {
   let jobs = jobsByServer.get(serverId);
@@ -540,23 +539,24 @@ export async function runCronJob(
 export async function duplicateCronJob(
   serverId: number,
   jobId: number,
-): Promise<CronApiResponse<CronJob>> {
-  return simulateRequest(() => {
-    const jobs = jobsFor(serverId);
-    const source = jobs.find((entry) => entry.id === jobId);
-    if (!source) throw new Error("Cron job no longer exists");
+): Promise<CronApiResponse<Record<string, never>>> {
+  const { data, error } = await NewRequestClient().PUT(
+    "/api/cron/{id}/duplicate/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+      },
+    },
+  );
 
-    const copy: CronJob = {
-      ...source,
-      id: nextJobId++,
-      name: source.name.trim() ? `${source.name} copy` : "",
-      status: source.status,
-      last_run: null,
-      next_run: source.status === "inactive" ? null : iso(minutes(5)),
-    };
-    jobs.push(copy);
-    return copy;
-  });
+  if (error) {
+    return { error };
+  }
+
+  return { data: (data ?? {}) as Record<string, never> };
 }
 
 export async function wrapCronJobsWithAgent(
@@ -578,12 +578,21 @@ export async function deleteCronJob(
   serverId: number,
   jobId: number,
 ): Promise<CronApiResponse<{ id: number }>> {
-  return simulateRequest(() => {
-    const jobs = jobsFor(serverId);
-    const index = jobs.findIndex((entry) => entry.id === jobId);
-    if (index === -1) throw new Error("Cron job no longer exists");
+  const { error } = await NewRequestClient().DELETE(
+    "/api/cron/{id}/delete/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+      },
+    },
+  );
 
-    jobs.splice(index, 1);
-    return { id: jobId };
-  });
+  if (error) {
+    return { error };
+  }
+
+  return { data: { id: jobId } };
 }

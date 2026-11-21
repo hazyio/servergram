@@ -2,7 +2,7 @@ import type { paths } from "#lib/types/request-schema.js";
 import { goto } from "$app/navigation";
 import createClient, { type Middleware } from "openapi-fetch";
 
-const REQUEST_TIMEOUT_MS = 3_000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 const fetchWithTimeout = (input: Request): Promise<Response> => {
   const controller = new AbortController();

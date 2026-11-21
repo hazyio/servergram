@@ -7,7 +7,7 @@
   import Highlighter from "#lib/components/base/HighLighter.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import type { components } from "#lib/types/request-schema.d.ts";
-  import { joinPath } from "#lib/utils.ts";
+  import { addEventSourceTimeout, joinPath } from "#lib/utils.ts";
   import { Download, Loader } from "@lucide/svelte";
 
   // Files larger than this are rejected by the agent instead of being streamed.
@@ -69,6 +69,12 @@
       { withCredentials: true },
     );
     eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      loading = false;
+      loadError = "Timed out connecting to the file stream";
+      stopStream();
+    });
 
     const decoder = new TextDecoder();
 

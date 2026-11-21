@@ -14,6 +14,7 @@
   import { Input } from "#lib/components/ui/input/index.ts";
   import * as Card from "#lib/components/ui/card/index.js";
   import type { components } from "#lib/types/request-schema.d.ts";
+  import { addEventSourceTimeout } from "#lib/utils.ts";
   import { CircleAlert, Loader, RefreshCcw } from "@lucide/svelte";
   import { onDestroy, onMount } from "svelte";
   import type { PageProps } from "./$types";
@@ -97,6 +98,12 @@
       withCredentials: true,
     });
     eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      stop();
+      loading = false;
+      loadError = "Timed out connecting to the cron job stream";
+    });
 
     source.addEventListener("data", (event) => {
       if (source !== eventSource) return;

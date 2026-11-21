@@ -120,10 +120,6 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 		}
 		job.NextRunAt = nextRunAt
 
-		if err := database.Save(job).Error; err != nil {
-			slog.Error("failed to update cron job", "error", err)
-			return status.Errorf(codes.Internal, "update cron job: %s", err.Error())
-		}
 		if err := onLine(job, schedule, command); err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@
   import Input from "#lib/components/ui/input/input.svelte";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
   import type { components } from "#lib/types/request-schema.d.ts";
+  import { addEventSourceTimeout } from "#lib/utils.ts";
   import { RefreshCcw } from "@lucide/svelte";
   import { untrack } from "svelte";
   import type { PageProps } from "./$types";
@@ -19,8 +20,7 @@
     type ProcessGrouping,
   } from "./ProcessSettingOption.svelte";
 
-  type WatchProcessesResponse =
-    components["schemas"]["WatchProcessesResponse"];
+  type WatchProcessesResponse = components["schemas"]["WatchProcessesResponse"];
 
   const processColumnValues: Record<ProcessColumns, number> = {
     memory: 1,
@@ -51,16 +51,12 @@
   let groupBy = $state<ProcessGrouping>("parent");
 
   function getSelectedColumns(): number[] {
-    const selected = (
-      Object.keys(processColumnValues) as ProcessColumns[]
-    )
+    const selected = (Object.keys(processColumnValues) as ProcessColumns[])
       .filter((column) => columnsToShow[column])
       .map((column) => processColumnValues[column]);
 
     // The API requires at least one column; pid and name are always returned.
-    return selected.length > 0
-      ? selected
-      : [processColumnValues.cmd];
+    return selected.length > 0 ? selected : [processColumnValues.cmd];
   }
 
   function stop() {
@@ -83,6 +79,12 @@
       { withCredentials: true },
     );
     eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      stop();
+      loading = false;
+      loadError = "Timed out connecting to the process stream";
+    });
 
     source.addEventListener("data", (event) => {
       if (source !== eventSource) return;

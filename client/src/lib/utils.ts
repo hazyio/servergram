@@ -8,7 +8,7 @@ import {
   MODE_SOCKET,
   MODE_STICKY,
   MODE_SYMLINK,
-  type FileEntry
+  type FileEntry,
 } from "./types";
 
 export { cn } from "cn";
@@ -28,6 +28,46 @@ export function getWebSocketUrl(path: string = "/ws"): string {
   const url = new URL(path, window.location.href);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   return url.toString();
+}
+
+export const STREAM_CONNECT_TIMEOUT_MS = 20_000;
+
+/**
+ * Stops an EventSource from retrying forever when it never connects.
+ * Browsers reconnect EventSources automatically, so closing it on timeout is
+ * the only way to give up on the connection.
+ */
+export function addEventSourceTimeout(
+  source: EventSource,
+  onTimeout: () => void,
+  timeoutMs = STREAM_CONNECT_TIMEOUT_MS,
+): void {
+  let timer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+    timer = undefined;
+    if (source.readyState === EventSource.OPEN) return;
+
+    source.close();
+    onTimeout();
+  }, timeoutMs);
+
+  source.addEventListener(
+    "open",
+    () => {
+      if (timer === undefined) return;
+      clearTimeout(timer);
+      timer = undefined;
+    },
+    { once: true },
+  );
+
+  const close = source.close.bind(source);
+  source.close = () => {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    close();
+  };
 }
 
 export function castType<T>(value: unknown, callback: (value: T) => void) {

@@ -7,6 +7,7 @@
   import Card from "#lib/components/ui/card/card.svelte";
   import { CardContent, CardHeader } from "#lib/components/ui/card/index.ts";
   import type { components } from "#lib/types/request-schema.d.ts";
+  import { addEventSourceTimeout } from "#lib/utils.ts";
   import { ChartColumnDecreasing, Menu } from "@lucide/svelte";
   import { onMount } from "svelte";
   import ServerResourcesBar from "./ServerResourcesBar.svelte";
@@ -36,17 +37,24 @@
     const query = new URLSearchParams({
       interval: String(refreshFrequencySeconds * 1000),
     });
-    eventSource = new EventSource(
+    const source = new EventSource(
       `/api/server/watch-resources/${id}?${query}`,
       {
         withCredentials: true, // send cookies; omit if same-origin or no auth
       },
     );
-    eventSource.onopen = () => {
+    eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      eventSource = undefined;
+      loading = false;
+      loadError = "Timed out connecting to the resource stream";
+    });
+    source.onopen = () => {
       loading = false;
       console.log("connected");
     };
-    eventSource.addEventListener("data", (event) => {
+    source.addEventListener("data", (event) => {
       try {
         const newData = JSON.parse(
           (event as MessageEvent<string>).data,
@@ -64,7 +72,7 @@
       }
     });
 
-    eventSource.onerror = () => console.log("disconnected, browser will retry");
+    source.onerror = () => console.log("disconnected, browser will retry");
   }
   onMount(() => {
     getServerResources();

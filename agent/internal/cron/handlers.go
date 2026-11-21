@@ -293,45 +293,40 @@ func handleDeleteCronJob(ctx context.Context, database *gorm.DB, req *proto.Dele
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cron job not found")
 	}
-	err = database.Transaction(func(tx *gorm.DB) error {
-		var file []byte
-		found := false
-
-		readErr := readCronJobEach(ctx, tx, func(curJob *db.CronJob, schedule, command string) error {
-			if curJob.Hash == job.Hash {
-				// found target job, skip it
-				found = true
-				return nil
-			}
-			if curJob.Managed {
-				command = addIDAndAgentPrefix(command, curJob.ID)
-			}
-			line, err := BuildLine(schedule, command)
-			if err != nil {
-				return err
-			}
-			file = appendLine(file, line)
-
+	var file []byte
+	found := false
+	readErr := readCronJobEach(ctx, database, func(curJob *db.CronJob, schedule, command string) error {
+		if curJob.Hash == job.Hash && !found {
+			// found target job, skip it
+			found = true
 			return nil
-		})
-		if readErr != nil {
-			return readErr
 		}
-		if !found {
-			return fmt.Errorf("cron job not found in crontab")
+		if curJob.Managed {
+			command = addIDAndAgentPrefix(command, curJob.ID)
 		}
-		if err := database.Delete(job).Error; err != nil {
+		line, err := BuildLine(schedule, command)
+		if err != nil {
 			return err
 		}
-		if err := installCrontab(ctx, file); err != nil {
-			return err
-		}
+		file = appendLine(file, line)
+
 		return nil
 	})
-	if err != nil {
-		slog.Error("failed to delete cron job", "error", err)
-		return nil, status.Errorf(codes.Internal, "failed to delete cron job: %v", err)
+	if readErr != nil {
+		return nil, status.Errorf(codes.Internal, "An error occurred reading cron job: %v", readErr)
+	}
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "cron job not found in crontab")
 	}
 
+	if err := installCrontab(ctx, file); err != nil {
+		slog.Error("An error occurred deleting cron job", "error", err)
+
+		return nil, status.Errorf(codes.Internal, "An error occurred deleting cron job")
+	}
+	if err := database.Delete(job).Error; err != nil {
+		slog.Error("An error occured deleting cron job", "error", err)
+		return nil, status.Errorf(codes.Internal, "An error occurred deleting cron job")
+	}
 	return &proto.DeleteCronJobResponse{}, nil
 }

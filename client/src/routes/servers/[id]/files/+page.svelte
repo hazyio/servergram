@@ -9,7 +9,7 @@
   import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
   import { severPageInfo } from "#lib/states/severPageInfo.svelte.ts";
   import type { FileEntry } from "#lib/types/index.ts";
-  import { joinPath } from "#lib/utils.ts";
+  import { addEventSourceTimeout, joinPath } from "#lib/utils.ts";
   import {
     ChevronLeft,
     ChevronRight,
@@ -99,6 +99,12 @@
       { withCredentials: true },
     );
     eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      stop();
+      loading = false;
+      loadError = "Timed out loading files";
+    });
 
     source.addEventListener("data", (event) => {
       if (source !== eventSource) return;
@@ -201,6 +207,11 @@
       { withCredentials: true },
     );
     watchSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== watchSource) return;
+      console.warn("Watch stream connection timed out");
+      stopWatch();
+    });
 
     source.addEventListener("data", (event) => {
       if (source !== watchSource) return;

@@ -9,7 +9,17 @@ import { getWebSocketUrl } from "#lib/utils.ts";
 import { toast } from "svelte-sonner";
 import handleWebSocketMessage from "./handleWebsocket";
 import { ConnectServer, DisconnectServer } from "./webSocketMessages";
+
+const WS_CONNECT_TIMEOUT_MS = 10_000;
+
 let ws: WebSocket | undefined;
+let connectTimer: ReturnType<typeof setTimeout> | undefined;
+
+function clearConnectTimer() {
+  if (connectTimer === undefined) return;
+  clearTimeout(connectTimer);
+  connectTimer = undefined;
+}
 
 export const servicesState = $state({
   services: [] as WSServiceConnectedListItem[],
@@ -33,27 +43,59 @@ export function startWebSocket(onOpen: () => void) {
     console.log("WebSocket already open");
     return;
   }
+
+  clearConnectTimer();
+  ws?.close(1000, "reconnecting");
   servicesState.connecting = true;
-  ws = new WebSocket(getWebSocketUrl("/ws/services"));
-  ws.onopen = () => {
+
+  const socket = new WebSocket(getWebSocketUrl("/ws/services"));
+  ws = socket;
+
+  connectTimer = setTimeout(() => {
+    connectTimer = undefined;
+    if (socket.readyState === WebSocket.OPEN) return;
+
+    socket.close(4000, "Connection timed out");
+    if (ws !== socket) return;
+
+    ws = undefined;
+    servicesState.error = "Could not connect, connection timed out";
+    servicesState.connecting = false;
+    servicesState.tries += 1;
+  }, WS_CONNECT_TIMEOUT_MS);
+
+  socket.onopen = () => {
+    if (ws !== socket) return;
+    clearConnectTimer();
     onOpen();
     servicesState.connecting = false;
     servicesState.error = null;
     servicesState.tries = 0;
   };
-  ws.onerror = (e) => {
+  socket.onerror = (e) => {
+    if (ws !== socket) return;
+    clearConnectTimer();
     console.log(e);
     servicesState.error = "Could not connect, webSocket error";
     servicesState.connecting = false;
     servicesState.tries += 1;
   };
-  ws.onmessage = (e) => {
+  socket.onclose = () => {
+    if (ws !== socket) return;
+    clearConnectTimer();
+    ws = undefined;
+    servicesState.connecting = false;
+    servicesState.error ??= "WebSocket connection closed";
+  };
+  socket.onmessage = (e) => {
     handleWebSocketMessage(JSON.parse(e.data));
   };
 }
 export function stopWebSocket() {
-  ws?.close(1000, "bye");
+  clearConnectTimer();
+  const socket = ws;
   ws = undefined;
+  socket?.close(1000, "bye");
 }
 export type ServiceState = "connected";
 export function checkWs(showError: boolean = false): boolean {

@@ -25,6 +25,10 @@
   let intervalId = $state<ReturnType<typeof setInterval> | null>(null);
   function retryWebSocketConnection() {
     if (servicesState.tries >= 5) {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
       toastError("Maximum connection attempts reached");
     } else {
       startWebSocketWrapper();

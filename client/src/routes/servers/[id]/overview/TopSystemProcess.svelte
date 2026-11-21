@@ -15,6 +15,7 @@
   import Button from "#lib/components/ui/button/button.svelte";
   import CardFooter from "#lib/components/ui/card/card-footer.svelte";
   import appPaths from "#lib/appPaths.ts";
+  import { addEventSourceTimeout } from "#lib/utils.ts";
   type SortBy = "CPU" | "Memory";
   let { id } = $props();
   let sortBy: SortBy = $state("CPU");
@@ -49,6 +50,12 @@
       { withCredentials: true },
     );
     eventSource = source;
+    addEventSourceTimeout(source, () => {
+      if (source !== eventSource) return;
+      eventSource = undefined;
+      loading = false;
+      loadError = "Timed out connecting to the process stream";
+    });
 
     source.addEventListener("data", (event) => {
       if (source !== eventSource) return;

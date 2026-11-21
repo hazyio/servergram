@@ -18,7 +18,7 @@ type CronJob struct {
 	ID               uint64 `gorm:"primaryKey"`
 	Name             string
 	Hash             string        `gorm:"uniqueIndex:idx_server_hash"`
-	Managed          bool          // This will be updated on demand
+	Managed          bool          // This might be updated on demand
 	Status           CronJobStatus `gorm:"type:varchar(20)"`
 	MetaKeepCount    int32
 	RunLogKeepCount  int32

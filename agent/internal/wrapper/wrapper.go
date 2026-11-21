@@ -39,6 +39,9 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		if err := db.PruneCronRuns(database, job.MetaKeepCount, job.ID); err != nil {
 			slog.Error("failed to prune cron runs", "error", err)
 		}
+	}()
+	go func() {
+
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -66,7 +69,6 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 	if err := database.Save(job).Error; err != nil {
 		slog.Error("failed to save cron job", "error", err)
 	}
-
 	if newRun != nil {
 		if err != nil {
 			newRun.Status = db.RunStatusFailed
@@ -80,6 +82,11 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		}
 
 	}
+	if err != nil {
+		slog.Error("failed to run command", "error", err, "command", command)
+		return err
+	}
+	slog.Info("finished cron job", "job_id", jobID, "command", command)
 
 	return nil
 }

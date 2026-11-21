@@ -236,8 +236,9 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 			MetaKeepCount:     j.MetaKeepCount,
 			RunLogsKeepCount:  j.RunLogKeepCount,
 			ErrorLogsKeepDays: j.ErrorLogKeepDays,
+			LastRunAt:         j.LastRunAt.Format(time.RFC3339),
+			NextRunAt:         j.NextRunAt.Format(time.RFC3339),
 		}
-
 		return FoundErr
 	})
 
@@ -270,18 +271,20 @@ func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.Upda
 		job.MetaKeepCount = req.MetaKeepCount
 		job.RunLogKeepCount = req.RunLogsKeepCount
 		job.ErrorLogKeepDays = req.ErrorLogsKeepDays
-		if err := tx.Save(job).Error; err != nil {
-			return err
-		}
 		if req.Wrap {
 			command = addIDAndAgentPrefix(command, job.ID)
 		}
+		hashCommand := hashCronJob(schedule, command)
+		job.Hash = hashCommand
+		job.Managed = req.Wrap
+		if err := tx.Save(job).Error; err != nil {
+			return err
+		}
+
 		if err := updateJob(ctx, job.Hash, schedule, command); err != nil {
 			return err
 		}
-		
-		
-		
+
 		return nil
 	})
 	if err != nil {

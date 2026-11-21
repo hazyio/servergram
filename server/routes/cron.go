@@ -194,6 +194,7 @@ func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*Empty
 		Name:              data.Input.Body.Name,
 		MetaKeepCount:     data.Input.Body.MetaKeepCount,
 		RunLogsKeepCount:  data.Input.Body.RunLogsKeepCount,
+		Wrap:              data.Input.Body.Wrap,
 		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays})
 	if err != nil {
 		slog.Error("Failed to update cron job", "error", err)

@@ -70,6 +70,8 @@ message CronInfoResponse {
   int32 run_logs_keep_count = 7;
   int32 error_logs_keep_days = 8;
   string status = 9;
+  string last_run_at = 10;
+  string next_run_at = 11;
 }
 message UpdateCronJobRequest {
   uint64 id = 1;
@@ -80,6 +82,7 @@ message UpdateCronJobRequest {
   int32 run_logs_keep_count = 6;
   int32 error_logs_keep_days = 7;
   bool wrap = 8;
+
 }
 message UpdateCronJobResponse {}
 

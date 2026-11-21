@@ -13,8 +13,13 @@
   import * as Field from "#lib/components/ui/field/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
   import { Separator } from "#lib/components/ui/separator/index.js";
-  import { CalendarClock } from "@lucide/svelte";
-  import Loader from "@lucide/svelte/icons/loader";
+  import { CalendarClock, CircleAlert, Loader } from "@lucide/svelte";
+  import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+  } from "#lib/components/ui/alert/index.js";
+  import { Checkbox } from "#lib/components/ui/checkbox/index.ts";
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import * as z from "zod";
@@ -60,6 +65,9 @@
     command: "",
     schedule: "",
   });
+
+  let wrapWithAgent = $state(false);
+  let retentionEnabled = $state(false);
 
   const isManaged = $derived(
     loadedInfo ? loadedInfo.managed : job.status !== "unmanaged",
@@ -108,6 +116,11 @@
     metadataRuns = String(data.retention.metadata_runs);
     runLogs = String(data.retention.run_logs);
     errorLogDays = String(data.retention.error_log_days);
+    wrapWithAgent = data.managed;
+    retentionEnabled =
+      data.retention.metadata_runs > 0 ||
+      data.retention.run_logs > 0 ||
+      data.retention.error_log_days > 0;
     formError.name = "";
     formError.command = "";
     formError.schedule = "";
@@ -131,6 +144,8 @@
     if (submitting) return;
     open = false;
     requestError = "";
+    wrapWithAgent = false;
+    retentionEnabled = false;
   }
 
   async function save() {
@@ -152,9 +167,9 @@
     }
 
     const retention = {
-      metadata_runs: Number(metadataRuns),
-      run_logs: Number(runLogs),
-      error_log_days: Number(errorLogDays),
+      metadata_runs: retentionEnabled ? Number(metadataRuns) : 0,
+      run_logs: retentionEnabled ? Number(runLogs) : 0,
+      error_log_days: retentionEnabled ? Number(errorLogDays) : 0,
     };
 
     submitting = true;
@@ -162,7 +177,7 @@
       name: result.data.name,
       command: result.data.command,
       schedule: result.data.schedule,
-      wrap: isManaged,
+      wrap: wrapWithAgent,
       retention,
     });
     submitting = false;
@@ -177,7 +192,7 @@
       name: result.data.name,
       command: result.data.command,
       schedule: result.data.schedule,
-      ...(isManaged ? { retention } : {}),
+      ...(wrapWithAgent ? { retention } : {}),
     };
 
     onUpdated?.(updated);
@@ -281,39 +296,88 @@
           {/if}
         </Field.Field>
 
-        {#if isManaged}
+        {#if !loading && !loadError}
           <Separator />
 
-          <div>
-            <p class="text-sm font-medium">Retention</p>
-            <p class="text-xs text-muted-foreground">
-              How much run history the agent keeps for this job.
-            </p>
+          <div class="grid gap-3 md:grid-cols-2">
+            <Field.Label>
+              <Field.Field orientation="horizontal">
+                <Checkbox
+                  id="edit-wrap-with-agent"
+                  name="edit-wrap-with-agent"
+                  bind:checked={wrapWithAgent}
+                  disabled={submitting}
+                />
+                <Field.Content>
+                  <Field.Title>Wrap with agent</Field.Title>
+                  <Field.Description>
+                    Let ServerGram manage this job so you get logging, status
+                    tracking, and run history.
+                  </Field.Description>
+                </Field.Content>
+              </Field.Field>
+            </Field.Label>
+
+            <Field.Label class={wrapWithAgent ? "" : "opacity-60"}>
+              <Field.Field orientation="horizontal">
+                <Checkbox
+                  id="edit-cron-retention"
+                  name="edit-cron-retention"
+                  bind:checked={retentionEnabled}
+                  disabled={submitting || !wrapWithAgent}
+                />
+                <Field.Content>
+                  <Field.Title>Retention</Field.Title>
+                  <Field.Description>
+                    Keep run metadata, output logs, and error logs for this job.
+                  </Field.Description>
+                </Field.Content>
+              </Field.Field>
+            </Field.Label>
           </div>
 
-          <div class="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-            <CronRetentionSelect
-              id="edit-metadata-runs"
-              label="Runs metadata to keep"
-              bind:value={metadataRuns}
-              options={runCountOptions}
-              unit="run"
-            />
-            <CronRetentionSelect
-              id="edit-run-logs"
-              label="Run logs to keep"
-              bind:value={runLogs}
-              options={runCountOptions}
-              unit="run"
-            />
-            <CronRetentionSelect
-              id="edit-error-log-days"
-              label="Error logs to keep"
-              bind:value={errorLogDays}
-              options={errorLogDayOptions}
-              unit="day"
-            />
-          </div>
+          {#if wrapWithAgent && retentionEnabled}
+            <Alert class="border-amber-500/40 bg-amber-500/5">
+              <CircleAlert class="text-amber-600 dark:text-amber-400" />
+              <AlertTitle>Logging uses storage</AlertTitle>
+              <AlertDescription>
+                Run logs can use a lot of storage. If the server has 200 MB or
+                less free storage, older run logs will be deleted automatically.
+              </AlertDescription>
+            </Alert>
+
+            <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
+              <CronRetentionSelect
+                id="edit-metadata-runs"
+                label="Runs metadata to keep"
+                description="Stores status, start time, end time, and exit code for recent runs."
+                bind:value={metadataRuns}
+                options={runCountOptions}
+                unit="run"
+              />
+              <CronRetentionSelect
+                id="edit-run-logs"
+                label="Run logs to keep"
+                description="Stores stdout and stderr for recent runs."
+                bind:value={runLogs}
+                options={runCountOptions}
+                unit="run"
+              />
+              <CronRetentionSelect
+                id="edit-error-log-days"
+                label="Error logs to keep"
+                description="Stores error logs for the selected number of days."
+                bind:value={errorLogDays}
+                options={errorLogDayOptions}
+                unit="day"
+              />
+            </div>
+          {:else}
+            <p class="text-sm text-muted-foreground">
+              Retention is disabled. No run history or logs will be kept for
+              this job.
+            </p>
+          {/if}
         {/if}
 
         {#if requestError}

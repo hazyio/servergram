@@ -99,7 +99,7 @@ func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*Empty
 	})
 	if err != nil {
 		slog.Error("Failed to create cron job", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	db.AddLog(db.LogActionCreate, fmt.Sprintf("Created cron job in server \"%d\"", data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
@@ -115,7 +115,7 @@ func removeDuplicateCronJobs(data internal.RouteData[PathIdRequest]) (*models.Re
 	result, err := resource.RemoveDuplicateCronJobs(ctx, &proto.RemoveDuplicateCronJobsRequest{})
 	if err != nil {
 		slog.Error("Failed to remove duplicate cron jobs", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 
 	response := &models.RemoveDuplicateCronJobsResponse{}
@@ -134,7 +134,7 @@ func fixUnmanagedCronJobs(data internal.RouteData[PathIdRequest]) (*models.FixUn
 	result, err := resource.FixUnmanagedCronJobs(ctx, &proto.FixUnmanagedCronJobsRequest{})
 	if err != nil {
 		slog.Error("Failed to fix unmanaged cron jobs", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	response := &models.FixUnmanagedCronJobsResponse{}
 	response.Body.Fixed = result.Fixed
@@ -153,7 +153,7 @@ func runCronJob(data internal.RouteData[models.RunJobRequest]) (*models.RunJobRe
 	})
 	if err != nil {
 		slog.Error("Failed to run cron job", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	response := &models.RunJobResponse{}
 	response.Body = result
@@ -172,7 +172,7 @@ func getCronJobInfo(data internal.RouteData[models.CronJobInfoRequest]) (*models
 	})
 	if err != nil {
 		slog.Error("Failed to get cron job info", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	response := &models.CronJobInfoResponse{}
 	response.Body = result
@@ -197,7 +197,7 @@ func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*Empty
 		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays})
 	if err != nil {
 		slog.Error("Failed to update cron job", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Updated cron job %d in server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
@@ -214,7 +214,7 @@ func deleteCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR
 	})
 	if err != nil {
 		slog.Error("Failed to delete cron job", "error", err)
-		return nil, err
+		return nil, internal.FromGrpcError(err)
 	}
 	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted cron job %d from server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil

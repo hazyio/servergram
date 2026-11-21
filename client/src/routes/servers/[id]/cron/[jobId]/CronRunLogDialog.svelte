@@ -11,7 +11,7 @@
   import {
     cronJobDisplayName,
     getCronRunLog,
-    type CronJob,
+    type CronJobInfo,
     type CronRun,
   } from "../cronJobs.ts";
 
@@ -23,7 +23,7 @@
   }: {
     open: boolean;
     serverId: number;
-    job: CronJob;
+    job: CronJobInfo;
     run: CronRun | null;
   } = $props();
 

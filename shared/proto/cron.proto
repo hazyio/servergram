@@ -69,6 +69,8 @@ message CronInfoResponse {
   int32 meta_keep_count = 6;
   int32 run_logs_keep_count = 7;
   int32 error_logs_keep_days = 8;
+  string status = 9;
+
 }
 message UpdateCronJobRequest {
   uint64 id = 1;

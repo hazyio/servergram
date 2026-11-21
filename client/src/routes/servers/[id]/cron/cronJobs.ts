@@ -29,6 +29,9 @@ export type CronJobInfo = {
   command: string;
   schedule: string;
   managed: boolean;
+  status: CronJobStatus;
+  last_run: string | null;
+  next_run: string | null;
   retention: CronRetention;
 };
 
@@ -325,6 +328,9 @@ export async function getCronJob(
 
 type CronInfoApi = components["schemas"]["CronInfoResponse"] & {
   name?: string;
+  status?: string;
+  last_run_at?: string;
+  next_run_at?: string;
 };
 
 export async function getCronJobInfo(
@@ -359,6 +365,25 @@ export async function getCronJobInfo(
   }
 
   const info = data as CronInfoApi;
+  const managed = info.managed ?? false;
+
+  // TODO: remove this stub fallback once the info endpoint exposes run state.
+  // The info response currently only carries configuration, so status and run
+  // times come from the same seeded data used by the other cron stubs.
+  const fallback = jobsFor(serverId).find((entry) => entry.id === jobId);
+  const status: CronJobStatus = !managed
+    ? "unmanaged"
+    : knownCronStatuses.has(info.status as CronJobStatus)
+      ? (info.status as CronJobStatus)
+      : fallback?.status === "active"
+        ? "active"
+        : "inactive";
+  const lastRun = isCronDateSet(info.last_run_at)
+    ? info.last_run_at
+    : (fallback?.last_run ?? null);
+  const nextRun = isCronDateSet(info.next_run_at)
+    ? info.next_run_at
+    : (fallback?.next_run ?? null);
 
   return {
     data: {
@@ -366,8 +391,12 @@ export async function getCronJobInfo(
       name: info.name ?? "",
       command: info.command ?? "",
       schedule: info.schedule ?? "",
-      managed: info.managed ?? false,
+      managed,
+      status,
+      last_run: lastRun,
+      next_run: nextRun,
       retention: {
+        // The API omits retention fields when they are zero.
         metadata_runs: info.meta_keep_count ?? 0,
         run_logs: info.run_logs_keep_count ?? 0,
         error_log_days: info.error_logs_keep_days ?? 0,

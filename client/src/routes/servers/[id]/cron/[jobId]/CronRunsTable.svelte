@@ -3,7 +3,7 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Table from "#lib/components/ui/table/index.js";
   import { FileText } from "@lucide/svelte";
-  import type { CronJob, CronRun } from "../cronJobs.ts";
+  import type { CronJobInfo, CronRun } from "../cronJobs.ts";
   import CronRunLogDialog from "./CronRunLogDialog.svelte";
   import CronRunStatusBadge from "./CronRunStatusBadge.svelte";
 
@@ -11,7 +11,7 @@
     runs,
     serverId,
     job,
-  }: { runs: CronRun[]; serverId: number; job: CronJob } = $props();
+  }: { runs: CronRun[]; serverId: number; job: CronJobInfo } = $props();
 
   let logsOpen = $state(false);
   let selectedRun = $state<CronRun | null>(null);

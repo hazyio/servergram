@@ -12,16 +12,17 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import Card from "#lib/components/ui/card/card.svelte";
   import { updateCronJobPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import { ArrowLeft, CircleAlert } from "@lucide/svelte";
+  import { ArrowLeft, CircleAlert, Settings2 } from "@lucide/svelte";
   import type { PageProps } from "./$types";
   import CronRunsTable from "./CronRunsTable.svelte";
+  import CronEditDialog from "../CronEditDialog.svelte";
   import CronSchedule from "../CronTable/CronSchedule.svelte";
   import CronStatusBadge from "../CronTable/CronStatusBadge.svelte";
   import {
     cronJobDisplayName,
-    getCronJob,
+    getCronJobInfo,
     listCronRuns,
-    type CronJob,
+    type CronJobInfo,
     type CronRun,
   } from "../cronJobs.ts";
 
@@ -29,50 +30,82 @@
   const serverId = $derived(Number(params.id));
   const jobId = $derived(Number(params.jobId));
 
-  let job = $state<CronJob | null>(null);
+  let info = $state<CronJobInfo | null>(null);
+  let infoLoading = $state(true);
+  let infoError = $state<string | null>(null);
+
   let runs = $state<CronRun[]>([]);
-  let loading = $state(true);
-  let loadError = $state<string | null>(null);
+  let runsLoading = $state(false);
+  let runsError = $state<string | null>(null);
 
-  const displayName = $derived(job ? cronJobDisplayName(job) : "Cron job");
+  let editOpen = $state(false);
 
-  async function load() {
-    loading = true;
-    loadError = null;
-    job = null;
+  let infoToken = 0;
+  let runsToken = 0;
+
+  const displayName = $derived(info ? cronJobDisplayName(info) : "Cron job");
+
+  async function loadRuns() {
+    const token = ++runsToken;
+
+    runsLoading = true;
+    runsError = null;
     runs = [];
 
-    const [jobResponse, runsResponse] = await Promise.all([
-      getCronJob(serverId, jobId),
-      listCronRuns(serverId, jobId),
-    ]);
+    const { data, error } = await listCronRuns(serverId, jobId);
 
-    loading = false;
+    if (token !== runsToken) return;
 
-    if (jobResponse.error || !jobResponse.data) {
-      loadError = jobResponse.error
-        ? unWrapErrorMessage(jobResponse.error, "Failed to load cron job")
-        : "Failed to load cron job";
-      return;
-    }
+    runsLoading = false;
 
-    if (runsResponse.error || !runsResponse.data) {
-      loadError = runsResponse.error
-        ? unWrapErrorMessage(runsResponse.error, "Failed to load cron runs")
+    if (error || !data) {
+      runsError = error
+        ? unWrapErrorMessage(error, "Failed to load cron runs")
         : "Failed to load cron runs";
       return;
     }
 
-    job = jobResponse.data;
-    runs = runsResponse.data.items;
+    runs = data.items;
+  }
+
+  async function loadInfo() {
+    const token = ++infoToken;
+    runsToken++;
+
+    infoLoading = true;
+    infoError = null;
+    info = null;
+
+    runsLoading = false;
+    runsError = null;
+    runs = [];
+
+    const { data, error } = await getCronJobInfo(serverId, jobId);
+
+    if (token !== infoToken) return;
+
+    infoLoading = false;
+
+    if (error || !data) {
+      infoError = error
+        ? unWrapErrorMessage(error, "Failed to load cron job")
+        : "Failed to load cron job";
+      return;
+    }
+
+    info = data;
+
+    if (data.managed) {
+      void loadRuns();
+    }
   }
 
   $effect(() => {
-    load();
+    loadInfo();
   });
 
   $effect(() => {
-    updateCronJobPageInfo(jobId, job ? cronJobDisplayName(job) : "Job runs");
+    updateCronJobPageInfo(jobId, info ? cronJobDisplayName(info) : "Job runs");
   });
 </script>
 
@@ -85,13 +118,13 @@
 </svelte:head>
 
 <div class="p-2">
-  {#if loading}
-    <Loading loading class="mt-20 w-12 h-12" text="Loading job runs..." />
-  {:else if loadError || !job}
+  {#if infoLoading}
+    <Loading loading class="mt-20 w-12 h-12" text="Loading cron job..." />
+  {:else if infoError || !info}
     <ErrorSection
       title="Failed to load cron job"
-      message={loadError ?? "Cron job not found"}
-      onRetry={load}
+      message={infoError ?? "Cron job not found"}
+      onRetry={loadInfo}
       class="mt-10"
     />
   {:else}
@@ -99,30 +132,36 @@
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="truncate text-lg font-semibold">{displayName}</h1>
-          <CronStatusBadge status={job.status} />
+          <CronStatusBadge status={info.status} />
         </div>
         <p class="mt-1 truncate font-mono text-xs text-muted-foreground">
-          {job.command}
+          {info.command}
         </p>
       </div>
-      <Button variant="outline" href={appPaths.servers.cron(serverId)}>
-        <ArrowLeft />
-        Back to cron jobs
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" onclick={() => (editOpen = true)}>
+          <Settings2 />
+          Settings
+        </Button>
+        <Button variant="outline" href={appPaths.servers.cron(serverId)}>
+          <ArrowLeft />
+          Back to cron jobs
+        </Button>
+      </div>
     </div>
 
     <div class="mt-4 grid gap-3 sm:grid-cols-3">
       <Card class="p-4">
         <p class="text-xs text-muted-foreground">Schedule</p>
         <div class="mt-1">
-          <CronSchedule schedule={job.schedule} />
+          <CronSchedule schedule={info.schedule} />
         </div>
       </Card>
       <Card class="p-4">
         <p class="text-xs text-muted-foreground">Last run</p>
         <p class="mt-1 text-sm">
-          {#if job.last_run}
-            <TimeAgo datetime={job.last_run} />
+          {#if info.last_run}
+            <TimeAgo datetime={info.last_run} />
           {:else}
             <span class="text-muted-foreground">Never</span>
           {/if}
@@ -131,8 +170,8 @@
       <Card class="p-4">
         <p class="text-xs text-muted-foreground">Next run</p>
         <p class="mt-1 text-sm">
-          {#if job.next_run}
-            <TimeAgo datetime={job.next_run} />
+          {#if info.next_run}
+            <TimeAgo datetime={info.next_run} />
           {:else}
             <span class="text-muted-foreground">Not scheduled</span>
           {/if}
@@ -140,7 +179,36 @@
       </Card>
     </div>
 
-    {#if job.status === "unmanaged"}
+    {#if info.managed}
+      <Card class="mt-4 p-4">
+        <h2 class="text-sm font-medium">Retention</h2>
+        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+          <div>
+            <p class="text-xs text-muted-foreground">Runs metadata to keep</p>
+            <p class="mt-1 text-sm">
+              {info.retention.metadata_runs}
+              {info.retention.metadata_runs === 1 ? "run" : "runs"}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">Run logs to keep</p>
+            <p class="mt-1 text-sm">
+              {info.retention.run_logs}
+              {info.retention.run_logs === 1 ? "run" : "runs"}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">Error logs to keep</p>
+            <p class="mt-1 text-sm">
+              {info.retention.error_log_days}
+              {info.retention.error_log_days === 1 ? "day" : "days"}
+            </p>
+          </div>
+        </div>
+      </Card>
+    {/if}
+
+    {#if info.status === "unmanaged"}
       <Alert class="mt-4 border-amber-500/40 bg-amber-500/5">
         <CircleAlert class="text-amber-600 dark:text-amber-400" />
         <AlertTitle>Runs are not being recorded</AlertTitle>
@@ -152,15 +220,55 @@
       </Alert>
     {/if}
 
-    <Card class="mt-4 p-4">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium">Runs</h2>
-        <span class="text-xs text-muted-foreground">
-          {runs.length}
-          {runs.length === 1 ? "run" : "runs"}
-        </span>
-      </div>
-      <CronRunsTable {runs} {serverId} {job} />
-    </Card>
+    {#if info.managed}
+      <Card class="mt-4 p-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-sm font-medium">Runs</h2>
+          {#if !runsLoading && !runsError}
+            <span class="text-xs text-muted-foreground">
+              {runs.length}
+              {runs.length === 1 ? "run" : "runs"}
+            </span>
+          {/if}
+        </div>
+
+        {#if runsLoading}
+          <Loading
+            loading
+            containerClass="h-32"
+            class="w-8 h-8"
+            text="Loading runs..."
+          />
+        {:else if runsError}
+          <ErrorSection
+            title="Failed to load run history"
+            message={runsError}
+            onRetry={loadRuns}
+            class="mt-3"
+          />
+        {:else}
+          <CronRunsTable {runs} {serverId} job={info} />
+        {/if}
+      </Card>
+    {/if}
   {/if}
 </div>
+
+{#if info}
+  <CronEditDialog
+    bind:open={editOpen}
+    {serverId}
+    job={info}
+    onUpdated={(updated) => {
+      if (!info) return;
+
+      info = {
+        ...info,
+        name: updated.name,
+        command: updated.command,
+        schedule: updated.schedule,
+        retention: updated.retention ?? info.retention,
+      };
+    }}
+  />
+{/if}

@@ -273,12 +273,15 @@ func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.Upda
 		if err := tx.Save(job).Error; err != nil {
 			return err
 		}
-		if job.Managed {
+		if req.Wrap {
 			command = addIDAndAgentPrefix(command, job.ID)
 		}
 		if err := updateJob(ctx, job.Hash, schedule, command); err != nil {
 			return err
 		}
+		
+		
+		
 		return nil
 	})
 	if err != nil {

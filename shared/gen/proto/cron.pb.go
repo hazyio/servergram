@@ -826,6 +826,7 @@ type UpdateCronJobRequest struct {
 	MetaKeepCount     int32                  `protobuf:"varint,5,opt,name=meta_keep_count,json=metaKeepCount,proto3" json:"meta_keep_count,omitempty"`
 	RunLogsKeepCount  int32                  `protobuf:"varint,6,opt,name=run_logs_keep_count,json=runLogsKeepCount,proto3" json:"run_logs_keep_count,omitempty"`
 	ErrorLogsKeepDays int32                  `protobuf:"varint,7,opt,name=error_logs_keep_days,json=errorLogsKeepDays,proto3" json:"error_logs_keep_days,omitempty"`
+	Wrap              bool                   `protobuf:"varint,8,opt,name=wrap,proto3" json:"wrap,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -907,6 +908,13 @@ func (x *UpdateCronJobRequest) GetErrorLogsKeepDays() int32 {
 		return x.ErrorLogsKeepDays
 	}
 	return 0
+}
+
+func (x *UpdateCronJobRequest) GetWrap() bool {
+	if x != nil {
+		return x.Wrap
+	}
+	return false
 }
 
 type UpdateCronJobResponse struct {
@@ -1076,7 +1084,7 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x0fmeta_keep_count\x18\x06 \x01(\x05R\rmetaKeepCount\x12-\n" +
 	"\x13run_logs_keep_count\x18\a \x01(\x05R\x10runLogsKeepCount\x12/\n" +
 	"\x14error_logs_keep_days\x18\b \x01(\x05R\x11errorLogsKeepDays\x12\x16\n" +
-	"\x06status\x18\t \x01(\tR\x06status\"\xf8\x01\n" +
+	"\x06status\x18\t \x01(\tR\x06status\"\x8c\x02\n" +
 	"\x14UpdateCronJobRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
@@ -1084,7 +1092,8 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\acommand\x18\x04 \x01(\tR\acommand\x12&\n" +
 	"\x0fmeta_keep_count\x18\x05 \x01(\x05R\rmetaKeepCount\x12-\n" +
 	"\x13run_logs_keep_count\x18\x06 \x01(\x05R\x10runLogsKeepCount\x12/\n" +
-	"\x14error_logs_keep_days\x18\a \x01(\x05R\x11errorLogsKeepDays\"\x17\n" +
+	"\x14error_logs_keep_days\x18\a \x01(\x05R\x11errorLogsKeepDays\x12\x12\n" +
+	"\x04wrap\x18\b \x01(\bR\x04wrap\"\x17\n" +
 	"\x15UpdateCronJobResponse\"&\n" +
 	"\x14DeleteCronJobRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\"\x17\n" +

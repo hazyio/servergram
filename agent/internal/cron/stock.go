@@ -196,6 +196,9 @@ func addAgentPrefix(command string) string {
 	prefix := getAgentPrefix()
 	return fmt.Sprintf("%s %s", prefix, command)
 }
+func hasAgentPrefix(command string) bool {
+	return strings.HasPrefix(command, getAgentPrefix())
+}
 func addIDAndAgentPrefix(command string, id uint64) string {
 	return addAgentPrefix(addID(command, id))
 }

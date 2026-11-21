@@ -12,7 +12,7 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import Card from "#lib/components/ui/card/card.svelte";
   import { updateCronJobPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import { ArrowLeft, CircleAlert, Settings2 } from "@lucide/svelte";
+  import { ArrowLeft, CircleAlert, Pencil } from "@lucide/svelte";
   import type { PageProps } from "./$types";
   import CronRunsTable from "./CronRunsTable.svelte";
   import CronEditDialog from "../CronEditDialog.svelte";
@@ -140,8 +140,8 @@
       </div>
       <div class="flex items-center gap-2">
         <Button variant="outline" onclick={() => (editOpen = true)}>
-          <Settings2 />
-          Settings
+          <Pencil />
+          Edit
         </Button>
         <Button variant="outline" href={appPaths.servers.cron(serverId)}>
           <ArrowLeft />

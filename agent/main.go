@@ -38,7 +38,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "run-job":
-		if len(os.Args) != 4 {
+		if len(os.Args) != 4 && len(os.Args) != 5 {
 			fmt.Fprintln(os.Stderr, `usage: agent run-job "command" id=<id>`)
 			os.Exit(2)
 		}
@@ -57,7 +57,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, "invalid job id")
 			os.Exit(2)
 		}
-		if err := wrapper.RunJob(database, id, command, db.CronRunTriggerScheduled); err != nil {
+		trigger := db.CronRunTriggerScheduled
+		if len(os.Args) > 4 && os.Args[4] == "--manual" {
+			trigger = db.CronRunTriggerManual
+		}
+		if err := wrapper.RunJob(database, id, command, trigger); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

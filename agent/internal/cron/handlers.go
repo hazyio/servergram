@@ -191,7 +191,7 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
 	slog.Debug("running cron job", "job_id", job.ID, "command", jobCommand)
-	cmd := exec.Command(common.GetAgentPath(), "run-job", jobCommand, fmt.Sprintf("id=%d", job.ID))
+	cmd := exec.Command(common.GetAgentPath(), "run-job", jobCommand, fmt.Sprintf("id=%d", job.ID), "--manual")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
 
 	if err := cmd.Start(); err != nil {
@@ -336,4 +336,38 @@ func handleDeleteCronJob(ctx context.Context, database *gorm.DB, req *proto.Dele
 		return nil, status.Errorf(codes.Internal, "An error occurred deleting cron job")
 	}
 	return &proto.DeleteCronJobResponse{}, nil
+}
+
+func handleListCronJobRuns(database *gorm.DB, req *proto.ListCronJobRunsRequest) (*proto.ListCronJobRunsResponse, error) {
+	_, err := db.FindCronJobByID(database, uint64(req.CronJobId))
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job not found")
+	}
+
+	runs := make([]*db.CronRun, 0, req.Limit)
+	err = database.Where("cron_job_id = ?", uint64(req.CronJobId)).Order("id desc").Offset(int(req.Offset)).Limit(int(req.Limit)).Find(&runs).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.Internal, "failed to get run meta list: %v", err)
+		}
+		return &proto.ListCronJobRunsResponse{Runs: make([]*proto.CronRunMeta, 0), More: false}, nil
+	}
+	thereIsMore := false
+	if len(runs) > 0 {
+		lastId := runs[len(runs)-1].ID
+		var one *proto.CronRunMeta
+		if err := database.Where("cron_job_id = ? AND id > ?", uint64(req.CronJobId), lastId).First(&one).Error; err == nil {
+			thereIsMore = true
+		}
+	}
+	return &proto.ListCronJobRunsResponse{Runs: common.Map(runs, func(run *db.CronRun) *proto.CronRunMeta {
+		return &proto.CronRunMeta{
+			Id:         uint32(run.ID),
+			Status:     string(run.Status),
+			StartedAt:  run.StartedAt.Format(time.RFC3339),
+			FinishedAt: run.FinishedAt.Format(time.RFC3339),
+			ExitCode:   int32(run.ExitCode),
+			Trigger:    string(run.Trigger),
+		}
+	}), More: thereIsMore}, nil
 }

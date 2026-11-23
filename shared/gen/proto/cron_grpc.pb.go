@@ -28,6 +28,7 @@ const (
 	CronService_CronInfo_FullMethodName                = "/proto.CronService/CronInfo"
 	CronService_UpdateCronJob_FullMethodName           = "/proto.CronService/UpdateCronJob"
 	CronService_DeleteCronJob_FullMethodName           = "/proto.CronService/DeleteCronJob"
+	CronService_ListCronJobRuns_FullMethodName         = "/proto.CronService/ListCronJobRuns"
 )
 
 // CronServiceClient is the client API for CronService service.
@@ -43,6 +44,7 @@ type CronServiceClient interface {
 	CronInfo(ctx context.Context, in *CronInfoRequest, opts ...grpc.CallOption) (*CronInfoResponse, error)
 	UpdateCronJob(ctx context.Context, in *UpdateCronJobRequest, opts ...grpc.CallOption) (*UpdateCronJobResponse, error)
 	DeleteCronJob(ctx context.Context, in *DeleteCronJobRequest, opts ...grpc.CallOption) (*DeleteCronJobResponse, error)
+	ListCronJobRuns(ctx context.Context, in *ListCronJobRunsRequest, opts ...grpc.CallOption) (*ListCronJobRunsResponse, error)
 }
 
 type cronServiceClient struct {
@@ -152,6 +154,16 @@ func (c *cronServiceClient) DeleteCronJob(ctx context.Context, in *DeleteCronJob
 	return out, nil
 }
 
+func (c *cronServiceClient) ListCronJobRuns(ctx context.Context, in *ListCronJobRunsRequest, opts ...grpc.CallOption) (*ListCronJobRunsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCronJobRunsResponse)
+	err := c.cc.Invoke(ctx, CronService_ListCronJobRuns_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CronServiceServer is the server API for CronService service.
 // All implementations must embed UnimplementedCronServiceServer
 // for forward compatibility.
@@ -165,6 +177,7 @@ type CronServiceServer interface {
 	CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error)
 	UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error)
 	DeleteCronJob(context.Context, *DeleteCronJobRequest) (*DeleteCronJobResponse, error)
+	ListCronJobRuns(context.Context, *ListCronJobRunsRequest) (*ListCronJobRunsResponse, error)
 	mustEmbedUnimplementedCronServiceServer()
 }
 
@@ -201,6 +214,9 @@ func (UnimplementedCronServiceServer) UpdateCronJob(context.Context, *UpdateCron
 }
 func (UnimplementedCronServiceServer) DeleteCronJob(context.Context, *DeleteCronJobRequest) (*DeleteCronJobResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteCronJob not implemented")
+}
+func (UnimplementedCronServiceServer) ListCronJobRuns(context.Context, *ListCronJobRunsRequest) (*ListCronJobRunsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCronJobRuns not implemented")
 }
 func (UnimplementedCronServiceServer) mustEmbedUnimplementedCronServiceServer() {}
 func (UnimplementedCronServiceServer) testEmbeddedByValue()                     {}
@@ -378,6 +394,24 @@ func _CronService_DeleteCronJob_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CronService_ListCronJobRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCronJobRunsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CronServiceServer).ListCronJobRuns(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CronService_ListCronJobRuns_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CronServiceServer).ListCronJobRuns(ctx, req.(*ListCronJobRunsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CronService_ServiceDesc is the grpc.ServiceDesc for CronService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -416,6 +450,10 @@ var CronService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteCronJob",
 			Handler:    _CronService_DeleteCronJob_Handler,
+		},
+		{
+			MethodName: "ListCronJobRuns",
+			Handler:    _CronService_ListCronJobRuns_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

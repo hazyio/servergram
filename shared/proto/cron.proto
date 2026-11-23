@@ -82,15 +82,31 @@ message UpdateCronJobRequest {
   int32 run_logs_keep_count = 6;
   int32 error_logs_keep_days = 7;
   bool wrap = 8;
-
 }
 message UpdateCronJobResponse {}
 
 message DeleteCronJobRequest {
   uint64 id = 1;
 }
-
+message CronRunMeta {
+  uint32 id = 1;
+  string status = 2;
+  string started_at = 3;
+  string finished_at = 4;
+  int32 exit_code = 5;
+  string trigger = 7;
+}
 message DeleteCronJobResponse {}
+message ListCronJobRunsRequest {
+  uint64 cron_job_id = 1;
+  uint32 offset = 2;
+  uint32 limit = 3;
+}
+
+message ListCronJobRunsResponse {
+  repeated CronRunMeta runs = 1;
+  bool more = 2;
+}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
@@ -102,4 +118,5 @@ service CronService {
   rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
   rpc UpdateCronJob(UpdateCronJobRequest) returns (UpdateCronJobResponse);
   rpc DeleteCronJob(DeleteCronJobRequest) returns (DeleteCronJobResponse);
+  rpc ListCronJobRuns(ListCronJobRunsRequest) returns (ListCronJobRunsResponse);
 }

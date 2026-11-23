@@ -61,3 +61,14 @@ type UpdateCronJobRequest struct {
 		Wrap              bool   `json:"wrap"`
 	}
 }
+
+type ListCronJobRunsRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	JobID uint64 `path:"job_id" minimum:"1" doc:"The ID of the cron job to list runs for"`
+	Limit uint   `query:"limit" default:"10" validate:"lte=100"`
+	Offset uint `query:"offset" default:"0"`
+}
+
+type ListCronJobRunsResponse struct {
+	Body *proto.ListCronJobRunsResponse
+}

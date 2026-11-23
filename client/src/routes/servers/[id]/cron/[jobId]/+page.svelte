@@ -9,10 +9,12 @@
     AlertDescription,
     AlertTitle,
   } from "#lib/components/ui/alert/index.js";
+  import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { Button } from "#lib/components/ui/button/index.ts";
   import Card from "#lib/components/ui/card/card.svelte";
   import { updateCronJobPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import { ArrowLeft, CircleAlert, Pencil } from "@lucide/svelte";
+  import { ArrowLeft, CircleAlert, Loader, Pencil, Play } from "@lucide/svelte";
+  import { toast } from "svelte-sonner";
   import type { PageProps } from "./$types";
   import CronRunsTable from "./CronRunsTable.svelte";
   import CronEditDialog from "../CronEditDialog.svelte";
@@ -22,6 +24,7 @@
     cronJobDisplayName,
     getCronJobInfo,
     listCronRuns,
+    runCronJob,
     type CronJobInfo,
     type CronRun,
   } from "../cronJobs.ts";
@@ -39,11 +42,40 @@
   let runsError = $state<string | null>(null);
 
   let editOpen = $state(false);
+  let runPending = $state(false);
+  let runErrorOpen = $state(false);
+  let runError = $state("");
 
   let infoToken = 0;
   let runsToken = 0;
 
   const displayName = $derived(info ? cronJobDisplayName(info) : "Cron job");
+
+  async function runJob() {
+    if (runPending) return;
+    runPending = true;
+    runError = "";
+
+    const { error } = await runCronJob(serverId, jobId);
+    runPending = false;
+
+    if (error) {
+      runError = unWrapErrorMessage(error, `Failed to run ${displayName}`);
+      runErrorOpen = true;
+      return;
+    }
+
+    runErrorOpen = false;
+    // Trigger reload of runs and update last_run on info
+    if (info) {
+      info = {
+        ...info,
+        last_run: new Date().toISOString(),
+      };
+    }
+    void loadRuns();
+    toast.success(`${displayName} started`);
+  }
 
   async function loadRuns() {
     const token = ++runsToken;
@@ -139,6 +171,21 @@
         </p>
       </div>
       <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          class="gap-1.5"
+          disabled={runPending}
+          title={`Run ${displayName}`}
+          onclick={runJob}
+        >
+          {#if runPending}
+            <Loader class="size-3.5 animate-spin" />
+          {:else}
+            <Play class="size-3.5" />
+          {/if}
+          <span class="hidden md:inline">Run</span>
+        </Button>
         <Button variant="outline" onclick={() => (editOpen = true)}>
           <Pencil />
           Edit
@@ -272,3 +319,19 @@
     }}
   />
 {/if}
+
+<AlertDialog.Root bind:open={runErrorOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Could not run cron job</AlertDialog.Title>
+    </AlertDialog.Header>
+    <ErrorSection
+      title="Failed to run cron job"
+      message={runError}
+      onRetry={runJob}
+    />
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel disabled={runPending}>Close</AlertDialog.Cancel>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>

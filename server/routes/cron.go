@@ -29,6 +29,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
 	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
 	server.Delete("/{id}/delete/{job_id}", http.StatusOK, deleteCronJob)
+	server.Get("/{id}/runs/{job_id}", http.StatusOK, listCronJobRuns)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -219,4 +220,25 @@ func deleteCronJob(data internal.RouteData[models.CronJobInfoRequest]) (*EmptyRR
 	}
 	db.AddLog(db.LogActionDelete, fmt.Sprintf("Deleted cron job %d from server \"%d\"", data.Input.JobID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
+}
+
+func listCronJobRuns(data internal.RouteData[models.ListCronJobRunsRequest]) (*models.ListCronJobRunsResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	result, err := resource.ListCronJobRuns(ctx, &proto.ListCronJobRunsRequest{
+		CronJobId: data.Input.JobID,
+		Offset:    uint32(data.Input.Offset),
+		Limit:     uint32(data.Input.Limit),
+	})
+	if err != nil {
+		slog.Error("Failed to list cron job runs", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+	response := &models.ListCronJobRunsResponse{}
+	response.Body = result
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Listed cron job runs for job %d in server \"%d\", limit %d, offset %d", data.Input.JobID, data.Input.ID, data.Input.Limit, data.Input.Offset), data.Database)
+	return response, nil
 }

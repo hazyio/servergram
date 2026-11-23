@@ -196,14 +196,12 @@ func addAgentPrefix(command string) string {
 	prefix := getAgentPrefix()
 	return fmt.Sprintf("%s %s", prefix, command)
 }
-func hasAgentPrefix(command string) bool {
-	return strings.HasPrefix(command, getAgentPrefix())
-}
+
 func addIDAndAgentPrefix(command string, id uint64) string {
 	return addAgentPrefix(addID(command, id))
 }
 func addID(command string, id uint64) string {
-	return fmt.Sprintf("%s id=%d", command, id)
+	return fmt.Sprintf("-id=%d %s", id, command)
 }
 func getAgentPrefix() string {
 	return fmt.Sprintf("%s run-job", common.GetAgentPath())
@@ -286,13 +284,15 @@ func shQuote(s string) string {
 }
 
 func splitID(s string) (string, uint64) {
-	before, after, ok := strings.CutLast(s, " id=")
+	s = strings.TrimSpace(s)
+	rest, ok := strings.CutPrefix(s, "-id=")
 	if !ok {
-		return strings.TrimSpace(s), 0
+		return s, 0
 	}
-	id, err := strconv.ParseUint(strings.TrimSpace(after), 10, 64)
+	idStr, command, _ := strings.Cut(rest, " ")
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		return strings.TrimSpace(s), 0 // " id=" wasn't a real trailing ID, leave the text alone
+		return s, 0 // "-id=" wasn't a real leading ID, leave the text alone
 	}
-	return strings.TrimSpace(before), id
+	return strings.TrimSpace(command), id
 }

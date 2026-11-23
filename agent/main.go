@@ -1,10 +1,11 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"strings"
 
 	"hazyio.com/servergram/agent/internal"
@@ -38,39 +39,48 @@ func main() {
 
 	switch os.Args[1] {
 	case "run-job":
-		if len(os.Args) != 4 && len(os.Args) != 5 {
-			fmt.Fprintln(os.Stderr, `usage: agent run-job "command" id=<id>`)
+		fs := flag.NewFlagSet("run-job", flag.ContinueOnError)
+		fs.SetOutput(os.Stderr)
+		fs.Usage = func() {
+			fmt.Fprintln(os.Stderr, `usage: agent run-job -id=<id> [-manual] "command"`)
+			fs.PrintDefaults()
+		}
+		id := fs.Uint64("id", 0, "job id (required)")
+		manual := fs.Bool("manual", false, "mark run as manually triggered")
+
+		if err := fs.Parse(os.Args[2:]); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				os.Exit(0)
+			}
 			os.Exit(2)
 		}
-		command := os.Args[2]
+
+		command := strings.Join(fs.Args(), " ")
 		if command == "" {
 			fmt.Fprintln(os.Stderr, "command must not be empty")
+			fs.Usage()
 			os.Exit(2)
 		}
-		idStr, ok := strings.CutPrefix(os.Args[3], "id=")
-		if !ok {
-			fmt.Fprintln(os.Stderr, "expected id=<id> as the last argument")
+		if *id == 0 {
+			fmt.Fprintln(os.Stderr, "-id is required")
+			fs.Usage()
 			os.Exit(2)
 		}
-		id, err := strconv.ParseUint(idStr, 10, 64)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "invalid job id")
-			os.Exit(2)
-		}
+
 		trigger := db.CronRunTriggerScheduled
-		if len(os.Args) > 4 && os.Args[4] == "--manual" {
+		if *manual {
 			trigger = db.CronRunTriggerManual
 		}
-		if err := wrapper.RunJob(database, id, command, trigger); err != nil {
+		if err := wrapper.RunJob(database, *id, command, trigger); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		os.Exit(0)
+
 	case "serve":
 		internal.Serve(database, transportOut)
 
 	default:
 		shared.Fatal("unknown command: %s", os.Args[1])
 	}
-
 }

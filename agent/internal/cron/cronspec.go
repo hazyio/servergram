@@ -201,7 +201,7 @@ func BuildLine(schedule, command string) (string, error) {
 	// cron turns every unescaped % into a newline, so store them as \%
 	command = strings.ReplaceAll(command, "%", `\%`)
 
-	line := schedule + " " + command
+	line := schedule + " " + shQuote(command)
 	if len(line) > maxLineLen {
 		return "", fmt.Errorf("line longer than %d characters", maxLineLen)
 	}

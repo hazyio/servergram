@@ -3,12 +3,6 @@ import type { components } from "#lib/types/request-schema.d.ts";
 
 export type CronJobStatus = "active" | "inactive" | "unmanaged";
 
-export type CronRetention = {
-  metadata_runs: number;
-  run_logs: number;
-  error_log_days: number;
-};
-
 export type CronJob = {
   id: number;
   key?: string;
@@ -20,7 +14,7 @@ export type CronJob = {
   status: CronJobStatus;
   last_run: string | null;
   next_run: string | null;
-  retention?: CronRetention;
+  run_logs_keep_count?: number;
 };
 
 export type CronJobInfo = {
@@ -32,7 +26,7 @@ export type CronJobInfo = {
   status: CronJobStatus;
   last_run: string | null;
   next_run: string | null;
-  retention: CronRetention;
+  run_logs_keep_count: number;
 };
 
 export type CronDuplicateGroup = {
@@ -46,9 +40,7 @@ export type CreateCronJobInput = {
   command: string;
   schedule: string;
   wrap: boolean;
-  meta_keep_count: number;
   run_logs_keep_count: number;
-  error_logs_keep_days: number;
 };
 
 export type UpdateCronJobInput = {
@@ -56,7 +48,7 @@ export type UpdateCronJobInput = {
   command: string;
   schedule: string;
   wrap: boolean;
-  retention: CronRetention;
+  run_logs_keep_count: number;
 };
 
 export type CronRunStatus =
@@ -94,7 +86,8 @@ function cronRunFromApi(jobId: number, run: CronRunApi): CronRun {
     trigger: run.trigger === "manual" ? "manual" : "schedule",
     started_at: run.started_at ?? "",
     finished_at: isCronDateSet(run.finished_at) ? run.finished_at : null,
-    exit_code: status === "running" ? null : (run.exit_code ?? null),
+    // The API omits exit_code when it is 0, so only running runs have no value.
+    exit_code: status === "running" ? null : (run.exit_code ?? 0),
   };
 }
 
@@ -318,9 +311,7 @@ export async function updateCronJob(
         command: input.command,
         schedule: input.schedule,
         wrap: input.wrap,
-        meta_keep_count: input.retention.metadata_runs,
-        run_logs_keep_count: input.retention.run_logs,
-        error_logs_keep_days: input.retention.error_log_days,
+        run_logs_keep_count: input.run_logs_keep_count,
       },
     },
   );
@@ -422,12 +413,7 @@ export async function getCronJobInfo(
       status,
       last_run: lastRun,
       next_run: nextRun,
-      retention: {
-        // The API omits retention fields when they are zero.
-        metadata_runs: info.meta_keep_count ?? 0,
-        run_logs: info.run_logs_keep_count ?? 0,
-        error_log_days: info.error_logs_keep_days ?? 0,
-      },
+      run_logs_keep_count: info.run_logs_keep_count ?? 0,
     },
   };
 }

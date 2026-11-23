@@ -183,7 +183,7 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
 	slog.Debug("running cron job", "job_id", job.ID, "command", jobCommand)
-	cmd := exec.Command(common.GetAgentPath(), "run-job", jobCommand, fmt.Sprintf("id=%d", job.ID), "--manual")
+	cmd := exec.Command(common.GetAgentPath(), "run-job", fmt.Sprintf("-id=%d", job.ID), jobCommand, "--manual")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
 
 	if err := cmd.Start(); err != nil {

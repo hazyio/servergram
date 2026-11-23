@@ -27,7 +27,6 @@
   const serverId = $derived(Number(params.id));
 
   const runCountOptions = [5, 10, 20, 40, 80, 160, 240, 480, 960];
-  const errorLogDayOptions = [1, 7, 14, 30, 60, 90, 180, 365];
 
   let name = $state("");
   let command = $state("");
@@ -36,9 +35,7 @@
   let scheduleDialogOpen = $state(false);
   let wrapWithAgent = $state(false);
   let retentionEnabled = $state(true);
-  let metadataRuns = $state("20");
   let runLogs = $state("20");
-  let errorLogDays = $state("14");
   let submitting = $state(false);
   let formError = $state({
     name: "",
@@ -84,9 +81,7 @@
       command: result.data.command,
       schedule: result.data.schedule,
       wrap: wrapWithAgent,
-      meta_keep_count: keepRetention ? Number(metadataRuns) : 0,
       run_logs_keep_count: keepRetention ? Number(runLogs) : 0,
-      error_logs_keep_days: keepRetention ? Number(errorLogDays) : 0,
     });
 
     if (error || !data) {
@@ -242,7 +237,7 @@
             <Field.Content>
               <Field.Title>Retention</Field.Title>
               <Field.Description>
-                Keep run metadata, output logs, and error logs for this job.
+                Keep run metadata and output logs for this job.
               </Field.Description>
             </Field.Content>
           </Field.Field>
@@ -260,32 +255,14 @@
         </Alert>
 
         {#if retentionEnabled}
-          <div class="grid gap-x-4 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
-            <CronRetentionSelect
-              id="metadata-runs"
-              label="Runs metadata to keep"
-              description="Stores status, start time, end time, and exit code for recent runs."
-              bind:value={metadataRuns}
-              options={runCountOptions}
-              unit="run"
-            />
-            <CronRetentionSelect
-              id="run-logs"
-              label="Run logs to keep"
-              description="Stores stdout and stderr for recent runs."
-              bind:value={runLogs}
-              options={runCountOptions}
-              unit="run"
-            />
-            <CronRetentionSelect
-              id="error-log-days"
-              label="Error logs to keep"
-              description="Stores error logs for the selected number of days."
-              bind:value={errorLogDays}
-              options={errorLogDayOptions}
-              unit="day"
-            />
-          </div>
+          <CronRetentionSelect
+            id="run-logs"
+            label="Runs and logs to keep"
+            description="Stores run metadata, stdout, and stderr for recent runs."
+            bind:value={runLogs}
+            options={runCountOptions}
+            unit="run"
+          />
         {:else}
           <p class="text-sm text-muted-foreground">
             Retention is disabled. No run history or logs will be kept for this

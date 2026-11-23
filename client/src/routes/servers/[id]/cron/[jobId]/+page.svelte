@@ -236,28 +236,12 @@
     {#if info.managed}
       <Card class="mt-4 p-4">
         <h2 class="text-sm font-medium">Retention</h2>
-        <div class="mt-3 grid gap-3 sm:grid-cols-3">
-          <div>
-            <p class="text-xs text-muted-foreground">Runs metadata to keep</p>
-            <p class="mt-1 text-sm">
-              {info.retention.metadata_runs}
-              {info.retention.metadata_runs === 1 ? "run" : "runs"}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs text-muted-foreground">Run logs to keep</p>
-            <p class="mt-1 text-sm">
-              {info.retention.run_logs}
-              {info.retention.run_logs === 1 ? "run" : "runs"}
-            </p>
-          </div>
-          <div>
-            <p class="text-xs text-muted-foreground">Error logs to keep</p>
-            <p class="mt-1 text-sm">
-              {info.retention.error_log_days}
-              {info.retention.error_log_days === 1 ? "day" : "days"}
-            </p>
-          </div>
+        <div class="mt-3">
+          <p class="text-xs text-muted-foreground">Runs and logs to keep</p>
+          <p class="mt-1 text-sm">
+            {info.run_logs_keep_count}
+            {info.run_logs_keep_count === 1 ? "run" : "runs"}
+          </p>
         </div>
       </Card>
     {/if}
@@ -337,7 +321,8 @@
         name: updated.name,
         command: updated.command,
         schedule: updated.schedule,
-        retention: updated.retention ?? info.retention,
+        run_logs_keep_count:
+          updated.run_logs_keep_count ?? info.run_logs_keep_count,
       };
     }}
   />

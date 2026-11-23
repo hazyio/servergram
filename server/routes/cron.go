@@ -189,14 +189,13 @@ func updateCronJob(data internal.RouteData[models.UpdateCronJobRequest]) (*Empty
 
 	defer cancel()
 	_, err = resource.UpdateCronJob(ctx, &proto.UpdateCronJobRequest{
-		Id:                data.Input.JobID,
-		Schedule:          data.Input.Body.Schedule,
-		Command:           data.Input.Body.Command,
-		Name:              data.Input.Body.Name,
-		MetaKeepCount:     data.Input.Body.MetaKeepCount,
-		RunLogsKeepCount:  data.Input.Body.RunLogsKeepCount,
-		Wrap:              data.Input.Body.Wrap,
-		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays})
+		Id:               data.Input.JobID,
+		Schedule:         data.Input.Body.Schedule,
+		Command:          data.Input.Body.Command,
+		Name:             data.Input.Body.Name,
+		RunLogsKeepCount: data.Input.Body.RunLogsKeepCount,
+		Wrap:             data.Input.Body.Wrap,
+	})
 	if err != nil {
 		slog.Error("Failed to update cron job", "error", err)
 		return nil, internal.FromGrpcError(err)

@@ -66,22 +66,18 @@ message CronInfoResponse {
   uint64 id = 3;
   string schedule = 4;
   string command = 5;
-  int32 meta_keep_count = 6;
-  int32 run_logs_keep_count = 7;
-  int32 error_logs_keep_days = 8;
-  string status = 9;
-  string last_run_at = 10;
-  string next_run_at = 11;
+  int32 run_logs_keep_count = 6;
+  string status = 7;
+  string last_run_at = 8;
+  string next_run_at = 9;
 }
 message UpdateCronJobRequest {
   uint64 id = 1;
   string name = 2;
   string schedule = 3;
   string command = 4;
-  int32 meta_keep_count = 5;
-  int32 run_logs_keep_count = 6;
-  int32 error_logs_keep_days = 7;
-  bool wrap = 8;
+  int32 run_logs_keep_count = 5;
+  bool wrap = 6;
 }
 message UpdateCronJobResponse {}
 

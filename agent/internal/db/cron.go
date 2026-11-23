@@ -15,19 +15,17 @@ const (
 )
 
 type CronJob struct {
-	ID               uint64 `gorm:"primaryKey"`
-	Name             string
-	Hash             string        `gorm:"uniqueIndex:idx_server_hash"`
-	Managed          bool          // This might be updated on demand
-	Status           CronJobStatus `gorm:"type:varchar(20)"`
-	MetaKeepCount    int32
-	RunLogKeepCount  int32
-	ErrorLogKeepDays int32
-	LastRunAt        time.Time
-	NextRunAt        time.Time
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Runs             []CronRun `gorm:"foreignKey:CronJobID;constraint:OnDelete:CASCADE"`
+	ID              uint64 `gorm:"primaryKey"`
+	Name            string
+	Hash            string        `gorm:"uniqueIndex:idx_server_hash"`
+	Managed         bool          // This might be updated on demand
+	Status          CronJobStatus `gorm:"type:varchar(20)"`
+	RunLogKeepCount int32
+	LastRunAt       time.Time
+	NextRunAt       time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Runs            []CronRun `gorm:"foreignKey:CronJobID;constraint:OnDelete:CASCADE"`
 }
 
 func FindCronJobByID(db *gorm.DB, id uint64) (*CronJob, error) {

@@ -98,26 +98,18 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 	cronJobHash := hashCronJob(req.Schedule, req.Name)
 	var newCronJobLine string
 	newCronJob := db.CronJob{
-		Name:             req.GetName(),
-		Hash:             cronJobHash,
-		Managed:          req.GetWrap(),
-		Status:           db.CronJobStatusActive,
-		MetaKeepCount:    req.GetMetaKeepCount(),
-		ErrorLogKeepDays: req.GetErrorLogsKeepDays(),
-		RunLogKeepCount:  req.GetRunLogsKeepCount(),
+		Name:            req.GetName(),
+		Hash:            cronJobHash,
+		Managed:         req.GetWrap(),
+		Status:          db.CronJobStatusActive,
+		RunLogKeepCount: req.GetRunLogsKeepCount(),
 	}
-	bound1 := []int{5, 10, 20, 40, 80, 160, 240, 480, 960}
-	errorDaysBounds := []int{1, 7, 14, 30, 60, 90, 180, 365}
 	if req.Wrap {
-		if !slices.Contains(bound1, int(req.GetMetaKeepCount())) {
-			return nil, status.Errorf(codes.InvalidArgument, "meta_keep_count must be one of 5, 10, 20, 40, 80, 160, 240, 480, or 960")
-		}
-		if !slices.Contains(bound1, int(req.GetRunLogsKeepCount())) {
+
+		if !slices.Contains([]int{5, 10, 20, 40, 80, 160, 240, 480, 960}, int(newCronJob.RunLogKeepCount)) {
 			return nil, status.Errorf(codes.InvalidArgument, "run_logs_keep_count must be one of 5, 10, 20, 40, 80, 160, 240, 480, or 960")
 		}
-		if !slices.Contains(errorDaysBounds, int(req.GetErrorLogsKeepDays())) {
-			return nil, status.Errorf(codes.InvalidArgument, "error_logs_keep_days must be one of 1, 7, 14, 30, 60, 90, 180, or 365")
-		}
+
 	}
 	var ErrDuplicateJob = errors.New("a cron job with this schedule and command already exists")
 
@@ -227,17 +219,15 @@ func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoReque
 			return nil
 		}
 		job = &proto.CronInfoResponse{
-			Status:            string(j.Status),
-			Name:              j.Name,
-			Managed:           j.Managed,
-			Id:                j.ID,
-			Schedule:          schedule,
-			Command:           command,
-			MetaKeepCount:     j.MetaKeepCount,
-			RunLogsKeepCount:  j.RunLogKeepCount,
-			ErrorLogsKeepDays: j.ErrorLogKeepDays,
-			LastRunAt:         j.LastRunAt.Format(time.RFC3339),
-			NextRunAt:         j.NextRunAt.Format(time.RFC3339),
+			Status:           string(j.Status),
+			Name:             j.Name,
+			Managed:          j.Managed,
+			Id:               j.ID,
+			Schedule:         schedule,
+			Command:          command,
+			RunLogsKeepCount: j.RunLogKeepCount,
+			LastRunAt:        j.LastRunAt.Format(time.RFC3339),
+			NextRunAt:        j.NextRunAt.Format(time.RFC3339),
 		}
 		return FoundErr
 	})
@@ -268,9 +258,7 @@ func handleUpdateCronJob(ctx context.Context, database *gorm.DB, req *proto.Upda
 	}
 	err = database.Transaction(func(tx *gorm.DB) error {
 		job.Name = req.Name
-		job.MetaKeepCount = req.MetaKeepCount
 		job.RunLogKeepCount = req.RunLogsKeepCount
-		job.ErrorLogKeepDays = req.ErrorLogsKeepDays
 		if req.Wrap {
 			command = addIDAndAgentPrefix(command, job.ID)
 		}

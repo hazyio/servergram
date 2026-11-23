@@ -23,7 +23,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var newRun *db.CronRun
-	if job.MetaKeepCount > 0 && job.Managed {
+	if job.RunLogKeepCount > 0 && job.Managed {
 		newRun = &db.CronRun{
 			CronJobID: int64(jobID),
 			Status:    db.RunStatusRunning,
@@ -36,7 +36,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 	}
 	go func() {
 		// remove old cron runs
-		if err := db.PruneCronRuns(database, job.MetaKeepCount, job.ID); err != nil {
+		if err := db.PruneCronRuns(database, job.RunLogKeepCount, job.ID); err != nil {
 			slog.Error("failed to prune cron runs", "error", err)
 		}
 	}()

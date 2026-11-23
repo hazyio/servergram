@@ -905,14 +905,10 @@ export interface components {
         };
         CronInfoResponse: {
             command?: string;
-            /** Format: int32 */
-            error_logs_keep_days?: number;
             /** Format: int64 */
             id?: number;
             last_run_at?: string;
             managed?: boolean;
-            /** Format: int32 */
-            meta_keep_count?: number;
             name?: string;
             next_run_at?: string;
             /** Format: int32 */
@@ -1230,10 +1226,6 @@ export interface components {
         };
         UpdateCronJobRequestBody: {
             command: string;
-            /** Format: int32 */
-            error_logs_keep_days: number;
-            /** Format: int32 */
-            meta_keep_count: number;
             name: string;
             /** Format: int32 */
             run_logs_keep_count: number;

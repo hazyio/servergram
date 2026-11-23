@@ -1,25 +1,13 @@
 <script lang="ts">
+  import appPaths from "#lib/appPaths.ts";
   import TimeAgo from "#lib/components/base/TimeAgo.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Table from "#lib/components/ui/table/index.js";
   import { FileText } from "@lucide/svelte";
-  import type { CronJobInfo, CronRun } from "../cronJobs.ts";
-  import CronRunLogDialog from "./CronRunLogDialog.svelte";
+  import type { CronRun } from "../cronJobs.ts";
   import CronRunStatusBadge from "./CronRunStatusBadge.svelte";
 
-  let {
-    runs,
-    serverId,
-    job,
-  }: { runs: CronRun[]; serverId: number; job: CronJobInfo } = $props();
-
-  let logsOpen = $state(false);
-  let selectedRun = $state<CronRun | null>(null);
-
-  function viewLogs(run: CronRun) {
-    selectedRun = run;
-    logsOpen = true;
-  }
+  let { runs, serverId }: { runs: CronRun[]; serverId: number } = $props();
 
   function duration(run: CronRun) {
     if (!run.finished_at) return "Running";
@@ -77,7 +65,11 @@
           {/if}
         </Table.Cell>
         <Table.Cell class="px-2 text-right md:px-4">
-          <Button variant="ghost" size="sm" onclick={() => viewLogs(run)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            href={appPaths.servers.cronRunLog(serverId, run.job_id, run.id)}
+          >
             <FileText class="size-3.5" />
             View logs
           </Button>
@@ -92,5 +84,3 @@
     {/each}
   </Table.Body>
 </Table.Root>
-
-<CronRunLogDialog bind:open={logsOpen} {serverId} {job} run={selectedRun} />

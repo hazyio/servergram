@@ -13,7 +13,14 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import Card from "#lib/components/ui/card/card.svelte";
   import { updateCronJobPageInfo } from "#lib/states/severPageInfo.svelte.ts";
-  import { ArrowLeft, CircleAlert, Loader, Pencil, Play } from "@lucide/svelte";
+  import {
+    ArrowLeft,
+    CircleAlert,
+    Loader,
+    Pencil,
+    Play,
+    RefreshCcw,
+  } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
   import type { PageProps } from "./$types";
   import CronRunsTable from "./CronRunsTable.svelte";
@@ -271,12 +278,28 @@
       <Card class="mt-4 p-4">
         <div class="flex items-center justify-between gap-2">
           <h2 class="text-sm font-medium">Runs</h2>
-          {#if !runsLoading && !runsError}
-            <span class="text-xs text-muted-foreground">
-              {runs.length}
-              {runs.length === 1 ? "run" : "runs"}
-            </span>
-          {/if}
+          <div class="flex items-center gap-2">
+            {#if !runsLoading && !runsError}
+              <span class="text-xs text-muted-foreground">
+                {runs.length}
+                {runs.length === 1 ? "run" : "runs"}
+              </span>
+            {/if}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Reload runs"
+              aria-label="Reload runs"
+              disabled={runsLoading}
+              onclick={loadRuns}
+            >
+              {#if runsLoading}
+                <Loader class="size-3.5 animate-spin" />
+              {:else}
+                <RefreshCcw class="size-3.5" />
+              {/if}
+            </Button>
+          </div>
         </div>
 
         {#if runsLoading}
@@ -294,7 +317,7 @@
             class="mt-3"
           />
         {:else}
-          <CronRunsTable {runs} {serverId} job={info} />
+          <CronRunsTable {runs} {serverId} />
         {/if}
       </Card>
     {/if}

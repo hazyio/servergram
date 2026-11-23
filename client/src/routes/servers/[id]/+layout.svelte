@@ -17,7 +17,6 @@
     { label: "Overview", href: appPaths.servers.overview(serverId) },
     { label: "Files", href: appPaths.servers.files(serverId) },
     { label: "Processes", href: appPaths.servers.processes(serverId) },
-    { label: "Docker", href: appPaths.servers.docker(serverId) },
     { label: "Cron", href: appPaths.servers.cron(serverId) },
   ]);
   $effect(() => {

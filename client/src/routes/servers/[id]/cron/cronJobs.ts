@@ -59,7 +59,8 @@ export type UpdateCronJobInput = {
   retention: CronRetention;
 };
 
-export type CronRunStatus = "running" | "succeeded" | "failed" | "canceled";
+export type CronRunStatus =
+  "running" | "succeeded" | "failed" | "canceled" | "timed_out";
 
 export type CronRun = {
   id: number;
@@ -70,6 +71,32 @@ export type CronRun = {
   finished_at: string | null;
   exit_code: number | null;
 };
+
+type CronRunApi = components["schemas"]["CronRunMeta"];
+
+const cronRunStatuses: Record<string, CronRunStatus> = {
+  running: "running",
+  success: "succeeded",
+  succeeded: "succeeded",
+  failed: "failed",
+  cancelled: "canceled",
+  canceled: "canceled",
+  timed_out: "timed_out",
+};
+
+function cronRunFromApi(jobId: number, run: CronRunApi): CronRun {
+  const status = cronRunStatuses[run.status ?? ""] ?? "failed";
+
+  return {
+    id: run.id ?? 0,
+    job_id: jobId,
+    status,
+    trigger: run.trigger === "manual" ? "manual" : "schedule",
+    started_at: run.started_at ?? "",
+    finished_at: isCronDateSet(run.finished_at) ? run.finished_at : null,
+    exit_code: status === "running" ? null : (run.exit_code ?? null),
+  };
+}
 
 export type CronApiError = {
   type: string;
@@ -405,143 +432,37 @@ export async function getCronJobInfo(
   };
 }
 
-const runsByJob = new Map<number, CronRun[]>();
-
-function seedRuns(job: CronJob): CronRun[] {
-  const statuses: CronRunStatus[] = [
-    "succeeded",
-    "succeeded",
-    "failed",
-    "succeeded",
-    "canceled",
-    "succeeded",
-    "succeeded",
-    "failed",
-  ];
-
-  return Array.from({ length: 12 }, (_, index) => {
-    const live = index === 0 && job.status === "active";
-    const status: CronRunStatus = live
-      ? "running"
-      : statuses[(index + job.id) % statuses.length];
-    const startedAt = iso(minutes(-(index * 45 + 5)));
-    const durationMs = seconds(45 + ((job.id * 17 + index * 29) % 180));
-
-    return {
-      id: job.id * 1_000 + (12 - index),
-      job_id: job.id,
-      status,
-      trigger: (index + job.id) % 5 === 0 ? "manual" : "schedule",
-      started_at: startedAt,
-      finished_at: live
-        ? null
-        : new Date(Date.parse(startedAt) + durationMs).toISOString(),
-      exit_code: live
-        ? null
-        : status === "succeeded"
-          ? 0
-          : status === "canceled"
-            ? 130
-            : 1,
-    };
-  });
-}
-
-function runsFor(job: CronJob): CronRun[] {
-  let runs = runsByJob.get(job.id);
-  if (!runs) {
-    runs = seedRuns(job);
-    runsByJob.set(job.id, runs);
-  }
-  return runs;
-}
-
 export async function listCronRuns(
   serverId: number,
   jobId: number,
-): Promise<CronApiResponse<{ items: CronRun[] }>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
+): Promise<CronApiResponse<{ items: CronRun[]; more: boolean }>> {
+  const { data, error } = await NewRequestClient().GET(
+    "/api/cron/{id}/runs/{job_id}",
+    {
+      params: {
+        path: {
+          id: serverId,
+          job_id: jobId,
+        },
+        query: {
+          limit: 100,
+          offset: 0,
+        },
+      },
+    },
+  );
 
-    if (job.status === "unmanaged") return { items: [] };
-
-    return { items: runsFor(job) };
-  });
-}
-
-function buildRunLog(job: CronJob, run: CronRun): string {
-  const started = Date.parse(run.started_at);
-  const line = (offsetMs: number, level: string, message: string) =>
-    `${new Date(started + offsetMs).toISOString()} ${level.padEnd(5)} ${message}`;
-
-  const lines = [
-    line(0, "INFO", `Starting "${cronJobDisplayName(job)}" (run #${run.id})`),
-    line(
-      20,
-      "INFO",
-      `Trigger: ${run.trigger === "manual" ? "manual" : "schedule"}`,
-    ),
-    line(80, "INFO", `Command: ${job.command}`),
-    line(160, "INFO", "Loading configuration from /etc/servergram/agent.yaml"),
-    line(420, "INFO", "Connected to local agent socket"),
-  ];
-
-  if (run.status === "running") {
-    lines.push(
-      line(900, "INFO", `Executing ${job.command}`),
-      line(1_200, "INFO", "Streaming output to the agent"),
-      line(1_500, "INFO", "Run is still in progress..."),
-    );
-    return lines.join("\n");
+  if (error) {
+    return { error };
   }
 
-  if (run.status === "succeeded") {
-    lines.push(
-      line(900, "INFO", `Executing ${job.command}`),
-      line(2_400, "INFO", "Task finished successfully"),
-      line(2_600, "INFO", "Cleaning up temporary files"),
-      line(2_700, "INFO", `Exited with code ${run.exit_code}`),
-    );
-  } else if (run.status === "failed") {
-    lines.push(
-      line(900, "INFO", `Executing ${job.command}`),
-      line(1_900, "ERROR", "Command failed"),
-      line(1_950, "ERROR", "stderr: connection to upstream service timed out"),
-      line(1_980, "ERROR", "Retrying once in 5s..."),
-      line(6_900, "ERROR", "Retry failed, aborting"),
-      line(7_000, "ERROR", `Exited with code ${run.exit_code}`),
-    );
-  } else {
-    lines.push(
-      line(900, "INFO", `Executing ${job.command}`),
-      line(1_400, "WARN", "Run was canceled before completion"),
-      line(1_450, "INFO", `Exited with code ${run.exit_code}`),
-    );
-  }
-
-  return lines.join("\n");
+  return {
+    data: {
+      items: (data?.runs ?? []).map((run) => cronRunFromApi(jobId, run)),
+      more: data?.more ?? false,
+    },
+  };
 }
-
-export async function getCronRunLog(
-  serverId: number,
-  jobId: number,
-  runId: number,
-): Promise<CronApiResponse<{ content: string }>> {
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
-    if (!job) throw new Error("Cron job no longer exists");
-    if (job.status === "unmanaged") {
-      throw new Error("This cron job is not managed by the agent");
-    }
-
-    const run = runsFor(job).find((entry) => entry.id === runId);
-    if (!run) throw new Error("Run no longer exists");
-
-    return { content: buildRunLog(job, run) };
-  });
-}
-
 export async function runCronJob(
   serverId: number,
   jobId: number,

@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/runs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get by ID runs by job ID */
+        get: operations["get-cron--id-runs-job_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/update/{job_id}": {
         parameters: {
             query?: never;
@@ -892,14 +909,26 @@ export interface components {
             error_logs_keep_days?: number;
             /** Format: int64 */
             id?: number;
+            last_run_at?: string;
             managed?: boolean;
             /** Format: int32 */
             meta_keep_count?: number;
             name?: string;
+            next_run_at?: string;
             /** Format: int32 */
             run_logs_keep_count?: number;
             schedule?: string;
             status?: string;
+        };
+        CronRunMeta: {
+            /** Format: int32 */
+            exit_code?: number;
+            finished_at?: string;
+            /** Format: int32 */
+            id?: number;
+            started_at?: string;
+            status?: string;
+            trigger?: string;
         };
         DeleteFileRequestBody: {
             /** @description The name of the file to delete */
@@ -1007,6 +1036,10 @@ export interface components {
             name: string;
             /** Format: int64 */
             resources_attached: number;
+        };
+        ListCronJobRunsResponse: {
+            more?: boolean;
+            runs?: components["schemas"]["CronRunMeta"][] | null;
         };
         ListCronJobsResponse: {
             done?: boolean;
@@ -1520,6 +1553,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunCronJobResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-cron--id-runs-job_id": {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job to list runs for */
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListCronJobRunsResponse"];
                 };
             };
             /** @description Error */

@@ -28,6 +28,11 @@
       variant: "outline",
       class: "text-muted-foreground",
     },
+    timed_out: {
+      label: "Timed out",
+      variant: "destructive",
+      class: "",
+    },
   };
 
   const current = $derived(statuses[status]);

@@ -23,7 +23,7 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var newRun *db.CronRun
-	if job.RunLogKeepCount > 0 && job.Managed {
+	if job.RunLogKeepCount > 0 {
 		newRun = &db.CronRun{
 			CronJobID: int64(jobID),
 			Status:    db.RunStatusRunning,

@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -108,6 +109,9 @@ func GetAgentPath() string {
 	return filepath.Join(home, ".servergram", "agent")
 }
 
+func HasAgentPrefix(s string) bool {
+	return strings.HasPrefix(s, fmt.Sprintf("%s run-job", GetAgentPath()))
+}
 
 func Map[T, U any](in []T, f func(T) U) []U {
 	out := make([]U, 0, len(in))

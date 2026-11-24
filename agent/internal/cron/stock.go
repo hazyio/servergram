@@ -101,7 +101,7 @@ func readCronJobEach(ctx context.Context, database *gorm.DB, onLine func(job *db
 			}
 		}
 		// update managed status
-		job.Managed = strings.HasPrefix(command, fmt.Sprintf("%s run-job", common.GetAgentPath()))
+		job.Managed = common.HasAgentPrefix(command)
 		command, id := splitID(trimAgentPrefix(command))
 		if job.Managed {
 			if id != job.ID {

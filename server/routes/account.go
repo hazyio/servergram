@@ -18,7 +18,7 @@ import (
 func registerAccountRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []string, polls *internal.Polls) {
 	server := internal.NewGroup("/account", api, database, []string{"Accounts"}, nil, allowedOrigins, polls)
 	server.Post("/login", http.StatusCreated, login)
-	// server.Delete("/logout", http.StatusOK, logout)
+	server.Delete("/logout", http.StatusOK, logOut)
 
 }
 
@@ -69,4 +69,15 @@ func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfu
 			MaxAge:   int((24 * time.Hour).Seconds()),
 		},
 	}, nil
+}
+
+func logOut(data internal.RouteData[models.LogoutRequest]) (*EmptyRR, error) {
+	token := internal.HashString(data.Input.CookieToken)
+	if err := data.Database.Where("token = ?", token).Delete(&db.Sessions{}).Error; err != nil {
+		slog.Error("error deleting session", "err", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "error deleting session")
+	}
+	db.AddLog(db.LogActionDelete, "User logged out", data.Database)
+	return &EmptyRR{}, nil
+
 }

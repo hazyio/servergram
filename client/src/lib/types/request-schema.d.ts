@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/account/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete logout */
+        delete: operations["delete-account--logout"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/create": {
         parameters: {
             query?: never;
@@ -865,10 +882,6 @@ export interface components {
         };
         CreateCronJobRequestBody: {
             command: string;
-            /** Format: int32 */
-            error_logs_keep_days: number;
-            /** Format: int32 */
-            meta_keep_count: number;
             name: string;
             /** Format: int32 */
             run_logs_keep_count: number;
@@ -1291,6 +1304,33 @@ export interface operations {
             201: {
                 headers: {
                     "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-account--logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content?: never;

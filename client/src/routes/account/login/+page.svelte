@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { NewRequestClient } from "#lib/api/request.ts";
+  import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
   import Button from "#lib/components/ui/button/button.svelte";
   import Card from "#lib/components/ui/card/card.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
@@ -9,6 +9,7 @@
   import Eye from "@lucide/svelte/icons/eye";
   import EyeOff from "@lucide/svelte/icons/eye-off";
   import Loader from "@lucide/svelte/icons/loader";
+  import { toast } from "svelte-sonner";
 
   let password = $state("");
   let formError = $state("");
@@ -24,16 +25,19 @@
     });
     submitting = false;
     if (error) {
-      formError = error.detail ?? "An unknown error occurred";
+      formError = unWrapErrorMessage(error);
       return;
     }
+    toast.success("Signed in successfully");
     // Only same-origin paths, to avoid open redirects.
     const redirect = page.url.searchParams.get("redirect");
     const target =
       redirect && redirect.startsWith("/") && !redirect.startsWith("//")
         ? redirect
         : "/";
-    await goto(target);
+    await goto(target, {
+      invalidateAll: true,
+    });
   }
 </script>
 

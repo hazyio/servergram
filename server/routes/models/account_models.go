@@ -13,3 +13,8 @@ type LoginSuccessfulRedirectResponse struct {
 	Status    int
 	SetCookie http.Cookie `header:"Set-Cookie"`
 }
+
+type LogoutRequest struct {
+	CookieToken string `header:"Cookie-Token" required:"true" hidden:"true"`
+}
+

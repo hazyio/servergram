@@ -151,14 +151,6 @@
             url: appPaths.home,
             breadcrumb: [{ title: "Home", url: appPaths.home }],
           },
-          {
-            title: "Servers",
-            url: appPaths.servers.index,
-            breadcrumb: [
-              ...homeBreadcrumbs,
-              { title: "Servers", url: appPaths.servers.index },
-            ],
-          },
 
           {
             title: "Groups",

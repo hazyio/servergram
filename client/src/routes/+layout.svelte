@@ -159,28 +159,7 @@
               { title: "Servers", url: appPaths.servers.index },
             ],
           },
-          {
-            title: "Databases",
-            url: appPaths.databases.index,
-            breadcrumb: [
-              ...homeBreadcrumbs,
-              { title: "Databases", url: appPaths.databases.index },
-            ],
-          },
-          {
-            title: "Cron Jobs",
-            url: appPaths.cronJobs.index,
-            breadcrumb: [
-              ...homeBreadcrumbs,
-              { title: "Cron Jobs", url: appPaths.cronJobs.index },
-            ],
-          },
-        ],
-      },
-      {
-        title: "Subs",
-        url: "#",
-        items: [
+
           {
             title: "Groups",
             url: appPaths.groups.index,

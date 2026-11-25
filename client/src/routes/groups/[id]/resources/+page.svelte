@@ -1,0 +1,132 @@
+<script lang="ts">
+  import { NewRequestClient, unWrapErrorMessage } from "#lib/api/request.ts";
+  import { dataTableFeatures } from "#lib/components/base/data-table-features.js";
+  import Error from "#lib/components/base/ErrorSection.svelte";
+  import Loading from "#lib/components/base/loading.svelte";
+  import Button from "#lib/components/ui/button/button.svelte";
+  import Input from "#lib/components/ui/input/input.svelte";
+  import * as Table from "#lib/components/ui/table/index.js";
+  import type { components } from "#lib/types/request-schema.d.ts";
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
+  import { createTable, FlexRender } from "@tanstack/svelte-table";
+  import { onMount } from "svelte";
+  import { getColumns } from "../../../servers/columns.js";
+  import type { PageProps } from "./$types";
+
+  let { params }: PageProps = $props();
+  let groupId = $derived(Number(params.id));
+  let loading = $state(true);
+  let servers: components["schemas"]["ListServersResponseBody"] | undefined =
+    $state();
+  let loadError = $state("");
+
+  async function loadServers() {
+    loading = true;
+    const { data, error } = await NewRequestClient().GET(
+      "/api/server/list/by-group/{group_id}",
+      {
+        params: {
+          path: {
+            group_id: groupId,
+          },
+        },
+      },
+    );
+    loading = false;
+    if (error) {
+      loadError = unWrapErrorMessage(
+        error,
+        "An error occurred while fetching the servers in this group.",
+      );
+      return;
+    }
+    loadError = "";
+    servers = data;
+  }
+
+  const columns = getColumns(loadServers);
+  const table = createTable({
+    features: dataTableFeatures,
+    get data() {
+      return servers?.items ?? [];
+    },
+    columns,
+  });
+  onMount(() => {
+    loadServers();
+  });
+</script>
+
+<svelte:head>
+  <title>Group Resources | ServerGram</title>
+  <meta
+    name="description"
+    content="View and manage the servers attached to your ServerGram group."
+  />
+</svelte:head>
+
+<div class="p-2">
+  <div
+    class="flex gap-2 justify-center items-center sticky z-10 top-0 pt-2 bg-background h-15"
+  >
+    <Input
+      name="filter-group-servers"
+      placeholder="Search servers..."
+      autocomplete="off"
+      type="search"
+      onchange={(e) => {
+        table.getColumn("name")?.setFilterValue(e.currentTarget.value);
+      }}
+      oninput={(e) => {
+        table.getColumn("name")?.setFilterValue(e.currentTarget.value);
+      }}
+    />
+    <Button variant="secondary" onclick={loadServers}><RefreshCw /></Button>
+  </div>
+  <Loading class="mt-20" {loading} text="Loading..." />
+
+  {#if loadError && !loading}
+    <Error
+      title="Failed to load group resources"
+      message={loadError}
+      onRetry={loadServers}
+    />
+  {:else if servers && !loading}
+    <div class="rounded-md border mt-12 mb-20">
+      <Table.Root>
+        <Table.Header>
+          {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+            <Table.Row>
+              {#each headerGroup.headers as header (header.id)}
+                <Table.Head colspan={header.colSpan}>
+                  {#if !header.isPlaceholder}
+                    <FlexRender {header} />
+                  {/if}
+                </Table.Head>
+              {/each}
+            </Table.Row>
+          {/each}
+        </Table.Header>
+        <Table.Body>
+          {#each table.getRowModel().rows as row (row.id)}
+            <Table.Row>
+              {#each row.getVisibleCells() as cell (cell.id)}
+                <Table.Cell>
+                  <FlexRender {cell} />
+                </Table.Cell>
+              {/each}
+            </Table.Row>
+          {:else}
+            <Table.Row>
+              <Table.Cell colspan={columns.length} class="h-24 text-center">
+                {servers.items?.length
+                  ? "No matching servers."
+                  : "No servers are attached to this group yet."}
+              </Table.Cell>
+            </Table.Row>
+          {/each}
+        </Table.Body>
+      </Table.Root>
+    </div>
+  {/if}
+</div>

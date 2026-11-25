@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"slices"
+	"strings"
 	"syscall"
 	"time"
 
@@ -101,7 +102,7 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 
 	} else {
 		cronJobHash = hashCronJob(req.Schedule, req.Command)
-	}	
+	}
 	var newCronJobLine string
 	newCronJob := db.CronJob{
 		Name:            req.Name,
@@ -189,7 +190,11 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
 	slog.Debug("running cron job", "job_id", job.ID, "command", jobCommand)
-	cmd := exec.Command(common.GetAgentPath(), "run-job", fmt.Sprintf("-id=%d", job.ID), "--manual", jobCommand)
+	parts := strings.Fields(jobCommand) // handles repeated spaces, unlike Split
+	if len(parts) == 0 {
+		return nil, status.Errorf(codes.Internal, "empty command")
+	}
+	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
 
 	if err := cmd.Start(); err != nil {
@@ -201,20 +206,18 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 	return &proto.RunCronJobResponse{}, nil
 }
 
-func handleStopCronJob(ctx context.Context, database *gorm.DB, req *proto.StopCronJobRequest) (*proto.StopCronJobResponse, error) {
-	job, err := db.FindCronJobByID(database, uint64(req.Id))
+func handleStopCronJobRun(ctx context.Context, database *gorm.DB, req *proto.StopCronJobRunRequest) (*proto.StopCronJobRunResponse, error) {
+	job, err := db.FindCronJobRunByID(database, uint64(req.Id))
 
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "cron job not found: %v", err)
+		return nil, status.Errorf(codes.NotFound, "cron job run not found: %v", err)
 	}
-	if !job.Managed {
-		return nil, status.Errorf(codes.FailedPrecondition, "cron job is not managed by agent")
-	}
-	job.Status = db.CronJobStatusInactive
+
+	job.Status = db.RunStatusCancelled
 	if err := database.Save(job).Error; err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update cron job status: %v", err)
 	}
-	return &proto.StopCronJobResponse{}, nil
+	return &proto.StopCronJobRunResponse{}, nil
 }
 func handleInfo(ctx context.Context, database *gorm.DB, req *proto.CronInfoRequest) (*proto.CronInfoResponse, error) {
 	var job *proto.CronInfoResponse

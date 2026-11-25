@@ -13,6 +13,7 @@ The server is configured through environment variables. A `.env` file in the dir
 | `SERVER_PORT`      | No       | `9788`                                       | Port the HTTPS server listens on.                                           |
 | `ALLOWED_ORIGINS`  | Yes\*    | `*` when `SERVER_PORT` is unset              | Comma-separated list of browser origins allowed to call the API cross-origin. |
 | `PASSWORD`         | No       | Empty (authentication disabled)              | Password for the web UI. Must meet the [password rules](#password-rules).   |
+| `SESSION_TTL`      | No       | `1`                                          | Login session lifetime in days. Must be an integer from `1` to `30`.        |
 | `SHH_MASTER_KEY`   | Yes      | None                                         | Key used to encrypt SSH private keys at rest. Must meet the [password rules](#password-rules). |
 | `SSL_PUBLIC_KEY`   | Yes      | None                                         | Path to the PEM certificate or certificate chain.                           |
 | `SSL_PRIVATE_KEY`  | Yes      | None                                         | Path to the PEM private key.                                                |
@@ -26,6 +27,7 @@ DATABASE_URL="postgres://user:pass@localhost:5432/servergram"
 SERVER_PORT="9788"
 ALLOWED_ORIGINS="https://localhost:9788"
 PASSWORD="ChangeMe-Str0ng!2026"
+SESSION_TTL="7"
 SHH_MASTER_KEY="ChangeMe-Too-Str0ng!2026"
 SSL_PUBLIC_KEY="./cert.pem"
 SSL_PRIVATE_KEY="./key.pem"
@@ -69,6 +71,14 @@ The server uses HTTPS, so use `https://` origins. For the Vite development serve
 </Warning>
 
 When set, the password is used to sign in to the web UI. It must meet the [password rules](#password-rules), otherwise the server refuses to start.
+
+## `SESSION_TTL`
+
+`SESSION_TTL` controls how long a login session remains valid, in days. It must be an integer from `1` to `30` and defaults to `1`. Changes apply to new sessions. Existing sessions keep the expiry they were created with.
+
+```bash
+SESSION_TTL="7"
+```
 
 ## `SHH_MASTER_KEY`
 

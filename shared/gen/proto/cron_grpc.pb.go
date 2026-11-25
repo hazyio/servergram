@@ -24,7 +24,7 @@ const (
 	CronService_RemoveDuplicateCronJobs_FullMethodName = "/proto.CronService/RemoveDuplicateCronJobs"
 	CronService_FixUnmanagedCronJobs_FullMethodName    = "/proto.CronService/FixUnmanagedCronJobs"
 	CronService_RunCronJob_FullMethodName              = "/proto.CronService/RunCronJob"
-	CronService_StopCronJob_FullMethodName             = "/proto.CronService/StopCronJob"
+	CronService_StopCronJobRun_FullMethodName          = "/proto.CronService/StopCronJobRun"
 	CronService_CronInfo_FullMethodName                = "/proto.CronService/CronInfo"
 	CronService_UpdateCronJob_FullMethodName           = "/proto.CronService/UpdateCronJob"
 	CronService_DeleteCronJob_FullMethodName           = "/proto.CronService/DeleteCronJob"
@@ -40,7 +40,7 @@ type CronServiceClient interface {
 	RemoveDuplicateCronJobs(ctx context.Context, in *RemoveDuplicateCronJobsRequest, opts ...grpc.CallOption) (*RemoveDuplicateCronJobsResponse, error)
 	FixUnmanagedCronJobs(ctx context.Context, in *FixUnmanagedCronJobsRequest, opts ...grpc.CallOption) (*FixUnmanagedCronJobsResponse, error)
 	RunCronJob(ctx context.Context, in *RunCronJobRequest, opts ...grpc.CallOption) (*RunCronJobResponse, error)
-	StopCronJob(ctx context.Context, in *StopCronJobRequest, opts ...grpc.CallOption) (*StopCronJobResponse, error)
+	StopCronJobRun(ctx context.Context, in *StopCronJobRunRequest, opts ...grpc.CallOption) (*StopCronJobRunResponse, error)
 	CronInfo(ctx context.Context, in *CronInfoRequest, opts ...grpc.CallOption) (*CronInfoResponse, error)
 	UpdateCronJob(ctx context.Context, in *UpdateCronJobRequest, opts ...grpc.CallOption) (*UpdateCronJobResponse, error)
 	DeleteCronJob(ctx context.Context, in *DeleteCronJobRequest, opts ...grpc.CallOption) (*DeleteCronJobResponse, error)
@@ -114,10 +114,10 @@ func (c *cronServiceClient) RunCronJob(ctx context.Context, in *RunCronJobReques
 	return out, nil
 }
 
-func (c *cronServiceClient) StopCronJob(ctx context.Context, in *StopCronJobRequest, opts ...grpc.CallOption) (*StopCronJobResponse, error) {
+func (c *cronServiceClient) StopCronJobRun(ctx context.Context, in *StopCronJobRunRequest, opts ...grpc.CallOption) (*StopCronJobRunResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopCronJobResponse)
-	err := c.cc.Invoke(ctx, CronService_StopCronJob_FullMethodName, in, out, cOpts...)
+	out := new(StopCronJobRunResponse)
+	err := c.cc.Invoke(ctx, CronService_StopCronJobRun_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ type CronServiceServer interface {
 	RemoveDuplicateCronJobs(context.Context, *RemoveDuplicateCronJobsRequest) (*RemoveDuplicateCronJobsResponse, error)
 	FixUnmanagedCronJobs(context.Context, *FixUnmanagedCronJobsRequest) (*FixUnmanagedCronJobsResponse, error)
 	RunCronJob(context.Context, *RunCronJobRequest) (*RunCronJobResponse, error)
-	StopCronJob(context.Context, *StopCronJobRequest) (*StopCronJobResponse, error)
+	StopCronJobRun(context.Context, *StopCronJobRunRequest) (*StopCronJobRunResponse, error)
 	CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error)
 	UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error)
 	DeleteCronJob(context.Context, *DeleteCronJobRequest) (*DeleteCronJobResponse, error)
@@ -203,8 +203,8 @@ func (UnimplementedCronServiceServer) FixUnmanagedCronJobs(context.Context, *Fix
 func (UnimplementedCronServiceServer) RunCronJob(context.Context, *RunCronJobRequest) (*RunCronJobResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RunCronJob not implemented")
 }
-func (UnimplementedCronServiceServer) StopCronJob(context.Context, *StopCronJobRequest) (*StopCronJobResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StopCronJob not implemented")
+func (UnimplementedCronServiceServer) StopCronJobRun(context.Context, *StopCronJobRunRequest) (*StopCronJobRunResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopCronJobRun not implemented")
 }
 func (UnimplementedCronServiceServer) CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CronInfo not implemented")
@@ -322,20 +322,20 @@ func _CronService_RunCronJob_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CronService_StopCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopCronJobRequest)
+func _CronService_StopCronJobRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopCronJobRunRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CronServiceServer).StopCronJob(ctx, in)
+		return srv.(CronServiceServer).StopCronJobRun(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CronService_StopCronJob_FullMethodName,
+		FullMethod: CronService_StopCronJobRun_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CronServiceServer).StopCronJob(ctx, req.(*StopCronJobRequest))
+		return srv.(CronServiceServer).StopCronJobRun(ctx, req.(*StopCronJobRunRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -436,8 +436,8 @@ var CronService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CronService_RunCronJob_Handler,
 		},
 		{
-			MethodName: "StopCronJob",
-			Handler:    _CronService_StopCronJob_Handler,
+			MethodName: "StopCronJobRun",
+			Handler:    _CronService_StopCronJobRun_Handler,
 		},
 		{
 			MethodName: "CronInfo",

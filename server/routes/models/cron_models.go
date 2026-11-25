@@ -68,3 +68,8 @@ type ListCronJobRunsRequest struct {
 type ListCronJobRunsResponse struct {
 	Body *proto.ListCronJobRunsResponse
 }
+
+type StopCronJobRunRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	RunID uint64 `path:"run_id" minimum:"1" doc:"The ID of the cron job run to stop"`
+}

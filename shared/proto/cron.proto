@@ -49,11 +49,11 @@ message RunCronJobRequest {
 
 message RunCronJobResponse {}
 
-message StopCronJobRequest {
+message StopCronJobRunRequest {
   uint64 id = 1;
 }
 
-message StopCronJobResponse {}
+message StopCronJobRunResponse {}
 message CronInfoRequest {
   uint64 id = 1;
 }
@@ -108,7 +108,7 @@ service CronService {
   rpc RemoveDuplicateCronJobs(RemoveDuplicateCronJobsRequest) returns (RemoveDuplicateCronJobsResponse);
   rpc FixUnmanagedCronJobs(FixUnmanagedCronJobsRequest) returns (FixUnmanagedCronJobsResponse);
   rpc RunCronJob(RunCronJobRequest) returns (RunCronJobResponse);
-  rpc StopCronJob(StopCronJobRequest) returns (StopCronJobResponse);
+  rpc StopCronJobRun(StopCronJobRunRequest) returns (StopCronJobRunResponse);
   rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
   rpc UpdateCronJob(UpdateCronJobRequest) returns (UpdateCronJobResponse);
   rpc DeleteCronJob(DeleteCronJobRequest) returns (DeleteCronJobResponse);

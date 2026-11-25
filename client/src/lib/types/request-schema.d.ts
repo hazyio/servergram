@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cron/{id}/runs/{job_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get by ID runs by job ID stop */
+        get: operations["get-cron--id-runs-job_id-stop"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cron/{id}/update/{job_id}": {
         parameters: {
             query?: never;
@@ -1756,6 +1773,38 @@ export interface operations {
             };
         };
     };
+    "get-cron--id-runs-job_id-stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job run to stop */
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "post-cron--id-update-job_id": {
         parameters: {
             query?: never;
@@ -2810,8 +2859,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The ID of the current resource */
-                id: number;
+                /** @description The group ID to filter servers by */
+                group_id: number;
             };
             cookie?: never;
         };
@@ -2824,6 +2873,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListServersResponseBody"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
                 };
             };
             /** @description Unprocessable Entity */

@@ -25,6 +25,7 @@ export const getColumns = (onDeleted: () => void) =>
         renderComponent(SortableTableHeader, {
           text: "Resources",
           onclick: column.getToggleSortingHandler(),
+          
         }),
       cell: ({ row }) =>
         renderComponent(ResourcesLink, {

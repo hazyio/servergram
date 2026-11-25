@@ -98,7 +98,8 @@
     }
 
     if (!stopped) {
-      availabilityTimer = setTimeout(checkUnreadNotifications, 120_000);
+      // TODO: Add timeout for polling
+      // availabilityTimer = setTimeout(checkUnreadNotifications, 120_000);
     }
   }
 

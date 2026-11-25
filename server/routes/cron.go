@@ -30,6 +30,7 @@ func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHM
 	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
 	server.Delete("/{id}/delete/{job_id}", http.StatusOK, deleteCronJob)
 	server.Get("/{id}/runs/{job_id}", http.StatusOK, listCronJobRuns)
+	server.Get("/{id}/runs/{run_id}/stop", http.StatusOK, stopCronJobRun)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -238,4 +239,21 @@ func listCronJobRuns(data internal.RouteData[models.ListCronJobRunsRequest]) (*m
 	response.Body = result
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Listed cron job runs for job %d in server \"%d\", limit %d, offset %d", data.Input.JobID, data.Input.ID, data.Input.Limit, data.Input.Offset), data.Database)
 	return response, nil
+}
+
+func stopCronJobRun(data internal.RouteData[models.StopCronJobRunRequest]) (*EmptyRR, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	_, err = resource.StopCronJobRun(ctx, &proto.StopCronJobRunRequest{
+		Id: data.Input.RunID,
+	})
+	if err != nil {
+		slog.Error("Failed to stop cron job run", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Stopped cron job run %d in server \"%d\"", data.Input.RunID, data.Input.ID), data.Database)
+	return &EmptyRR{}, nil
 }

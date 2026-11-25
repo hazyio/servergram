@@ -5,5 +5,5 @@
 </script>
 
 <a href={appPaths.groups.resources(id)}>
-  {count}
+  {count} {count === 1 ? 'Server' : 'Servers'}
 </a>

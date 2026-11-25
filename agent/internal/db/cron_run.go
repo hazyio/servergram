@@ -39,7 +39,14 @@ func (c *CronRun) RetrieveStatus(database *gorm.DB) error {
 
 	return database.First(c).Error
 }
-
+func FindCronJobRunByID(database *gorm.DB, id uint64) (*CronRun, error) {
+	run := &CronRun{}
+	err := database.First(run, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return run, nil
+}
 func PruneCronRuns(db *gorm.DB, keep int32, cronJobID uint64) error {
 	var cutoff CronRun
 	err := db.Select("id").

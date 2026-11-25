@@ -496,6 +496,29 @@ export async function runCronJob(
   return { data: (data ?? {}) as Record<string, never> };
 }
 
+export async function stopCronJobRun(
+  serverId: number,
+  runId: number,
+): Promise<CronApiResponse<Record<string, never>>> {
+  const { data, error } = await NewRequestClient().GET(
+    "/api/cron/{id}/runs/{run_id}/stop",
+    {
+      params: {
+        path: {
+          id: serverId,
+          run_id: runId,
+        },
+      },
+    },
+  );
+
+  if (error) {
+    return { error };
+  }
+
+  return { data: (data ?? {}) as Record<string, never> };
+}
+
 export async function wrapCronJobsWithAgent(
   serverId: number,
 ): Promise<CronApiResponse<{ fixed: number }>> {

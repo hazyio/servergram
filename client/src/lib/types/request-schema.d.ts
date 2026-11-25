@@ -208,15 +208,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/cron/{id}/runs/{job_id}/stop": {
+    "/api/cron/{id}/runs/{run_id}/stop": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get by ID runs by job ID stop */
-        get: operations["get-cron--id-runs-job_id-stop"];
+        /** Get by ID runs by run ID stop */
+        get: operations["get-cron--id-runs-run_id-stop"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1773,7 +1773,7 @@ export interface operations {
             };
         };
     };
-    "get-cron--id-runs-job_id-stop": {
+    "get-cron--id-runs-run_id-stop": {
         parameters: {
             query?: never;
             header?: never;

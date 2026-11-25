@@ -2,10 +2,11 @@
   import TimeAgo from "#lib/components/base/TimeAgo.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Table from "#lib/components/ui/table/index.js";
-  import { FileText } from "@lucide/svelte";
+  import { FileText, Square } from "@lucide/svelte";
   import type { CronRun } from "../cronJobs.ts";
   import CronRunLogDialog from "./CronRunLogDialog.svelte";
   import CronRunStatusBadge from "./CronRunStatusBadge.svelte";
+  import StopCronRunDialog from "./StopCronRunDialog.svelte";
 
   let {
     runs,
@@ -15,10 +16,23 @@
 
   let selectedRun = $state<CronRun | null>(null);
   let logOpen = $state(false);
+  let stopOpen = $state(false);
+  let runToStop = $state<CronRun | null>(null);
 
   function openLog(run: CronRun) {
     selectedRun = run;
     logOpen = true;
+  }
+
+  function openStop(run: CronRun) {
+    runToStop = run;
+    stopOpen = true;
+  }
+
+  function onRunStopped(runId: number) {
+    runs = runs.map((r) =>
+      r.id === runId ? { ...r, status: "canceled" as const } : r,
+    );
   }
 
   function duration(run: CronRun) {
@@ -35,6 +49,8 @@
     const seconds = totalSeconds % 60;
     return `${minutes}m ${seconds}s`;
   }
+
+  const isRunning = (run: CronRun) => run.status === "running";
 </script>
 
 <Table.Root>
@@ -46,7 +62,7 @@
       <Table.Head class="h-10 px-2 md:px-4">Duration</Table.Head>
       <Table.Head class="h-10 px-2 md:px-4">Trigger</Table.Head>
       <Table.Head class="h-10 px-2 md:px-4">Exit code</Table.Head>
-      <Table.Head class="h-10 px-2 text-right md:px-4">Logs</Table.Head>
+      <Table.Head class="h-10 px-2 text-right md:px-4">Actions</Table.Head>
     </Table.Row>
   </Table.Header>
   <Table.Body>
@@ -77,10 +93,29 @@
           {/if}
         </Table.Cell>
         <Table.Cell class="px-2 text-right md:px-4">
-          <Button variant="ghost" size="sm" onclick={() => openLog(run)}>
-            <FileText class="size-3.5" />
-            View logs
-          </Button>
+          <div class="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onclick={() => openLog(run)}
+              class="gap-1.5"
+            >
+              <FileText class="size-3.5" />
+              View logs
+            </Button>
+            {#if isRunning(run)}
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => openStop(run)}
+                class="gap-1.5 text-destructive hover:text-destructive"
+                title="Stop run"
+              >
+                <Square class="size-3.5" />
+                <span class="hidden sm:inline">Stop</span>
+              </Button>
+            {/if}
+          </div>
         </Table.Cell>
       </Table.Row>
     {:else}
@@ -94,3 +129,9 @@
 </Table.Root>
 
 <CronRunLogDialog bind:open={logOpen} {serverId} {jobName} run={selectedRun} />
+<StopCronRunDialog
+  bind:open={stopOpen}
+  {serverId}
+  run={runToStop}
+  onStopped={onRunStopped}
+/>

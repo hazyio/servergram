@@ -13,3 +13,4 @@ File and folder icons in `client/src/lib/assets/icons` come from [Material Icon 
 - [ ] Handle Permission Denied Errors
 - [ ] Handle Deleting mutlpte in client
 - [ ] Handle done on stream finished
+- [ ] Implement cron job 200MB log storage limit

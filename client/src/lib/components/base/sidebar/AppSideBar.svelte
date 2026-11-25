@@ -25,6 +25,14 @@
     items = [],
     ...restProps
   }: ComponentProps<typeof Sidebar.Root> & { items: SideBarItem[] } = $props();
+
+  const sidebar = Sidebar.useSidebar();
+
+  function closeMobileSidebar() {
+    if (sidebar.isMobile) {
+      sidebar.setOpenMobile(false);
+    }
+  }
 </script>
 
 <Sidebar.Root {...restProps} bind:ref>
@@ -46,7 +54,9 @@
                     page.url.pathname}
                 >
                   {#snippet child({ props })}
-                    <a href={item.url} {...props}>{item.title}</a>
+                    <a href={item.url} {...props} onclick={closeMobileSidebar}
+                      >{item.title}</a
+                    >
                   {/snippet}
                 </Sidebar.MenuButton>
               </Sidebar.MenuItem>

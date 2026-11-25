@@ -22,7 +22,7 @@ func registerServerRoutes(api *huma.Group, database *gorm.DB, sshManager *sshman
 	server := internal.NewGroup("/server", api, database, []string{"Servers"}, sshManager, allowedOrigins, polls)
 	server.Post("/add", http.StatusCreated, addServer, http.StatusConflict, http.StatusInternalServerError)
 	server.Get("/list", http.StatusOK, listServers, http.StatusInternalServerError)
-	server.Get("/list/by-group/{group_id}", http.StatusOK, listServersByGroup, http.StatusInternalServerError)
+	server.Get("/list/by-group/{group_id}", http.StatusOK, listServersByGroup, http.StatusInternalServerError, http.StatusNotFound)
 	server.Delete("/delete/{id}", http.StatusOK, deleteServer, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusNotFound)
 	server.Put("/update-finger-print/{id}", http.StatusNoContent, updateServerFingerPrint, http.StatusNotFound, http.StatusInternalServerError, http.StatusNotFound)
 
@@ -99,14 +99,21 @@ func listServers(data internal.RouteData[EmptyRR]) (*models.ListServersResponse,
 
 	return response, nil
 }
-func listServersByGroup(data internal.RouteData[PathIdRequest]) (*models.ListServersResponse, error) {
+func listServersByGroup(data internal.RouteData[models.ListServersByGroupRequest]) (*models.ListServersResponse, error) {
 	database := data.Database
+	groupID := data.Input.GroupID
+	group, err := db.FindGroupByID(groupID, database)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, internal.NewHumaError(http.StatusNotFound, "Group does not exist")
+	} else if err != nil {
+		return nil, internal.InternalServerError
+	}
 
 	response := &models.ListServersResponse{}
 	response.Body.Items = make([]models.ServerItem, 0)
 
 	database.Model(&db.Server{}).
-		Where("servers.group_id = ?", data.Input.ID).
+		Where("servers.group_id = ?", group.ID).
 		Select("servers.id, servers.name, servers.host, servers.created_at, servers.trusted").Order("servers.id").
 		Scan(&response.Body.Items)
 

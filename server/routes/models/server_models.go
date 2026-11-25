@@ -24,9 +24,12 @@ type AddServerResponse struct {
 }
 
 type ListServersRequest struct {
-	Body struct {
-	}
+
 }
+type ListServersByGroupRequest struct {
+	GroupID uint `path:"group_id" required:"true" minimum:"1" doc:"The group ID to filter servers by"`
+}
+
 type ServerItem struct {
 	ID        uint      `json:"id" doc:"The ID of the server"`
 	Name      string    `json:"name" doc:"The name of the server"`

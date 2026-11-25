@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -22,6 +23,7 @@ type Env struct {
 	EncryptionMasterKey string   `validate:"required,strong_password"`
 	SSLPublicKey        string   `validate:"required"`
 	SSLPrivateKey       string   `validate:"required"`
+	SessionTTL          int      `validate:"required,gt=0,lte=30"`
 }
 
 var validate = func() *validator.Validate {
@@ -71,6 +73,15 @@ func LoadEnv() Env {
 		}
 	}
 
+	sessionTTLStr := os.Getenv("SESSION_TTL")
+	if sessionTTLStr == "" {
+		sessionTTLStr = "1"
+	}
+	sessionTTL, err := strconv.Atoi(sessionTTLStr)
+	if err != nil {
+		shared.Fatal("SESSION_TTL must be a valid integer: %v", err)
+	}
+
 	env := Env{
 		DatabaseUrl:         os.Getenv("DATABASE_URL"),
 		ServerPort:          os.Getenv("SERVER_PORT"),
@@ -79,6 +90,7 @@ func LoadEnv() Env {
 		EncryptionMasterKey: os.Getenv("SHH_MASTER_KEY"),
 		SSLPublicKey:        os.Getenv("SSL_PUBLIC_KEY"),
 		SSLPrivateKey:       os.Getenv("SSL_PRIVATE_KEY"),
+		SessionTTL:          sessionTTL,
 	}
 	for i, origin := range env.AllowedOrigins {
 		env.AllowedOrigins[i] = strings.TrimSpace(origin)

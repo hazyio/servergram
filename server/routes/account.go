@@ -24,7 +24,7 @@ func registerAccountRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []
 
 }
 
-func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfulRedirectResponse, error) {
+func login(data internal.RouteData[models.LoginRequest]) (*models.LoginResponse, error) {
 	input := data.Input
 	password := input.Body.Password
 	env := internal.LoadEnv()
@@ -42,7 +42,7 @@ func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfu
 		slog.Error("error generating random token", "err", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error generating random token")
 	}
-	expires := time.Now().Add(24 * time.Hour)
+	expires := time.Now().Add(time.Duration(env.SessionTTL*24) * time.Hour)
 	ua := useragent.Parse(input.UserAgent)
 	new_session := db.Sessions{
 		Token:     internal.HashString(randomToken),
@@ -58,7 +58,7 @@ func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfu
 		slog.Error("error deleting expired sessions", "err", err)
 	}
 	db.AddLog(db.LogActionCreate, "User logged in", data.Database)
-	return &models.LoginSuccessfulRedirectResponse{
+	return &models.LoginResponse{
 		Status: http.StatusCreated,
 		SetCookie: http.Cookie{
 			Name:     "session_token",
@@ -75,35 +75,41 @@ func login(data internal.RouteData[models.LoginRequest]) (*models.LoginSuccessfu
 
 func logOut(data internal.RouteData[models.LogoutRequest]) (*EmptyRR, error) {
 	token := internal.HashString(data.Input.CookieToken)
-	if err := data.Database.Where("token = ?", token).Delete(&db.Sessions{}).Error; err != nil {
-		slog.Error("error deleting session", "err", err)
+	res := data.Database.Where("token = ?", token).Delete(&db.Sessions{})
+
+	if res.Error != nil {
+		slog.Error("error deleting session", "err", res.Error)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error deleting session")
 	}
+	if res.RowsAffected == 0 {
+		return nil, internal.NewHumaError(http.StatusNotFound, "session not found")
+	}
 	db.AddLog(db.LogActionDelete, "User logged out", data.Database)
-	return &EmptyRR{}, nil
+	return &EmptyRR{}, nil 
 
 }
 
 func listSessions(data internal.RouteData[models.ListSessionsRequest]) (*models.SessionResponse, error) {
 	sessions := make([]db.Sessions, 0)
-	token := internal.HashString(data.Input.CookieToken)
 
 	if err := data.Database.Find(&sessions).Error; err != nil {
 		slog.Error("error fetching sessions", "err", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error fetching sessions")
 	}
 	db.AddLog(db.LogActionRead, "User listed sessions", data.Database)
+	token := internal.HashString(data.Input.CookieToken)
+
 	return &models.SessionResponse{
 		Body: struct {
 			Sessions []models.Session `json:"sessions"`
 		}{
 			Sessions: internal.Map(sessions, func(s db.Sessions) models.Session {
 				return models.Session{
-					ID:        s.ID,
-					ExpiresAt: s.Expires.Format(time.RFC3339),
-					CreatedAt: s.CreatedAt.Format(time.RFC3339),
-					Os:        s.Os,
-					UserAgent: s.UserAgent,
+					ID:         s.ID,
+					ExpiresAt:  s.Expires.Format(time.RFC3339),
+					CreatedAt:  s.CreatedAt.Format(time.RFC3339),
+					Os:         s.Os,
+					UserAgent:  s.UserAgent,
 					ThisDevice: s.Token == token,
 				}
 			}),

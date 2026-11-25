@@ -9,17 +9,17 @@ type LoginRequest struct {
 	UserAgent string `header:"User-Agent" required:"true" hidden:"true"`
 }
 
-type LoginSuccessfulRedirectResponse struct {
+type LoginResponse struct {
 	Status    int
 	SetCookie http.Cookie `header:"Set-Cookie"`
 }
 
 type LogoutRequest struct {
-	CookieToken string `cookie:"token" required:"true" hidden:"true"`
+	CookieToken string `cookie:"session_token" required:"true" hidden:"true"`
 }
 
 type ListSessionsRequest struct {
-	CookieToken string `cookie:"token" required:"true" hidden:"true"`
+	CookieToken string `cookie:"session_token" required:"true" hidden:"true"`
 }
 
 type Session struct {

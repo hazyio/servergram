@@ -1263,6 +1263,7 @@ export interface components {
             /** Format: int64 */
             id: number;
             os: string;
+            this_device: boolean;
             user_agent: string;
         };
         SessionResponseBody: {

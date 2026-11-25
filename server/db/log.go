@@ -19,7 +19,7 @@ const (
 
 type Log struct {
 	ID        uint      `gorm:"primaryKey"`
-	Action    LogAction `gorm:"not null;size:20;check:chk_log_action,action IN ('delete','create','add','update')"`
+	Action    LogAction `gorm:"not null;size:20;check:chk_log_action,action IN ('delete','create','add','update','read')"`
 	Message   string    `gorm:"not null;size:255"`
 	CreatedAt time.Time
 }

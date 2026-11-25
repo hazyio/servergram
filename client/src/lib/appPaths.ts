@@ -10,6 +10,7 @@ const appPaths = {
   },
   account: {
     login: "/account/login",
+    sessions: "/sessions",
   },
   servers: {
     index: "/",

@@ -84,17 +84,29 @@ func logOut(data internal.RouteData[models.LogoutRequest]) (*EmptyRR, error) {
 
 }
 
-func listSessions(data internal.RouteData[EmptyRR]) (*models.SessionResponse, error) {
-	var sessions []models.Session
+func listSessions(data internal.RouteData[models.ListSessionsRequest]) (*models.SessionResponse, error) {
+	sessions := make([]db.Sessions, 0)
+	token := internal.HashString(data.Input.CookieToken)
+
 	if err := data.Database.Find(&sessions).Error; err != nil {
 		slog.Error("error fetching sessions", "err", err)
 		return nil, internal.NewHumaError(http.StatusInternalServerError, "error fetching sessions")
 	}
+	db.AddLog(db.LogActionRead, "User listed sessions", data.Database)
 	return &models.SessionResponse{
 		Body: struct {
 			Sessions []models.Session `json:"sessions"`
 		}{
-			Sessions: sessions,
+			Sessions: internal.Map(sessions, func(s db.Sessions) models.Session {
+				return models.Session{
+					ID:        s.ID,
+					ExpiresAt: s.Expires.Format(time.RFC3339),
+					CreatedAt: s.CreatedAt.Format(time.RFC3339),
+					Os:        s.Os,
+					UserAgent: s.UserAgent,
+					ThisDevice: s.Token == token,
+				}
+			}),
 		},
 	}, nil
 }

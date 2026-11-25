@@ -15,15 +15,20 @@ type LoginSuccessfulRedirectResponse struct {
 }
 
 type LogoutRequest struct {
-	CookieToken string `header:"Cookie-Token" required:"true" hidden:"true"`
+	CookieToken string `cookie:"token" required:"true" hidden:"true"`
+}
+
+type ListSessionsRequest struct {
+	CookieToken string `cookie:"token" required:"true" hidden:"true"`
 }
 
 type Session struct {
 	ID        uint   `json:"id" gorm:"primaryKey"`
 	Os        string `json:"os"`
 	UserAgent string `json:"user_agent"`
-	CreatedAt int64  `json:"created_at"`
-	ExpiresAt int64  `json:"expires_at"`
+	CreatedAt string  `json:"created_at"`
+	ExpiresAt string `json:"expires_at"`
+	ThisDevice bool   `json:"this_device"`
 }
 
 type SessionResponse struct {

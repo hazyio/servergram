@@ -48,8 +48,7 @@
       </AlertDialog.Footer>
     {:else}
       <AlertDialog.Header>
-        <AlertDialog.Title
-          >Are you sure you want to sign out?</AlertDialog.Title
+        <AlertDialog.Title>Are you sure you want to sign out?</AlertDialog.Title
         >
         <AlertDialog.Description>
           You will need to enter your password again to access your resources.

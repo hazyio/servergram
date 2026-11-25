@@ -169,6 +169,14 @@
             ],
           },
           {
+            title: "Sessions",
+            url: appPaths.account.sessions,
+            breadcrumb: [
+              ...homeBreadcrumbs,
+              { title: "Sessions", url: appPaths.account.sessions },
+            ],
+          },
+          {
             title: "Logs",
             url: appPaths.logs.index,
             breadcrumb: [

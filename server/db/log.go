@@ -12,8 +12,9 @@ type LogAction string
 const (
 	LogActionDelete LogAction = "delete"
 	LogActionCreate LogAction = "create"
-	LogActionAdd             LogAction = "add"
-	LogActionUpdate          LogAction = "update"
+	LogActionAdd    LogAction = "add"
+	LogActionUpdate LogAction = "update"
+	LogActionRead   LogAction = "read"
 )
 
 type Log struct {

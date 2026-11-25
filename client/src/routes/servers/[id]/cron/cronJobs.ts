@@ -64,6 +64,11 @@ export type CronRun = {
   exit_code: number | null;
 };
 
+export type CronRunLog = {
+  content: string;
+  truncated: boolean;
+};
+
 type CronRunApi = components["schemas"]["CronRunMeta"];
 
 const cronRunStatuses: Record<string, CronRunStatus> = {
@@ -449,6 +454,25 @@ export async function listCronRuns(
     },
   };
 }
+export async function getCronRunLog(
+  serverId: number,
+  jobId: number,
+  runId: number,
+): Promise<CronApiResponse<CronRunLog>> {
+  // TODO: replace with a real request once the agent exposes run output.
+  return simulateRequest(() => {
+    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
+
+    return {
+      content: [
+        `$ ${job?.command ?? "command"}`,
+        `[stub] Run #${runId} output will appear here once run log capture is wired up.`,
+      ].join("\n"),
+      truncated: false,
+    };
+  });
+}
+
 export async function runCronJob(
   serverId: number,
   jobId: number,

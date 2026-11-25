@@ -90,13 +90,11 @@ func createCronJob(data internal.RouteData[models.CreateCronJobRequest]) (*Empty
 	}
 	defer cancel()
 	_, err = resource.CreateCronJob(ctx, &proto.CreateCronJobRequest{
-		Schedule:          data.Input.Body.Schedule,
-		Command:           data.Input.Body.Command,
-		Name:              data.Input.Body.Name,
-		MetaKeepCount:     data.Input.Body.MetaKeepCount,
-		RunLogsKeepCount:  data.Input.Body.RunLogsKeepCount,
-		ErrorLogsKeepDays: data.Input.Body.ErrorLogsKeepDays,
-		Wrap:              data.Input.Body.Wrap,
+		Schedule:         data.Input.Body.Schedule,
+		Command:          data.Input.Body.Command,
+		Name:             data.Input.Body.Name,
+		RunLogsKeepCount: data.Input.Body.RunLogsKeepCount,
+		Wrap:             data.Input.Body.Wrap,
 	})
 	if err != nil {
 		slog.Error("Failed to create cron job", "error", err)

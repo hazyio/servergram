@@ -95,14 +95,20 @@ func handleCreateCronJob(ctx context.Context, database *gorm.DB, req *proto.Crea
 	if err := ValidateSchedule(req.Schedule); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid schedule: %v", err)
 	}
-	cronJobHash := hashCronJob(req.Schedule, req.Name)
+	cronJobHash := ""
+	if req.Wrap {
+		cronJobHash = hashCronJob(req.Schedule, addIDAndAgentPrefix(shQuote(req.Command), 0))
+
+	} else {
+		cronJobHash = hashCronJob(req.Schedule, req.Command)
+	}	
 	var newCronJobLine string
 	newCronJob := db.CronJob{
-		Name:            req.GetName(),
+		Name:            req.Name,
 		Hash:            cronJobHash,
-		Managed:         req.GetWrap(),
+		Managed:         req.Wrap,
 		Status:          db.CronJobStatusActive,
-		RunLogKeepCount: req.GetRunLogsKeepCount(),
+		RunLogKeepCount: req.RunLogsKeepCount,
 	}
 	if req.Wrap {
 

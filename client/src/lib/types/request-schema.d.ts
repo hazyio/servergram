@@ -865,6 +865,10 @@ export interface components {
         };
         CreateCronJobRequestBody: {
             command: string;
+            /** Format: int32 */
+            error_logs_keep_days: number;
+            /** Format: int32 */
+            meta_keep_count: number;
             name: string;
             /** Format: int32 */
             run_logs_keep_count: number;

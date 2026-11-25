@@ -301,7 +301,7 @@
             class="mt-3"
           />
         {:else}
-          <CronRunsTable {runs} {serverId} />
+          <CronRunsTable {runs} {serverId} jobName={displayName} />
         {/if}
       </Card>
     {/if}

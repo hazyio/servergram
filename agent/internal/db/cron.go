@@ -16,7 +16,7 @@ const (
 
 type CronJob struct {
 	ID              uint64 `gorm:"primaryKey"`
-	Name            string
+	Name            string `gorm:"size:255;not null"`
 	Hash            string        `gorm:"uniqueIndex:idx_server_hash"`
 	Managed         bool          // This might be updated on demand
 	Status          CronJobStatus `gorm:"type:varchar(20)"`

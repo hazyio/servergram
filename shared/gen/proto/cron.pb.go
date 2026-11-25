@@ -218,16 +218,14 @@ func (x *ListCronJobsResponse) GetDone() bool {
 }
 
 type CreateCronJobRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Schedule          string                 `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	Command           string                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
-	MetaKeepCount     int32                  `protobuf:"varint,4,opt,name=meta_keep_count,json=metaKeepCount,proto3" json:"meta_keep_count,omitempty"`
-	RunLogsKeepCount  int32                  `protobuf:"varint,5,opt,name=run_logs_keep_count,json=runLogsKeepCount,proto3" json:"run_logs_keep_count,omitempty"`
-	ErrorLogsKeepDays int32                  `protobuf:"varint,6,opt,name=error_logs_keep_days,json=errorLogsKeepDays,proto3" json:"error_logs_keep_days,omitempty"`
-	Wrap              bool                   `protobuf:"varint,7,opt,name=wrap,proto3" json:"wrap,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Schedule         string                 `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	Command          string                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	RunLogsKeepCount int32                  `protobuf:"varint,4,opt,name=run_logs_keep_count,json=runLogsKeepCount,proto3" json:"run_logs_keep_count,omitempty"`
+	Wrap             bool                   `protobuf:"varint,5,opt,name=wrap,proto3" json:"wrap,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateCronJobRequest) Reset() {
@@ -281,23 +279,9 @@ func (x *CreateCronJobRequest) GetCommand() string {
 	return ""
 }
 
-func (x *CreateCronJobRequest) GetMetaKeepCount() int32 {
-	if x != nil {
-		return x.MetaKeepCount
-	}
-	return 0
-}
-
 func (x *CreateCronJobRequest) GetRunLogsKeepCount() int32 {
 	if x != nil {
 		return x.RunLogsKeepCount
-	}
-	return 0
-}
-
-func (x *CreateCronJobRequest) GetErrorLogsKeepDays() int32 {
-	if x != nil {
-		return x.ErrorLogsKeepDays
 	}
 	return 0
 }
@@ -1231,15 +1215,13 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x13ListCronJobsRequest\"K\n" +
 	"\x14ListCronJobsResponse\x12\x1f\n" +
 	"\x04jobs\x18\x01 \x03(\v2\v.proto.CronR\x04jobs\x12\x12\n" +
-	"\x04done\x18\x02 \x01(\bR\x04done\"\xfc\x01\n" +
+	"\x04done\x18\x02 \x01(\bR\x04done\"\xa3\x01\n" +
 	"\x14CreateCronJobRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\bschedule\x18\x02 \x01(\tR\bschedule\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\tR\acommand\x12&\n" +
-	"\x0fmeta_keep_count\x18\x04 \x01(\x05R\rmetaKeepCount\x12-\n" +
-	"\x13run_logs_keep_count\x18\x05 \x01(\x05R\x10runLogsKeepCount\x12/\n" +
-	"\x14error_logs_keep_days\x18\x06 \x01(\x05R\x11errorLogsKeepDays\x12\x12\n" +
-	"\x04wrap\x18\a \x01(\bR\x04wrap\"\x17\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\x12-\n" +
+	"\x13run_logs_keep_count\x18\x04 \x01(\x05R\x10runLogsKeepCount\x12\x12\n" +
+	"\x04wrap\x18\x05 \x01(\bR\x04wrap\"\x17\n" +
 	"\x15CreateCronJobResponse\" \n" +
 	"\x1eRemoveDuplicateCronJobsRequest\";\n" +
 	"\x1fRemoveDuplicateCronJobsResponse\x12\x18\n" +

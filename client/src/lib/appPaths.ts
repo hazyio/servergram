@@ -21,8 +21,6 @@ const appPaths = {
     cron: (id: number) => `/servers/${id}/cron`,
     cronAdd: (id: number) => `/servers/${id}/cron/add`,
     cronJob: (id: number, jobId: number) => `/servers/${id}/cron/${jobId}`,
-    cronRunLog: (id: number, jobId: number, runId: number) =>
-      `/servers/${id}/cron/${jobId}/log/${runId}`,
   },
   databases: {
     index: "/databases",

@@ -3,7 +3,7 @@
   import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import type { ComponentProps } from "svelte";
   import ThemeChanger from "./ThemeChanger.svelte";
-  import Button from "#lib/components/ui/button/button.svelte";
+  import AccountSignOut from "./AccountSignOut.svelte";
   export interface SideBarItem {
     title: string;
     url: string;
@@ -58,6 +58,6 @@
   </Sidebar.Content>
   <Sidebar.Rail />
   <Sidebar.Footer>
-    <Button variant="destructive" class="grow">Sign Out</Button>
+    <AccountSignOut />
   </Sidebar.Footer>
 </Sidebar.Root>

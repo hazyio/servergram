@@ -19,6 +19,8 @@ func registerAccountRoutes(api *huma.Group, database *gorm.DB, allowedOrigins []
 	server := internal.NewGroup("/account", api, database, []string{"Accounts"}, nil, allowedOrigins, polls)
 	server.Post("/login", http.StatusCreated, login)
 	server.Delete("/logout", http.StatusOK, logOut)
+	server.Get("/sessions/list", http.StatusOK, listSessions)
+	server.Delete("/sessions/remove/{id}", http.StatusOK, deleteSession)
 
 }
 
@@ -80,4 +82,29 @@ func logOut(data internal.RouteData[models.LogoutRequest]) (*EmptyRR, error) {
 	db.AddLog(db.LogActionDelete, "User logged out", data.Database)
 	return &EmptyRR{}, nil
 
+}
+
+func listSessions(data internal.RouteData[EmptyRR]) (*models.SessionResponse, error) {
+	var sessions []models.Session
+	if err := data.Database.Find(&sessions).Error; err != nil {
+		slog.Error("error fetching sessions", "err", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "error fetching sessions")
+	}
+	return &models.SessionResponse{
+		Body: struct {
+			Sessions []models.Session `json:"sessions"`
+		}{
+			Sessions: sessions,
+		},
+	}, nil
+}
+
+func deleteSession(data internal.RouteData[models.DeleteSessionRequest]) (*EmptyRR, error) {
+	sessionID := data.Input.ID
+	if err := data.Database.Where("id = ?", sessionID).Delete(&db.Sessions{}).Error; err != nil {
+		slog.Error("error deleting session", "err", err)
+		return nil, internal.NewHumaError(http.StatusInternalServerError, "error deleting session")
+	}
+	db.AddLog(db.LogActionDelete, "User deleted session", data.Database)
+	return &EmptyRR{}, nil
 }

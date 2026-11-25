@@ -19,6 +19,7 @@
             "group": "Installation",
             "pages": [
               "installation/index",
+              "installation/binary",
               "installation/go"
             ]
           },

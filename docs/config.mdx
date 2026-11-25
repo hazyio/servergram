@@ -3,25 +3,37 @@ title: "Configuration"
 description: "Environment variables for the Servergram server"
 ---
 
-The server is configured through environment variables. A `.env` file in the directory the server is run from is loaded automatically.
+The server is configured through environment variables. A `.env` file in the directory the server is started from is loaded automatically. Variables already present in the environment take precedence over the file.
 
-| Variable          | Required                | Description                                                  | Example                        |
-| ----------------- | ----------------------- | ------------------------------------------------------------ | ------------------------------ |
-| `DATABASE_URL`    | No                      | Database connection string. Defaults to SQLite (see below)   | `postgres://user:pass@host/db` |
-| `SERVER_PORT`     | No                      | Port the server listens on. Defaults to `9788`               | `8080`                         |
-| `ALLOWED_ORIGINS` | If `SERVER_PORT` is set | Comma-separated list of allowed CORS origins                 | `http://localhost:5173`        |
-| `PASSWORD`        | No                      | Password used to log in. Authentication is disabled if unset | `Str0ng!Passw0rd#2026`         |
+## Variables
+
+| Variable           | Required | Default                                      | Description                                                                 |
+| ------------------ | -------- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| `DATABASE_URL`     | No       | `sqlite3://<user-config-dir>/servergram.db`  | Database connection string. See [supported databases](#database_url).        |
+| `SERVER_PORT`      | No       | `9788`                                       | Port the HTTPS server listens on.                                           |
+| `ALLOWED_ORIGINS`  | Yes\*    | `*` when `SERVER_PORT` is unset              | Comma-separated list of browser origins allowed to call the API cross-origin. |
+| `PASSWORD`         | No       | Empty (authentication disabled)              | Password for the web UI. Must meet the [password rules](#password-rules).   |
+| `SHH_MASTER_KEY`   | Yes      | None                                         | Key used to encrypt SSH private keys at rest. Must meet the [password rules](#password-rules). |
+| `SSL_PUBLIC_KEY`   | Yes      | None                                         | Path to the PEM certificate or certificate chain.                           |
+| `SSL_PRIVATE_KEY`  | Yes      | None                                         | Path to the PEM private key.                                                |
+
+\* `ALLOWED_ORIGINS` is required whenever `SERVER_PORT` is set. If `SERVER_PORT` is not set, the server defaults to port `9788` and sets `ALLOWED_ORIGINS` to `*`.
+
+## Example
 
 ```bash
-export DATABASE_URL="postgres://user:pass@localhost/servergram"
-export SERVER_PORT="8080"
-export ALLOWED_ORIGINS="http://localhost:5173"
-export PASSWORD="Str0ng!Passw0rd#2026"
+DATABASE_URL="postgres://user:pass@localhost:5432/servergram"
+SERVER_PORT="9788"
+ALLOWED_ORIGINS="https://localhost:9788"
+PASSWORD="ChangeMe-Str0ng!2026"
+SHH_MASTER_KEY="ChangeMe-Too-Str0ng!2026"
+SSL_PUBLIC_KEY="./cert.pem"
+SSL_PRIVATE_KEY="./key.pem"
 ```
 
 ## `DATABASE_URL`
 
-Supported databases:
+Supported databases and schemes:
 
 | Database   | Schemes                  | Example                                       |
 | ---------- | ------------------------ | --------------------------------------------- |
@@ -30,19 +42,25 @@ Supported databases:
 | MySQL      | `mysql`                  | `mysql://user:pass@host:3306/db`              |
 | SQL Server | `sqlserver`, `mssql`     | `sqlserver://user:pass@host:1433?database=db` |
 
-If `DATABASE_URL` is not set, a SQLite database is created at `servergram.db` in the user config directory (for example `~/.config/servergram.db`).
+If `DATABASE_URL` is not set, the server creates a SQLite database at `servergram.db` in the user config directory, for example `~/.config/servergram.db` on Linux.
+
+Tables are created and migrated automatically at startup.
 
 ## `SERVER_PORT` and `ALLOWED_ORIGINS`
 
+The server always serves HTTPS on `SERVER_PORT`.
+
 <Warning>
-  If `SERVER_PORT` is not set, the server defaults to port `9788` and allows requests from **all origins** (`*`). This is dangerous on any network you do not fully trust.
+  If `SERVER_PORT` is not set, the server listens on port `9788` and sets `ALLOWED_ORIGINS` to `*`. That default is unsafe on any network you do not fully trust. Set both variables explicitly.
 </Warning>
 
-When `SERVER_PORT` is set, you must also set `ALLOWED_ORIGINS` to the origin(s) of the client. Otherwise the server fails startup validation, and without a matching origin browsers block the client's requests (CORS).
+When `SERVER_PORT` is set, `ALLOWED_ORIGINS` must contain at least one non-empty origin or the server refuses to start. List the exact origins that load the UI, including the scheme and port, separated by commas:
 
 ```bash
-export ALLOWED_ORIGINS="http://localhost:5173,https://servergram.example.com"
+ALLOWED_ORIGINS="https://localhost:9788,https://servergram.example.com"
 ```
+
+The server uses HTTPS, so use `https://` origins. For the Vite development server, add `https://localhost:5173`.
 
 ## `PASSWORD`
 
@@ -50,7 +68,30 @@ export ALLOWED_ORIGINS="http://localhost:5173,https://servergram.example.com"
   If `PASSWORD` is not set, authentication is disabled and anyone who can reach the server has full access.
 </Warning>
 
-When set, the password must meet all of these requirements, otherwise the server refuses to start:
+When set, the password is used to sign in to the web UI. It must meet the [password rules](#password-rules), otherwise the server refuses to start.
+
+## `SHH_MASTER_KEY`
+
+`SHH_MASTER_KEY` encrypts the SSH private keys stored in the database. It is required and must meet the [password rules](#password-rules). It must also be different from `PASSWORD`.
+
+<Warning>
+  Changing `SHH_MASTER_KEY` after SSH keys have been saved makes those keys unreadable. Keep the value stable and back it up.
+</Warning>
+
+## `SSL_PUBLIC_KEY` and `SSL_PRIVATE_KEY`
+
+The server only serves HTTPS and exits at startup if either path is missing or does not point to an existing file. Paths are resolved relative to the directory the server is started from.
+
+For local development, [mkcert](https://github.com/FiloSottile/mkcert) creates a trusted pair:
+
+```bash
+mkcert -install
+mkcert -cert-file cert.pem -key-file key.pem localhost 127.0.0.1
+```
+
+## Password rules
+
+When `PASSWORD` is set, it must satisfy all of these requirements. `SHH_MASTER_KEY` is required and must satisfy the same rules:
 
 - 16 to 128 characters
 - At least one uppercase letter
@@ -58,3 +99,11 @@ When set, the password must meet all of these requirements, otherwise the server
 - At least one number
 - At least one symbol or punctuation character
 - Printable characters only, no spaces
+
+## Agent environment
+
+The agent runs on the managed server and accepts one optional variable:
+
+| Variable    | Default | Description                                              |
+| ----------- | ------- | -------------------------------------------------------- |
+| `LOG_LEVEL` | `info`  | Set to `debug` for verbose agent logs, which the server forwards to its own log output. |

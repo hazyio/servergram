@@ -1,0 +1,77 @@
+---
+title: "Download the server binary"
+description: "Run a prebuilt Servergram server"
+---
+
+Release binaries already contain the web UI and the Linux agents for `amd64` and `arm64`. You do not need Go, Node, or Bun on the machine that runs the server.
+
+## Prerequisites
+
+- A machine to run the server. The managed servers must be Linux `amd64` or `arm64`.
+- SSH access and a private key for each managed server.
+- A TLS certificate and key in PEM format.
+- [mkcert](https://github.com/FiloSottile/mkcert) if you want to create a locally trusted certificate.
+
+## Install
+
+<Steps>
+  <Step title="Download the release">
+    Download the latest server binary from [GitHub Releases](https://github.com/hazyio/servergram/releases/latest), then make it executable.
+
+    ```bash
+    chmod +x servergram-server
+    ```
+
+  </Step>
+
+  <Step title="Create a TLS certificate">
+    The server always serves HTTPS and refuses to start without a certificate. For local use, create one with `mkcert`:
+
+    ```bash
+    mkcert -install
+    mkcert -cert-file cert.pem -key-file key.pem localhost 127.0.0.1
+    ```
+
+    Any valid PEM certificate and key pair works. If the certificate is not trusted by your browser, the UI still loads but the browser shows a warning.
+
+  </Step>
+
+  <Step title="Create the environment file">
+    Create a `.env` file next to the binary. Replace the example secrets before starting.
+
+    ```bash
+    SERVER_PORT="9788"
+    ALLOWED_ORIGINS="https://localhost:9788"
+    PASSWORD="ChangeMe-Str0ng!2026"
+    SHH_MASTER_KEY="ChangeMe-Too-Str0ng!2026"
+    SSL_PUBLIC_KEY="./cert.pem"
+    SSL_PRIVATE_KEY="./key.pem"
+    ```
+
+    `DATABASE_URL` is optional and defaults to a SQLite database in your user config directory, for example `~/.config/servergram.db`. See [Configuration](/config) for every variable and its validation rules.
+
+  </Step>
+
+  <Step title="Start the server">
+    Run the binary from the directory that contains `.env` and the certificate files.
+
+    ```bash
+    ./servergram-server
+    ```
+
+    Open `https://localhost:9788`. If `PASSWORD` is set, sign in with it. If `PASSWORD` is empty, authentication is disabled and the UI opens directly.
+
+  </Step>
+
+  <Step title="Add a managed server">
+    In the UI, add an SSH key and a server. The server connects over SSH, uploads the matching agent to `~/.servergram/agent`, and starts it automatically.
+  </Step>
+</Steps>
+
+<Warning>
+  The server listens on all interfaces on `SERVER_PORT`. If you expose it beyond your machine, restrict access with a firewall or a reverse proxy, and keep `PASSWORD` and `SHH_MASTER_KEY` set.
+</Warning>
+
+<Note>
+  Changing `SHH_MASTER_KEY` later makes existing stored SSH keys unreadable. Back it up and keep it stable.
+</Note>

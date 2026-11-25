@@ -1,13 +1,18 @@
 ---
-title: "Install with Go"
-description: "Build the Servergram server and agent from source"
+title: "Build with Go"
+description: "Build the Servergram server, agent, and web client from source"
 ---
+
+The server embeds the web client and the Linux agents at compile time. Build them in this order so `go build` can find the embedded files.
 
 ## Prerequisites
 
-- [Go](https://go.dev/dl/) installed
+- [Go](https://go.dev/dl/) 1.27.3 or newer
+- [Bun](https://bun.sh/) (recommended) or Node.js 20 or newer
+- [mkcert](https://github.com/FiloSottile/mkcert) for a locally trusted certificate
+- Git
 
-## Install
+## Build
 
 <Steps>
   <Step title="Clone the repository">
@@ -15,32 +20,81 @@ description: "Build the Servergram server and agent from source"
     git clone https://github.com/hazyio/servergram.git
     cd servergram
     ```
+
+    The repository is a Go workspace containing the `agent`, `server`, and `shared` modules.
+
   </Step>
-  <Step title="Build the agent">
-    The agent runs on the managed server. The client pushes it over SSH.
+
+  <Step title="Create development certificates">
+    The Vite config reads the certificate files even for a production build, so create them first. The expected paths are `certs/localhost+2.pem` and `certs/localhost+2-key.pem`.
+
+    ```bash
+    mkdir -p certs
+    mkcert -install
+    mkcert \
+      -cert-file certs/localhost+2.pem \
+      -key-file certs/localhost+2-key.pem \
+      localhost 127.0.0.1 ::1
+    ```
+
+  </Step>
+
+  <Step title="Build the web client into server/dist">
+    ```bash
+    cd client
+    bun install
+    bun run build
+    cd ..
+    ```
+
+    The static adapter writes the production build to `server/dist`. The server embeds that directory, so the directory must exist before the server is built.
+
+  </Step>
+
+  <Step title="Build the Linux agents into server/agents">
+    The server embeds one agent per supported architecture. Build both:
 
     ```bash
     cd agent
-    go build -o servergram-agent .
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../server/agents/agent_linux_amd64.bin .
+    CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ../server/agents/agent_linux_arm64.bin .
+    cd ..
     ```
 
+    If you only need the architecture of the current machine, `scripts/build-agent-to-server.sh` builds it for you.
+
   </Step>
+
   <Step title="Build the server">
     ```bash
-    cd ../server
+    cd server
     go build -o servergram-server .
     ```
+
+    The result is a single binary containing the web UI and both agents. Build it after `server/dist` and `server/agents/*.bin` exist.
   </Step>
-  <Step title="Set environment variables and run">
-    See [Configuration](/config).
+
+  <Step title="Configure and run">
+    Create `server/.env` or export the variables in your shell. See [Configuration](/config) for the full list.
 
     ```bash
-    export DATABASE_URL="..."
-    export PASSWORD="change-me"
+    DATABASE_URL="sqlite3:///home/you/.config/servergram.db"
+    SERVER_PORT="9788"
+    ALLOWED_ORIGINS="https://localhost:9788"
+    PASSWORD="ChangeMe-Str0ng!2026"
+    SHH_MASTER_KEY="ChangeMe-Too-Str0ng!2026"
+    SSL_PUBLIC_KEY="../certs/localhost+2.pem"
+    SSL_PRIVATE_KEY="../certs/localhost+2-key.pem"
+    ```
+
+    ```bash
     ./servergram-server
     ```
 
+    Open `https://localhost:9788`.
   </Step>
 </Steps>
 
-<Note>This page will be updated as the install process changes.</Note>
+<Note>
+  To rebuild after changing the client or agent, repeat the relevant build step and then rebuild the server. `go build` only embeds files that exist when it runs.
+</Note>

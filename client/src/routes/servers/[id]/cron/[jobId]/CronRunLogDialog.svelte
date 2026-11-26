@@ -27,6 +27,7 @@
   } = $props();
 
   let content = $state("");
+  let downloadPath = $state("");
   let hasMore = $state(false);
   let offset = $state(0);
   let loading = $state(false);
@@ -37,10 +38,11 @@
   const title = $derived(
     run ? `${jobName ? `${jobName} · ` : ""}Run #${run.id}` : "Run log",
   );
-  const canDownload = $derived(!!content);
+  const canDownload = $derived(!!downloadPath);
 
   function reset() {
     content = "";
+    downloadPath = "";
     hasMore = false;
     offset = 0;
     loading = false;
@@ -69,6 +71,7 @@
     }
 
     content = data.content;
+    downloadPath = data.downloadPath;
     // The log endpoint has no "more" flag. Keep the button available until a
     // request comes back empty, which means the end of the log was reached.
     hasMore = content.length > 0;
@@ -104,6 +107,10 @@
       return;
     }
 
+    if (data.downloadPath) {
+      downloadPath = data.downloadPath;
+    }
+
     if (!data.content) {
       // Empty log means there is nothing left to load.
       hasMore = false;
@@ -115,16 +122,22 @@
   }
 
   function download() {
-    if (!content) return;
+    if (!downloadPath) return;
 
-    const url = URL.createObjectURL(
-      new Blob([content], { type: "text/plain" }),
+    // The download endpoint takes the directory and file name separately.
+    const separator = Math.max(
+      downloadPath.lastIndexOf("/"),
+      downloadPath.lastIndexOf("\\"),
     );
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `cron-run-${run?.id ?? "log"}.log`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const name =
+      separator >= 0 ? downloadPath.slice(separator + 1) : downloadPath;
+    const path = separator >= 0 ? downloadPath.slice(0, separator) : "";
+    const query = new URLSearchParams({ name, path });
+
+    window.open(
+      `/api/files/download-file-in-server/${serverId}?${query}`,
+      "_blank",
+    );
   }
 
   $effect.pre(() => {

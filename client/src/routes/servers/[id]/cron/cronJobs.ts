@@ -66,6 +66,7 @@ export type CronRun = {
 
 export type CronRunLog = {
   content: string;
+  downloadPath: string;
 };
 
 /**
@@ -449,6 +450,12 @@ export async function listCronRuns(
   };
 }
 
+type CronRunLogApi = components["schemas"]["GetCronRunLogResponse"] & {
+  // The server exposes this as download_path, while older generated schemas
+  // used download_url.
+  download_path?: string;
+};
+
 export async function getCronRunLog(
   serverId: number,
   runId: number,
@@ -475,9 +482,12 @@ export async function getCronRunLog(
     return { error };
   }
 
+  const log = data as CronRunLogApi | undefined;
+
   return {
     data: {
-      content: data?.log ?? "",
+      content: log?.log ?? "",
+      downloadPath: log?.download_path ?? log?.download_url ?? "",
     },
   };
 }

@@ -45,3 +45,4 @@ func FindCronJobByHash(db *gorm.DB, hash string) (*CronJob, error) {
 	}
 	return &job, nil
 }
+

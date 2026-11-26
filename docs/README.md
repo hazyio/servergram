@@ -1,5 +1,7 @@
 # Mintlify Starter Kit
 
+> **⚠️ Disclaimer:** This project is currently under active development. Features may be added, removed, or changed without notice. The documentation may not reflect the current state of the codebase.
+
 Use the starter kit to get your docs deployed and ready to customize.
 
 Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with

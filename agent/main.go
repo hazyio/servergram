@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"hazyio.com/servergram/agent/internal"
 	"hazyio.com/servergram/agent/internal/db"
@@ -39,6 +43,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "run-job":
+
 		fs := flag.NewFlagSet("run-job", flag.ContinueOnError)
 		fs.SetOutput(os.Stderr)
 		fs.Usage = func() {
@@ -71,11 +76,38 @@ func main() {
 		if *manual {
 			trigger = db.CronRunTriggerManual
 		}
-		if err := wrapper.RunJob(database, *id, command, trigger); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+
+		done := make(chan error, 1)
+		go func() {
+			done <- wrapper.RunJob(ctx, database, *id, command, trigger)
+		}()
+
+		select {
+		case err := <-done:
+			// job finished on its own (success, failure, or cancelled via DB)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return // or os.Exit(0)
+
+		case <-ctx.Done():
+			// SIGINT/SIGTERM: RunJob sees the same ctx, so it is already
+			// cancelling the process group. Give it a few seconds to
+			// write the final run status to the DB.
+			select {
+			case err := <-done:
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
+				}
+			case <-time.After(5 * time.Second):
+				fmt.Fprintln(os.Stderr, "timed out waiting for job to stop")
+				os.Exit(1)
+			}
 		}
-		os.Exit(0)
 
 	case "serve":
 		internal.Serve(database, transportOut)

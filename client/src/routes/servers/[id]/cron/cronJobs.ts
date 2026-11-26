@@ -91,8 +91,7 @@ function cronRunFromApi(jobId: number, run: CronRunApi): CronRun {
     trigger: run.trigger === "manual" ? "manual" : "schedule",
     started_at: run.started_at ?? "",
     finished_at: isCronDateSet(run.finished_at) ? run.finished_at : null,
-    // The API omits exit_code when it is 0, so only running runs have no value.
-    exit_code: status === "running" ? null : (run.exit_code ?? 0),
+    exit_code: run.exit_code ?? null,
   };
 }
 
@@ -390,23 +389,13 @@ export async function getCronJobInfo(
   const info = data as CronInfoApi;
   const managed = info.managed ?? false;
 
-  // TODO: remove this stub fallback once the info endpoint exposes run state.
-  // The info response currently only carries configuration, so status and run
-  // times come from the same seeded data used by the other cron stubs.
-  const fallback = jobsFor(serverId).find((entry) => entry.id === jobId);
   const status: CronJobStatus = !managed
     ? "unmanaged"
     : knownCronStatuses.has(info.status as CronJobStatus)
       ? (info.status as CronJobStatus)
-      : fallback?.status === "active"
-        ? "active"
-        : "inactive";
-  const lastRun = isCronDateSet(info.last_run_at)
-    ? info.last_run_at
-    : (fallback?.last_run ?? null);
-  const nextRun = isCronDateSet(info.next_run_at)
-    ? info.next_run_at
-    : (fallback?.next_run ?? null);
+      : "inactive";
+  const lastRun = isCronDateSet(info.last_run_at) ? info.last_run_at : null;
+  const nextRun = isCronDateSet(info.next_run_at) ? info.next_run_at : null;
 
   return {
     data: {

@@ -296,3 +296,5 @@ func splitID(s string) (string, uint64) {
 	}
 	return strings.TrimSpace(command), id
 }
+
+func pruneCronRunsLogs(id []uint){}

@@ -25,7 +25,7 @@ const (
 )
 
 type CronRun struct {
-	ID         int64 `gorm:"primaryKey"`
+	ID         uint64 `gorm:"primaryKey"`
 	CronJobID  int64
 	Status     CronRunStatus
 	Trigger    CronRunTrigger
@@ -64,4 +64,13 @@ func PruneCronRuns(db *gorm.DB, keep int32, cronJobID uint64) error {
 	return db.
 		Where("cron_job_id = ? AND status != ? AND id <= ?", cronJobID, RunStatusRunning, cutoff.ID).
 		Delete(&CronRun{}).Error
+}
+
+func GetCronJobRunStatus(database *gorm.DB, id uint64) (CronRunStatus, error) {
+	var status CronRunStatus
+	err := database.Model(&CronRun{}).Select("status").Where("id = ?", id).Scan(&status).Error
+	if err != nil {
+		return "", err
+	}
+	return status, nil
 }

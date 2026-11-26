@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"hazyio.com/servergram/agent/internal/common"
 	"hazyio.com/servergram/agent/internal/db"
 )
 
-func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunTrigger) error {
+func RunJob(ctx context.Context, database *gorm.DB, jobID uint64, command string, trigger db.CronRunTrigger) error {
 	job, err := db.FindCronJobByID(database, jobID)
 	if err != nil {
 		slog.Error("failed to find cron job", "error", err, "job_id", jobID)
@@ -20,15 +21,20 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		slog.Info("skipping inactive cron job", "job_id", job.ID)
 		return nil
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	var newRun *db.CronRun
+	var saveFileLog *string
 	if job.RunLogKeepCount > 0 {
+		now := time.Now()
+		logFileName, err := common.MakeLogFileName(jobID, now)
+		if err != nil {
+			return err
+		}
+		saveFileLog = logFileName
 		newRun = &db.CronRun{
 			CronJobID: int64(jobID),
 			Status:    db.RunStatusRunning,
 			Trigger:   trigger,
-			StartedAt: time.Now(),
+			StartedAt: now,
 		}
 		if err := database.Create(newRun).Error; err != nil {
 			return err
@@ -40,42 +46,54 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 			slog.Error("failed to prune cron runs", "error", err)
 		}
 	}()
-	go func() {
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	if newRun != nil {
+		go func() {
+			ticker := time.NewTicker(time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-runCtx.Done():
+					return
+				case <-ticker.C:
+					status, err := db.GetCronJobRunStatus(database, newRun.ID)
+					if err != nil {
+						slog.Error("failed to retrieve cron run status", "error", err)
+						continue
+					}
+					newRun.Status = status
 
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				statusErr := newRun.RetrieveStatus(database)
-				if statusErr != nil {
-					slog.Error("failed to retrieve cron run status", "error", statusErr)
-					return
-				}
-				if newRun.Status != db.RunStatusRunning {
-					// cancel the context to stop the command
-					cancel()
-					return
+					if status != db.RunStatusRunning {
+						slog.Info("cron run", "status", status, "run_id", newRun.ID)
+						cancel()
+						return
+					}
 				}
 			}
-		}
-	}()
-	slog.Info("starting cron job", "job_id", jobID, "command", command)
-	result, err := Run(ctx, command)
+		}()
+	}
+	slog.Info("starting cron job", "job_id", jobID, "command", command, "trigger", trigger, "is_managed", job.Managed, "save_file", saveFileLog)
+	result, err := Run(runCtx, command, saveFileLog)
+	slog.Info("finished cron job", "job_id", jobID, "status", result.ExitCode)
+
 	job.LastRunAt = time.Now()
 
 	if err := database.Save(job).Error; err != nil {
 		slog.Error("failed to save cron job", "error", err)
 	}
 	if newRun != nil {
-		if err != nil {
+
+		if result.TimedOut {
+			newRun.Status = db.RunStatusTimedOut
+		} else if err != nil {
 			newRun.Status = db.RunStatusFailed
-		} else {
+		} else if result.ExitCode == 0 {
 			newRun.Status = db.RunStatusSuccess
 		}
+
 		newRun.FinishedAt = time.Now()
+
 		newRun.ExitCode = result.ExitCode
 		if err := database.Save(newRun).Error; err != nil {
 			return err
@@ -86,7 +104,6 @@ func RunJob(database *gorm.DB, jobID uint64, command string, trigger db.CronRunT
 		slog.Error("failed to run command", "error", err, "command", command)
 		return err
 	}
-	slog.Info("finished cron job", "job_id", jobID, "command", command)
 
 	return nil
 }

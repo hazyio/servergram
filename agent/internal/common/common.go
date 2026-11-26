@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 )
 
@@ -97,6 +98,16 @@ func UnWrapLogErr[T any](data T, e error) *T {
 	}
 	return &data
 }
+func GetSavePath() string {
+	if p := os.Getenv("SERVERGRAM_BIN_SAVE_PATH"); p != "" {
+		return p
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".servergram")
+}
 
 func GetAgentPath() string {
 	if p := os.Getenv("SERVERGRAM_AGENT_PATH"); p != "" {
@@ -120,3 +131,14 @@ func Map[T, U any](in []T, f func(T) U) []U {
 	}
 	return out
 }
+
+func MakeLogFileName(id uint64, t time.Time) (*string, error) {
+	saveDir := filepath.Join(GetSavePath(), "logs", fmt.Sprintf("%d", id))
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		slog.Error("failed to create log directory", "dir", saveDir, "err", err)
+		return nil, err
+	}
+	path := filepath.Join(saveDir, fmt.Sprintf("log-%s.log", t.Format(time.RFC3339)))
+	return &path, nil
+}
+

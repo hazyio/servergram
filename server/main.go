@@ -14,7 +14,7 @@ import (
 func main() {
 	startServer()
 }
-
+ 
 func startServer() {
 	env := internal.LoadEnv()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

@@ -212,6 +212,9 @@ func handleStopCronJobRun(ctx context.Context, database *gorm.DB, req *proto.Sto
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cron job run not found: %v", err)
 	}
+	if job.Status != db.RunStatusRunning {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot stop cron job run with status: %s", job.Status)
+	}
 
 	job.Status = db.RunStatusCancelled
 	if err := database.Save(job).Error; err != nil {

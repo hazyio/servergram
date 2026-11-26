@@ -430,6 +430,7 @@ func handleGetCronRunLogResponse(database *gorm.DB, req *proto.GetCronRunLogRequ
 	}
 
 	return &proto.GetCronRunLogResponse{
-		Log: string(buf[:n]),
+		Log:         string(buf[:n]),
+		DownloadPath: *logPath,
 	}, nil
 }

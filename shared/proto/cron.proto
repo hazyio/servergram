@@ -109,6 +109,7 @@ message GetCronRunLogRequest {
 
 message GetCronRunLogResponse {
   string log = 1;
+  string download_path = 2;
 }
 
 service CronService {

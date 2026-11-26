@@ -1097,6 +1097,7 @@ export interface components {
             fixed: number;
         };
         GetCronRunLogResponse: {
+            download_url?: string;
             log?: string;
         };
         GetServerInfoResponse: {

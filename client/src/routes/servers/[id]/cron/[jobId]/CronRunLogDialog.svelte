@@ -1,6 +1,7 @@
 <script lang="ts">
   import { unWrapErrorMessage } from "#lib/api/request.ts";
   import ErrorSection from "#lib/components/base/ErrorSection.svelte";
+  import Highlighter from "#lib/components/base/HighLighter.svelte";
   import Loading from "#lib/components/base/loading.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
@@ -164,35 +165,42 @@
         />
       {:else}
         <div
-          class="max-h-[60vh] overflow-auto rounded-md border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
+          class="relative max-h-[60vh] min-h-[50vh] overflow-x-hidden overflow-y-auto rounded-md border"
         >
           {#if content}
-            {content}
+            <Highlighter
+              class="min-h-[50vh]"
+              code={content}
+              fileName="cron-run.log"
+            />
           {:else}
-            <span class="text-muted-foreground">
+            <p class="p-4 font-mono text-xs text-muted-foreground">
               No output was recorded for this run.
-            </span>
+            </p>
+          {/if}
+
+          {#if hasMore || loadingMore}
+            <div
+              class="pointer-events-none sticky bottom-3 z-20 flex justify-center px-4 pb-3"
+            >
+              <Button
+                variant="secondary"
+                size="sm"
+                class="pointer-events-auto gap-1.5 shadow-lg"
+                disabled={loadingMore}
+                onclick={loadMore}
+              >
+                {#if loadingMore}
+                  <Loader class="size-4 animate-spin" />
+                  Loading more...
+                {:else}
+                  <ChevronDown class="size-4" />
+                  Load more
+                {/if}
+              </Button>
+            </div>
           {/if}
         </div>
-        {#if hasMore || loadingMore}
-          <div class="mt-3 flex justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              class="gap-1.5"
-              disabled={loadingMore}
-              onclick={loadMore}
-            >
-              {#if loadingMore}
-                <Loader class="size-4 animate-spin" />
-                Loading more...
-              {:else}
-                <ChevronDown class="size-4" />
-                Load more
-              {/if}
-            </Button>
-          </div>
-        {/if}
       {/if}
     </div>
 

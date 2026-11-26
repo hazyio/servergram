@@ -1260,6 +1260,7 @@ func (x *GetCronRunLogRequest) GetLimit() uint32 {
 type GetCronRunLogResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Log           string                 `protobuf:"bytes,1,opt,name=log,proto3" json:"log,omitempty"`
+	DownloadPath  string                 `protobuf:"bytes,2,opt,name=download_path,json=downloadPath,proto3" json:"download_path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1297,6 +1298,13 @@ func (*GetCronRunLogResponse) Descriptor() ([]byte, []int) {
 func (x *GetCronRunLogResponse) GetLog() string {
 	if x != nil {
 		return x.Log
+	}
+	return ""
+}
+
+func (x *GetCronRunLogResponse) GetDownloadPath() string {
+	if x != nil {
+		return x.DownloadPath
 	}
 	return ""
 }
@@ -1381,9 +1389,10 @@ const file_proto_cron_proto_rawDesc = "" +
 	"\x14GetCronRunLogRequest\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\x04R\x05runId\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\rR\x06offset\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\rR\x05limit\")\n" +
+	"\x05limit\x18\x03 \x01(\rR\x05limit\"N\n" +
 	"\x15GetCronRunLogResponse\x12\x10\n" +
-	"\x03log\x18\x01 \x01(\tR\x03log2\xf4\x06\n" +
+	"\x03log\x18\x01 \x01(\tR\x03log\x12#\n" +
+	"\rdownload_path\x18\x02 \x01(\tR\fdownloadPath2\xf4\x06\n" +
 	"\vCronService\x12I\n" +
 	"\fListCronJobs\x12\x1a.proto.ListCronJobsRequest\x1a\x1b.proto.ListCronJobsResponse0\x01\x12J\n" +
 	"\rCreateCronJob\x12\x1b.proto.CreateCronJobRequest\x1a\x1c.proto.CreateCronJobResponse\x12h\n" +

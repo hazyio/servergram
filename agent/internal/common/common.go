@@ -131,9 +131,12 @@ func Map[T, U any](in []T, f func(T) U) []U {
 	}
 	return out
 }
+func GetLogSavePath() string {
+	return filepath.Join(GetSavePath(), "logs")
+}
 
 func MakeLogFileName(id uint64, t time.Time) (*string, error) {
-	saveDir := filepath.Join(GetSavePath(), "logs", fmt.Sprintf("%d", id))
+	saveDir := filepath.Join(GetLogSavePath(), fmt.Sprintf("%d", id))
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
 		slog.Error("failed to create log directory", "dir", saveDir, "err", err)
 		return nil, err
@@ -142,3 +145,24 @@ func MakeLogFileName(id uint64, t time.Time) (*string, error) {
 	return &path, nil
 }
 
+func DeleteDirectory(path string) error {
+	err := os.RemoveAll(path)
+	if err != nil {
+		slog.Error("failed to delete directory", "path", path, "err", err)
+	}
+	return err
+}
+func RemoveCronRunLog(data []struct {
+	StartedAt time.Time
+	ID        uint64
+}) {
+	for _, d := range data {
+		path, err := MakeLogFileName(d.ID, d.StartedAt)
+		if err != nil {
+			continue
+		}
+		if err := os.Remove(*path); err != nil {
+			slog.Error("failed to remove cron run log", "path", path, "err", err)
+		}
+	}
+}

@@ -11,6 +11,8 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -297,4 +299,32 @@ func splitID(s string) (string, uint64) {
 	return strings.TrimSpace(command), id
 }
 
-func pruneCronRunsLogs(id []uint){}
+func pruneOrpahanedCronRunsLogs(id []uint64) {
+	slog.Debug("Removing orphaned logs")
+	logPath := common.GetLogSavePath()
+	var removeCount uint64
+	entries, err := os.ReadDir(logPath)
+	if err != nil {
+		slog.Error("Error reading log path", "path", logPath, "error", err)
+		return
+	}
+	for _, e := range entries {
+		fileName := e.Name()
+		filePath := filepath.Join(logPath, fileName)
+		fileID, err := strconv.ParseUint(fileName, 10, 64)
+		if err != nil {
+			slog.Error("Failed to parse log file name as ID", "file", fileName, "error", err)
+			common.DeleteDirectory(filePath)
+			removeCount++
+			continue
+		}
+		if !slices.Contains(id, fileID) {
+			slog.Debug("Removing orphaned log file", "file", fileName)
+			common.DeleteDirectory(filePath)
+			removeCount++
+			continue
+		}
+
+	}
+	slog.Debug("Pruned orphaned logs", "count", removeCount)
+}

@@ -22,7 +22,7 @@ import (
 func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobsServer) error {
 	slog.Debug("listing cron jobs")
 	hashes := make([]string, 0)
-
+	ids := make([]uint64, 0)
 	batch := make([]*proto.Cron, 0, 50)
 	err := readCronJobEach(stream.Context(), database, func(job *db.CronJob, schedule, command string) error {
 		if len(batch) == 50 {
@@ -45,6 +45,7 @@ func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobs
 			Command:   command,
 		})
 		hashes = append(hashes, job.Hash)
+		ids = append(ids, job.ID)
 
 		return nil
 	})
@@ -59,6 +60,11 @@ func handleListCronJobs(database *gorm.DB, stream proto.CronService_ListCronJobs
 			if err != nil {
 				slog.Error("failed to delete orphaned cron jobs", "error", err)
 			}
+
+		}
+		if len(ids) > 0 {
+			// remove orphaned logs
+			pruneOrpahanedCronRunsLogs(ids)
 		}
 	}()
 	slog.Debug("sending final batch of cron jobs", "jobs", len(batch))

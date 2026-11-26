@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"hazyio.com/servergram/agent/internal/common"
 )
 
 type CronRunStatus string
@@ -61,9 +62,20 @@ func PruneCronRuns(db *gorm.DB, keep int32, cronJobID uint64) error {
 	if err != nil {
 		return err
 	}
-	return db.
+	deleted := make([]struct {
+		StartedAt time.Time
+		ID        uint64
+	}, 0)
+	err = db.
+		Model(&CronRun{}).
 		Where("cron_job_id = ? AND status != ? AND id <= ?", cronJobID, RunStatusRunning, cutoff.ID).
-		Delete(&CronRun{}).Error
+		Delete(&CronRun{}).Take(&deleted).Error
+	if err != nil {
+		return err
+	}
+	common.RemoveCronRunLog(deleted)
+
+	return nil
 }
 
 func GetCronJobRunStatus(database *gorm.DB, id uint64) (CronRunStatus, error) {

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"os/exec"
 	"slices"
 	"strings"
@@ -376,4 +378,58 @@ func handleListCronJobRuns(database *gorm.DB, req *proto.ListCronJobRunsRequest)
 			Trigger:    string(run.Trigger),
 		}
 	}), More: thereIsMore}, nil
+}
+
+const (
+	defaultLogLimit = 64 * 1024   // used when limit == 0
+	maxLogLimit     = 1024 * 1024 // hard cap per request
+)
+
+func handleGetCronRunLogResponse(database *gorm.DB, req *proto.GetCronRunLogRequest) (*proto.GetCronRunLogResponse, error) {
+	run, err := db.FindCronJobRunByID(database, req.RunId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cron job run not found")
+	}
+
+	logPath, err := common.MakeLogFileName(uint64(run.CronJobID), run.StartedAt)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get log file path: %v", err)
+	}
+
+	f, err := os.Open(*logPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			slog.Error("log file not found", "path", *logPath)
+			return nil, status.Errorf(codes.NotFound, "log file not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to open log file: %v", err)
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to stat log file: %v", err)
+	}
+
+	size := uint64(info.Size())
+	offset := uint64(req.Offset)
+	if offset >= size {
+		return &proto.GetCronRunLogResponse{}, nil
+	}
+
+	limit := uint64(req.Limit)
+	if limit == 0 {
+		limit = defaultLogLimit
+	}
+	limit = min(limit, maxLogLimit, size-offset)
+
+	buf := make([]byte, limit)
+	n, err := f.ReadAt(buf, int64(offset))
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, status.Errorf(codes.Internal, "failed to read log file: %v", err)
+	}
+
+	return &proto.GetCronRunLogResponse{
+		Log: string(buf[:n]),
+	}, nil
 }

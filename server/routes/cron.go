@@ -20,17 +20,18 @@ import (
 )
 
 func registerCronRoutes(api *huma.Group, database *gorm.DB, ssh *sshmanager.SSHManager, allowedOrigins []string, polls *internal.Polls) {
-	server := internal.NewGroup("/cron", api, database, []string{"Cron"}, ssh, allowedOrigins, polls)
-	server.SSE("/{id}/list", http.StatusOK, listCronJobs)
-	server.Post("/{id}/create", http.StatusOK, createCronJob)
-	server.Post("/{id}/remove-duplicates", http.StatusOK, removeDuplicateCronJobs)
-	server.Post("/{id}/fix-unmanaged", http.StatusOK, fixUnmanagedCronJobs)
-	server.Get("/{id}/run/{job_id}", http.StatusOK, runCronJob)
-	server.Get("/{id}/info/{job_id}", http.StatusOK, getCronJobInfo)
-	server.Post("/{id}/update/{job_id}", http.StatusOK, updateCronJob)
-	server.Delete("/{id}/delete/{job_id}", http.StatusOK, deleteCronJob)
-	server.Get("/{id}/runs/{job_id}", http.StatusOK, listCronJobRuns)
-	server.Get("/{id}/runs/{run_id}/stop", http.StatusOK, stopCronJobRun)
+	server := internal.NewGroup("/cron/{id}", api, database, []string{"Cron"}, ssh, allowedOrigins, polls)
+	server.SSE("/list", http.StatusOK, listCronJobs)
+	server.Post("/create", http.StatusOK, createCronJob)
+	server.Post("/remove-duplicates", http.StatusOK, removeDuplicateCronJobs)
+	server.Post("/fix-unmanaged", http.StatusOK, fixUnmanagedCronJobs)
+	server.Get("/run/{job_id}", http.StatusOK, runCronJob)
+	server.Get("/info/{job_id}", http.StatusOK, getCronJobInfo)
+	server.Post("/update/{job_id}", http.StatusOK, updateCronJob)
+	server.Delete("/delete/{job_id}", http.StatusOK, deleteCronJob)
+	server.Get("/runs/{job_id}", http.StatusOK, listCronJobRuns)
+	server.Get("/runs/{run_id}/stop", http.StatusOK, stopCronJobRun)
+	server.Get("/runs/{run_id}/log", http.StatusOK, getCronRunLog)
 }
 func getCronConnected(ctx context.Context, manager *sshmanager.SSHManager, id uint) (proto.CronServiceClient, context.Context, context.CancelFunc, error) {
 	if manager == nil {
@@ -256,4 +257,25 @@ func stopCronJobRun(data internal.RouteData[models.StopCronJobRunRequest]) (*Emp
 	}
 	db.AddLog(db.LogActionUpdate, fmt.Sprintf("Stopped cron job run %d in server \"%d\"", data.Input.RunID, data.Input.ID), data.Database)
 	return &EmptyRR{}, nil
+}
+
+func getCronRunLog(data internal.RouteData[models.GetCronRunLogRequest]) (*models.GetCronRunLogResponse, error) {
+	resource, ctx, cancel, err := getCronConnected(data.Context, data.SSHManager, data.Input.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	result, err := resource.GetCronRunLog(ctx, &proto.GetCronRunLogRequest{
+		RunId:  data.Input.RunID,
+		Limit:  uint32(data.Input.Limit),
+		Offset: uint32(data.Input.Offset),
+	})
+	if err != nil {
+		slog.Error("Failed to get cron job run log", "error", err)
+		return nil, internal.FromGrpcError(err)
+	}
+	db.AddLog(db.LogActionRead, fmt.Sprintf("Retrieved cron job run %d log from server \"%d\"", data.Input.RunID, data.Input.ID), data.Database)
+	response := &models.GetCronRunLogResponse{}
+	response.Body = result
+	return response, nil
 }

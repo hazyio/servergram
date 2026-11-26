@@ -58,3 +58,7 @@ func (s *CronServer) DeleteCronJob(ctx context.Context, req *proto.DeleteCronJob
 func (s *CronServer) ListCronJobRuns(_ context.Context, req *proto.ListCronJobRunsRequest) (*proto.ListCronJobRunsResponse, error) {
 	return handleListCronJobRuns(s.database, req)
 }
+
+func (s *CronServer) GetCronRunLog(_ context.Context, req *proto.GetCronRunLogRequest) (*proto.GetCronRunLogResponse, error) {
+	return handleGetCronRunLogResponse(s.database, req)
+}

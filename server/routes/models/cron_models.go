@@ -73,3 +73,14 @@ type StopCronJobRunRequest struct {
 	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
 	RunID uint64 `path:"run_id" minimum:"1" doc:"The ID of the cron job run to stop"`
 }
+
+type GetCronRunLogRequest struct {
+	ID    uint   `path:"id" minimum:"1" doc:"The ID of the current resource"`
+	RunID uint64 `path:"run_id" minimum:"1" doc:"The ID of the cron job run to get log for"`
+	Limit uint   `query:"limit" default:"1000" validate:"lte=10000"`
+	Offset uint   `query:"offset" default:"0"`
+}
+
+type GetCronRunLogResponse struct {
+	Body *proto.GetCronRunLogResponse
+}

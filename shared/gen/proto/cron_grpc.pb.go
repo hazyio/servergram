@@ -27,6 +27,7 @@ const (
 	CronService_StopCronJobRun_FullMethodName          = "/proto.CronService/StopCronJobRun"
 	CronService_CronInfo_FullMethodName                = "/proto.CronService/CronInfo"
 	CronService_UpdateCronJob_FullMethodName           = "/proto.CronService/UpdateCronJob"
+	CronService_GetCronRunLog_FullMethodName           = "/proto.CronService/GetCronRunLog"
 	CronService_DeleteCronJob_FullMethodName           = "/proto.CronService/DeleteCronJob"
 	CronService_ListCronJobRuns_FullMethodName         = "/proto.CronService/ListCronJobRuns"
 )
@@ -43,6 +44,7 @@ type CronServiceClient interface {
 	StopCronJobRun(ctx context.Context, in *StopCronJobRunRequest, opts ...grpc.CallOption) (*StopCronJobRunResponse, error)
 	CronInfo(ctx context.Context, in *CronInfoRequest, opts ...grpc.CallOption) (*CronInfoResponse, error)
 	UpdateCronJob(ctx context.Context, in *UpdateCronJobRequest, opts ...grpc.CallOption) (*UpdateCronJobResponse, error)
+	GetCronRunLog(ctx context.Context, in *GetCronRunLogRequest, opts ...grpc.CallOption) (*GetCronRunLogResponse, error)
 	DeleteCronJob(ctx context.Context, in *DeleteCronJobRequest, opts ...grpc.CallOption) (*DeleteCronJobResponse, error)
 	ListCronJobRuns(ctx context.Context, in *ListCronJobRunsRequest, opts ...grpc.CallOption) (*ListCronJobRunsResponse, error)
 }
@@ -144,6 +146,16 @@ func (c *cronServiceClient) UpdateCronJob(ctx context.Context, in *UpdateCronJob
 	return out, nil
 }
 
+func (c *cronServiceClient) GetCronRunLog(ctx context.Context, in *GetCronRunLogRequest, opts ...grpc.CallOption) (*GetCronRunLogResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCronRunLogResponse)
+	err := c.cc.Invoke(ctx, CronService_GetCronRunLog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cronServiceClient) DeleteCronJob(ctx context.Context, in *DeleteCronJobRequest, opts ...grpc.CallOption) (*DeleteCronJobResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteCronJobResponse)
@@ -176,6 +188,7 @@ type CronServiceServer interface {
 	StopCronJobRun(context.Context, *StopCronJobRunRequest) (*StopCronJobRunResponse, error)
 	CronInfo(context.Context, *CronInfoRequest) (*CronInfoResponse, error)
 	UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error)
+	GetCronRunLog(context.Context, *GetCronRunLogRequest) (*GetCronRunLogResponse, error)
 	DeleteCronJob(context.Context, *DeleteCronJobRequest) (*DeleteCronJobResponse, error)
 	ListCronJobRuns(context.Context, *ListCronJobRunsRequest) (*ListCronJobRunsResponse, error)
 	mustEmbedUnimplementedCronServiceServer()
@@ -211,6 +224,9 @@ func (UnimplementedCronServiceServer) CronInfo(context.Context, *CronInfoRequest
 }
 func (UnimplementedCronServiceServer) UpdateCronJob(context.Context, *UpdateCronJobRequest) (*UpdateCronJobResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateCronJob not implemented")
+}
+func (UnimplementedCronServiceServer) GetCronRunLog(context.Context, *GetCronRunLogRequest) (*GetCronRunLogResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCronRunLog not implemented")
 }
 func (UnimplementedCronServiceServer) DeleteCronJob(context.Context, *DeleteCronJobRequest) (*DeleteCronJobResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteCronJob not implemented")
@@ -376,6 +392,24 @@ func _CronService_UpdateCronJob_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CronService_GetCronRunLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCronRunLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CronServiceServer).GetCronRunLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CronService_GetCronRunLog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CronServiceServer).GetCronRunLog(ctx, req.(*GetCronRunLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CronService_DeleteCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteCronJobRequest)
 	if err := dec(in); err != nil {
@@ -446,6 +480,10 @@ var CronService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateCronJob",
 			Handler:    _CronService_UpdateCronJob_Handler,
+		},
+		{
+			MethodName: "GetCronRunLog",
+			Handler:    _CronService_GetCronRunLog_Handler,
 		},
 		{
 			MethodName: "DeleteCronJob",

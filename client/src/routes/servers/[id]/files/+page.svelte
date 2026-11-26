@@ -13,8 +13,6 @@
   import {
     ChevronLeft,
     ChevronRight,
-    Eye,
-    EyeOff,
     FileIcon,
     FolderIcon,
     Loader,
@@ -38,7 +36,6 @@
   import ViewFile from "./ViewFile.svelte";
 
   type Chunk = components["schemas"]["ListFilesChunkResponse"];
-  type WatchEvent = components["schemas"]["WatchDirectoryResponse"];
 
   let { params }: PageProps = $props();
   let settings = $state<SettingOptionProps>({
@@ -62,8 +59,6 @@
   let fileStreamError = $state<string | null>(null);
   let files: FileEntry[] = $state([]);
   let eventSource: EventSource | undefined;
-  let watchSource: EventSource | undefined;
-  let watching = $state(false);
   let deleteEntries = $state<DeleteEntryProps[]>([]);
   let newEntryType = $state<NewEntryType>("none");
   let renameOldName = $state<null | string>(null);
@@ -72,16 +67,9 @@
   let openFileUploadDialog = $state(false);
 
   function stop() {
-    stopWatch();
     eventSource?.close();
     eventSource = undefined;
     updating = false;
-  }
-
-  function stopWatch() {
-    watchSource?.close();
-    watchSource = undefined;
-    watching = false;
   }
 
   function loadFiles() {
@@ -131,8 +119,6 @@
         loading = false;
         if (chunk.done) {
           stop();
-          // start watching for changes after the initial load is complete,
-          watchFiles();
         } else {
           updating = true;
         }
@@ -192,90 +178,8 @@
     navigate(joinPath(dir, entry.name));
   }
 
-  function watchFiles() {
-    if (watching) return;
-
-    stopWatch();
-    watching = true;
-
-    const query = new URLSearchParams({
-      dir,
-      include_hidden: String(settings.showHidden),
-    });
-    const source = new EventSource(
-      `/api/files/watch-dir-in-server/${params.id}?${query}`,
-      { withCredentials: true },
-    );
-    watchSource = source;
-    addEventSourceTimeout(source, () => {
-      if (source !== watchSource) return;
-      console.warn("Watch stream connection timed out");
-      stopWatch();
-    });
-
-    source.addEventListener("data", (event) => {
-      if (source !== watchSource) return;
-      try {
-        const watchEvent = JSON.parse(
-          (event as MessageEvent<string>).data,
-        ) as WatchEvent;
-        handleWatchEvent(watchEvent);
-      } catch {
-        console.error("Failed to parse watch event");
-      }
-    });
-
-    source.addEventListener("error", (event) => {
-      if (source !== watchSource || !(event instanceof MessageEvent)) return;
-      try {
-        const response = JSON.parse(event.data) as { message?: string };
-        console.error(
-          "Watch error:",
-          response.message ?? "Failed to watch directory",
-        );
-      } catch {
-        console.error("Watch error: Failed to watch directory");
-      }
-      stopWatch();
-    });
-
-    source.onerror = () => {
-      if (source !== watchSource || source.readyState !== EventSource.CLOSED) {
-        return;
-      }
-      stopWatch();
-      console.warn("Watch stream closed");
-    };
-  }
   function removeFile(pathName: string) {
     files = files.filter((f) => f.name !== pathName);
-  }
-  function handleWatchEvent(event: WatchEvent) {
-    const {
-      kind,
-      path,
-      entry,
-    }: components["schemas"]["WatchDirectoryResponse"] = event;
-
-    switch (kind) {
-      case 0: // MODIFIED
-        console.warn("Unimplemented");
-        break;
-      case 1: // CREATED
-        // Add the new file/directory to the list
-        if (entry) {
-          files = [...files, entry];
-        } else {
-          loadFiles();
-        }
-        break;
-      case 2: // DELETED
-        // Remove the file/directory from the list
-        if (path) {
-          removeFile(path);
-        }
-        break;
-    }
   }
 
   function triggerDownload(name: string) {
@@ -330,20 +234,6 @@
     bind:entryType={newEntryType}
     onUploadClicked={() => (openFileUploadDialog = true)}
   />
-
-  <Button
-    variant={watching ? "default" : "outline"}
-    onclick={watching ? stopWatch : watchFiles}
-    class="flex items-center gap-1"
-    title={watching ? "Stop watching for changes" : "Watch for changes"}
-  >
-    {#if watching}
-      <Eye class="size-4" />
-    {:else}
-      <EyeOff class="size-4" />
-    {/if}
-    <span class="hidden sm:inline">{watching ? "Watching" : "Watch"}</span>
-  </Button>
 </div>
 
 <DeleteEntriesDialog
@@ -351,7 +241,6 @@
   {dir}
   bind:items={deleteEntries}
   onDeleted={(name) => {
-    // client-side update, backend will send an update but we cannot depend on that since watching can be turned off
     removeFile(name);
   }}
 />

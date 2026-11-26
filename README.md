@@ -4,14 +4,14 @@ Server Gram is a self-hosted web app for managing remote Linux servers. It handl
 
 ## Repository layout
 
-| Path       | Description                                                                 |
-| ---------- | --------------------------------------------------------------------------- |
-| `agent/`   | Go agent that runs on managed Linux servers.                                |
-| `server/`  | Go HTTPS server, REST API, WebSocket, SSH manager, and embedded web client. |
-| `client/`  | SvelteKit web UI, built into `server/dist` and embedded in the server.      |
-| `shared/`  | Protobuf definitions and shared Go code used by the agent and server.       |
-| `docs/`    | Mintlify documentation site.                                                |
-| `scripts/` | Build and code-generation helpers.                                          |
+| Path       | Description                                                                 | Details |
+| ---------- | --------------------------------------------------------------------------- | ------- |
+| `agent/`   | Go agent that runs on managed Linux servers.                                | [`README.md`](agent/README.md) |
+| `server/`  | Go HTTPS server, REST API, WebSocket, SSH manager, and embedded web client. | [`README.md`](server/README.md) |
+| `client/`  | SvelteKit web UI, built into `server/dist` and embedded in the server.      | [`README.md`](client/README.md) |
+| `shared/`  | Protobuf definitions and shared Go code used by the agent and server.       | — |
+| `docs/`    | Mintlify documentation site.                                                | [`README.md`](docs/README.md) |
+| `scripts/` | Build and code-generation helpers.                                          | — |
 
 ## How it works
 

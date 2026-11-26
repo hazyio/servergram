@@ -1,0 +1,189 @@
+---
+title: "Development Guide"
+description: "Set up and run Servergram for development"
+---
+
+> **⚠️ Disclaimer:** Servergram is currently under active development. Features may be added, removed, or changed without notice. The documentation may not reflect the current state of the codebase.
+
+This guide covers setting up the development environment, running each component locally, and understanding the project structure.
+
+## Repository Structure
+
+| Path | Description |
+|------|-------------|
+| `agent/` | Go agent that runs on managed Linux servers |
+| `server/` | Go HTTPS server, REST API, WebSocket, SSH manager, and embedded web client |
+| `client/` | SvelteKit web UI, built into `server/dist` and embedded in the server |
+| `shared/` | Protobuf definitions and shared Go code used by the agent and server |
+| `docs/` | Mintlify documentation site |
+| `scripts/` | Build and code-generation helpers |
+
+## Prerequisites
+
+- **Go** 1.27.3 or newer
+- **Bun** (recommended) or Node.js 20 or newer
+- **mkcert** for locally trusted TLS certificates
+- SSH access and a private key for each managed server (for testing against real servers)
+
+## Quick Start (Full Build)
+
+### 1. Create TLS Certificates
+
+```bash
+mkdir -p certs
+mkcert -install
+mkcert \
+  -cert-file certs/localhost+2.pem \
+  -key-file certs/localhost+2-key.pem \
+  localhost 127.0.0.1 ::1
+```
+
+### 2. Build the Web Client
+
+```bash
+cd client
+bun install
+bun run build
+cd ..
+```
+
+### 3. Build the Agents (both architectures)
+
+```bash
+cd agent
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../server/agents/agent_linux_amd64.bin .
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ../server/agents/agent_linux_arm64.bin .
+cd ..
+```
+
+### 4. Build the Server
+
+```bash
+cd server
+go build -o servergram-server .
+```
+
+### 5. Configure and Run
+
+Create `server/.env`:
+
+```bash
+SERVER_PORT="9788"
+ALLOWED_ORIGINS="https://localhost:9788"
+PASSWORD="ChangeMe-Str0ng!2026"
+SHH_MASTER_KEY="ChangeMe-Too-Str0ng!2026"
+SSL_PUBLIC_KEY="../certs/localhost+2.pem"
+SSL_PRIVATE_KEY="../certs/localhost+2-key.pem"
+```
+
+Run the server:
+
+```bash
+cd server
+./servergram-server
+```
+
+Open `https://localhost:9788`.
+
+## Development Workflow
+
+### Run Server with Hot Reload
+
+```bash
+cd server
+go run .
+```
+
+Or use `air` (configured in `.air.toml`):
+
+```bash
+cd server
+air
+```
+
+### Run Client with Hot Reload
+
+```bash
+cd client
+bun install
+bun run dev
+```
+
+Open `https://localhost:5173`. Vite proxies `/api` and `/ws` to `https://localhost:9788`.
+
+### Regenerate Generated Code
+
+Run these from the `scripts/` directory:
+
+| Command | Purpose |
+|---------|---------|
+| `./generate-protobuf.sh` | Regenerate Go and TypeScript protobuf code |
+| `./generate-openapi-ts.sh` | Regenerate `client/src/lib/types/request-schema.d.ts` from `openapi.json` |
+| `./generate-websockets-ts.sh` | Regenerate WebSocket models from Go types |
+
+> **Note:** The server writes `openapi.json` to the repository root on startup. Regenerate the client schema after API changes.
+
+### Run Tests
+
+```bash
+# Server tests
+cd server && go test ./...
+
+# Client type checks
+cd client && bun run check
+```
+
+## Component-Specific Development
+
+### Server (`server/`)
+
+- **Entry points:** `main.go`, `lib.go`
+- **Configuration:** `internal/env.go`
+- **SSH & Agent Management:** `internal/sshmanager/`
+- **Routes:** `routes/` (REST handlers)
+- **WebSockets:** `websockets/`
+- **Database:** `db/` (GORM models and migrations)
+
+See [`server/README.md`](../server/README.md) for detailed documentation.
+
+### Client (`client/`)
+
+- **Pages:** `src/routes/`
+- **API Client:** `src/lib/api/`
+- **Components:** `src/lib/components/`
+- **Types:** `src/lib/types/` (generated + hand-written)
+- **Service Worker:** `src/service-worker/`
+
+See [`client/README.md`](../client/README.md) for detailed documentation.
+
+### Agent (`agent/`)
+
+- **Commands:** `serve`, `run-job`
+- **Communication:** gRPC over SSH stdin/stdout
+- **Database:** SQLite at `~/.servergram/servergram.db`
+- **Resource Sampling:** `gopsutil`
+
+See [`agent/README.md`](../agent/README.md) for detailed documentation.
+
+### Shared (`shared/`)
+
+- **Protobuf Definitions:** `proto/`
+- **Generated Code:** `gen/`
+- **Build:** `buf generate` (run `scripts/generate-protobuf.sh`)
+
+## Documentation
+
+Preview the documentation site:
+
+```bash
+cd docs
+mint dev
+```
+
+## Useful Links
+
+- [Root README](../README.md) - Project overview, full build instructions, and roadmap
+- [Server README](../server/README.md) - Server architecture, endpoints, and configuration
+- [Client README](../client/README.md) - Client stack, features, and generated types
+- [Agent README](../agent/README.md) - Agent commands, runtime, and build
+- [Configuration Reference](/config) - All environment variables with validation rules

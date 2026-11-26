@@ -101,6 +101,15 @@ message ListCronJobRunsResponse {
   repeated CronRunMeta runs = 1;
   bool more = 2;
 }
+message GetCronRunLogRequest {
+  uint64 run_id = 1;
+  uint32 offset = 2;
+  uint32 limit = 3;
+}
+
+message GetCronRunLogResponse {
+  string log = 1;
+}
 
 service CronService {
   rpc ListCronJobs(ListCronJobsRequest) returns (stream ListCronJobsResponse);
@@ -111,6 +120,7 @@ service CronService {
   rpc StopCronJobRun(StopCronJobRunRequest) returns (StopCronJobRunResponse);
   rpc CronInfo(CronInfoRequest) returns (CronInfoResponse);
   rpc UpdateCronJob(UpdateCronJobRequest) returns (UpdateCronJobResponse);
+  rpc GetCronRunLog(GetCronRunLogRequest) returns (GetCronRunLogResponse);
   rpc DeleteCronJob(DeleteCronJobRequest) returns (DeleteCronJobResponse);
   rpc ListCronJobRuns(ListCronJobRunsRequest) returns (ListCronJobRunsResponse);
 }

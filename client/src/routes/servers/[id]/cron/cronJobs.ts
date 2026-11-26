@@ -66,8 +66,13 @@ export type CronRun = {
 
 export type CronRunLog = {
   content: string;
-  truncated: boolean;
 };
+
+/**
+ * The API reads the log file by byte range. This is the largest limit the
+ * server accepts, so each request pulls as much of the log as possible.
+ */
+export const CRON_RUN_LOG_PAGE_SIZE = 10_000;
 
 type CronRunApi = components["schemas"]["CronRunMeta"];
 
@@ -443,23 +448,38 @@ export async function listCronRuns(
     },
   };
 }
+
 export async function getCronRunLog(
   serverId: number,
-  jobId: number,
   runId: number,
+  offset = 0,
+  limit = CRON_RUN_LOG_PAGE_SIZE,
 ): Promise<CronApiResponse<CronRunLog>> {
-  // TODO: replace with a real request once the agent exposes run output.
-  return simulateRequest(() => {
-    const job = jobsFor(serverId).find((entry) => entry.id === jobId);
+  const { data, error } = await NewRequestClient().GET(
+    "/api/cron/{id}/runs/{run_id}/log",
+    {
+      params: {
+        path: {
+          id: serverId,
+          run_id: runId,
+        },
+        query: {
+          limit,
+          offset,
+        },
+      },
+    },
+  );
 
-    return {
-      content: [
-        `$ ${job?.command ?? "command"}`,
-        `[stub] Run #${runId} output will appear here once run log capture is wired up.`,
-      ].join("\n"),
-      truncated: false,
-    };
-  });
+  if (error) {
+    return { error };
+  }
+
+  return {
+    data: {
+      content: data?.log ?? "",
+    },
+  };
 }
 
 export async function runCronJob(

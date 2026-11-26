@@ -4,9 +4,14 @@
   import Loading from "#lib/components/base/loading.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import { Download } from "@lucide/svelte";
+  import { ChevronDown, Download, Loader } from "@lucide/svelte";
   import { untrack } from "svelte";
-  import { getCronRunLog, type CronRun, type CronRunLog } from "../cronJobs.ts";
+  import { toast } from "svelte-sonner";
+  import {
+    CRON_RUN_LOG_PAGE_SIZE,
+    getCronRunLog,
+    type CronRun,
+  } from "../cronJobs.ts";
 
   let {
     open = $bindable(false),
@@ -20,25 +25,36 @@
     run: CronRun | null;
   } = $props();
 
-  let log = $state<CronRunLog | null>(null);
+  let content = $state("");
+  let hasMore = $state(false);
+  let offset = $state(0);
   let loading = $state(false);
+  let loadingMore = $state(false);
   let loadError = $state("");
   let requestToken = 0;
 
   const title = $derived(
     run ? `${jobName ? `${jobName} · ` : ""}Run #${run.id}` : "Run log",
   );
-  const canDownload = $derived(!!log?.content);
+  const canDownload = $derived(!!content);
+
+  function reset() {
+    content = "";
+    hasMore = false;
+    offset = 0;
+    loading = false;
+    loadingMore = false;
+    loadError = "";
+  }
 
   async function load() {
     if (!run) return;
 
     const token = ++requestToken;
+    reset();
     loading = true;
-    loadError = "";
-    log = null;
 
-    const { data, error } = await getCronRunLog(serverId, run.job_id, run.id);
+    const { data, error } = await getCronRunLog(serverId, run.id, 0);
 
     if (token !== requestToken) return;
 
@@ -51,14 +67,57 @@
       return;
     }
 
-    log = data;
+    content = data.content;
+    // The log endpoint has no "more" flag. Keep the button available until a
+    // request comes back empty, which means the end of the log was reached.
+    hasMore = content.length > 0;
+    offset = CRON_RUN_LOG_PAGE_SIZE;
+  }
+
+  async function loadMore() {
+    if (!run || loadingMore || !hasMore) return;
+
+    const token = requestToken;
+    const limit = CRON_RUN_LOG_PAGE_SIZE;
+    loadingMore = true;
+
+    const { data, error } = await getCronRunLog(
+      serverId,
+      run.id,
+      offset,
+      limit,
+    );
+
+    if (token !== requestToken) return;
+
+    loadingMore = false;
+
+    if (error || !data) {
+      // Keep the output we already have and leave the button in place so the
+      // user can retry.
+      toast.error(
+        error
+          ? unWrapErrorMessage(error, "Failed to load more run log")
+          : "Failed to load more run log",
+      );
+      return;
+    }
+
+    if (!data.content) {
+      // Empty log means there is nothing left to load.
+      hasMore = false;
+      return;
+    }
+
+    content += data.content;
+    offset += limit;
   }
 
   function download() {
-    if (!log?.content) return;
+    if (!content) return;
 
     const url = URL.createObjectURL(
-      new Blob([log.content], { type: "text/plain" }),
+      new Blob([content], { type: "text/plain" }),
     );
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -70,9 +129,7 @@
   $effect.pre(() => {
     if (!open) {
       requestToken++;
-      loading = false;
-      loadError = "";
-      log = null;
+      reset();
       return;
     }
 
@@ -109,18 +166,32 @@
         <div
           class="max-h-[60vh] overflow-auto rounded-md border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
         >
-          {#if log?.content}
-            {log.content}
+          {#if content}
+            {content}
           {:else}
             <span class="text-muted-foreground">
               No output was recorded for this run.
             </span>
           {/if}
         </div>
-        {#if log?.truncated}
-          <p class="mt-2 text-xs text-muted-foreground">
-            Output was truncated to the last part of the log.
-          </p>
+        {#if hasMore || loadingMore}
+          <div class="mt-3 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              class="gap-1.5"
+              disabled={loadingMore}
+              onclick={loadMore}
+            >
+              {#if loadingMore}
+                <Loader class="size-4 animate-spin" />
+                Loading more...
+              {:else}
+                <ChevronDown class="size-4" />
+                Load more
+              {/if}
+            </Button>
+          </div>
         {/if}
       {/if}
     </div>

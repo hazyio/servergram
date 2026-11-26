@@ -81,8 +81,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post by ID create */
-        post: operations["post-cron--id-create"];
+        /** Post create */
+        post: operations["post-cron-id--create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -99,8 +99,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete by ID delete by job ID */
-        delete: operations["delete-cron--id-delete-job_id"];
+        /** Delete delete by job ID */
+        delete: operations["delete-cron-id--delete-job_id"];
         options?: never;
         head?: never;
         patch?: never;
@@ -115,8 +115,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post by ID fix unmanaged */
-        post: operations["post-cron--id-fix-unmanaged"];
+        /** Post fix unmanaged */
+        post: operations["post-cron-id--fix-unmanaged"];
         delete?: never;
         options?: never;
         head?: never;
@@ -130,8 +130,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get by ID info by job ID */
-        get: operations["get-cron--id-info-job_id"];
+        /** Get info by job ID */
+        get: operations["get-cron-id--info-job_id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -147,8 +147,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get by ID list */
-        get: operations["sse-cron--id-list"];
+        /** Get list */
+        get: operations["sse-cron-id--list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -166,8 +166,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post by ID remove duplicates */
-        post: operations["post-cron--id-remove-duplicates"];
+        /** Post remove duplicates */
+        post: operations["post-cron-id--remove-duplicates"];
         delete?: never;
         options?: never;
         head?: never;
@@ -181,8 +181,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get by ID run by job ID */
-        get: operations["get-cron--id-run-job_id"];
+        /** Get run by job ID */
+        get: operations["get-cron-id--run-job_id"];
         put?: never;
         post?: never;
         delete?: never;
@@ -198,8 +198,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get by ID runs by job ID */
-        get: operations["get-cron--id-runs-job_id"];
+        /** Get runs by job ID */
+        get: operations["get-cron-id--runs-job_id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cron/{id}/runs/{run_id}/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get runs by run ID log */
+        get: operations["get-cron-id--runs-run_id-log"];
         put?: never;
         post?: never;
         delete?: never;
@@ -215,8 +232,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get by ID runs by run ID stop */
-        get: operations["get-cron--id-runs-run_id-stop"];
+        /** Get runs by run ID stop */
+        get: operations["get-cron-id--runs-run_id-stop"];
         put?: never;
         post?: never;
         delete?: never;
@@ -234,8 +251,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Post by ID update by job ID */
-        post: operations["post-cron--id-update-job_id"];
+        /** Post update by job ID */
+        post: operations["post-cron-id--update-job_id"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1079,6 +1096,9 @@ export interface components {
              */
             fixed: number;
         };
+        GetCronRunLogResponse: {
+            log?: string;
+        };
         GetServerInfoResponse: {
             architecture?: string;
             cpu_model?: string;
@@ -1484,7 +1504,7 @@ export interface operations {
             };
         };
     };
-    "post-cron--id-create": {
+    "post-cron-id--create": {
         parameters: {
             query?: never;
             header?: never;
@@ -1518,7 +1538,7 @@ export interface operations {
             };
         };
     };
-    "delete-cron--id-delete-job_id": {
+    "delete-cron-id--delete-job_id": {
         parameters: {
             query?: never;
             header?: never;
@@ -1550,7 +1570,7 @@ export interface operations {
             };
         };
     };
-    "post-cron--id-fix-unmanaged": {
+    "post-cron-id--fix-unmanaged": {
         parameters: {
             query?: never;
             header?: never;
@@ -1582,7 +1602,7 @@ export interface operations {
             };
         };
     };
-    "get-cron--id-info-job_id": {
+    "get-cron-id--info-job_id": {
         parameters: {
             query?: never;
             header?: never;
@@ -1616,7 +1636,7 @@ export interface operations {
             };
         };
     };
-    "sse-cron--id-list": {
+    "sse-cron-id--list": {
         parameters: {
             query?: never;
             header?: never;
@@ -1670,7 +1690,7 @@ export interface operations {
             };
         };
     };
-    "post-cron--id-remove-duplicates": {
+    "post-cron-id--remove-duplicates": {
         parameters: {
             query?: never;
             header?: never;
@@ -1702,7 +1722,7 @@ export interface operations {
             };
         };
     };
-    "get-cron--id-run-job_id": {
+    "get-cron-id--run-job_id": {
         parameters: {
             query?: never;
             header?: never;
@@ -1736,7 +1756,7 @@ export interface operations {
             };
         };
     };
-    "get-cron--id-runs-job_id": {
+    "get-cron-id--runs-job_id": {
         parameters: {
             query?: {
                 limit?: number;
@@ -1773,7 +1793,44 @@ export interface operations {
             };
         };
     };
-    "get-cron--id-runs-run_id-stop": {
+    "get-cron-id--runs-run_id-log": {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The ID of the current resource */
+                id: number;
+                /** @description The ID of the cron job run to get log for */
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetCronRunLogResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-cron-id--runs-run_id-stop": {
         parameters: {
             query?: never;
             header?: never;
@@ -1805,7 +1862,7 @@ export interface operations {
             };
         };
     };
-    "post-cron--id-update-job_id": {
+    "post-cron-id--update-job_id": {
         parameters: {
             query?: never;
             header?: never;

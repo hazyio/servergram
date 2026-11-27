@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: |
+            agent/go.sum
+            server/go.sum
+
+      # 1. Frontend
+      - name: Build client
+        working-directory: ./client
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      # 2. Agents, output into ./server/agents
+      - name: Build agents
+        working-directory: ./agent
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p ../server/agents
+          GOOS=linux GOARCH=amd64 go build -o ../server/agents/agent_linux_amd64.bin .
+          GOOS=linux GOARCH=arm64 go build -o ../server/agents/agent_linux_arm64.bin .
+
+      # 3. Server (agents are already in ./server/agents, so go:embed picks them up)
+      - name: Build server
+        working-directory: ./server
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -o server_linux_amd64.bin .
+
+      # Package the frontend as one archive
+      - name: Package client
+        run: tar -czf client.tar.gz -C client dist
+
+      # 4. Publish
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            client.tar.gz
+            server/agents/agent_linux_amd64.bin
+            server/agents/agent_linux_arm64.bin
+            server/server_linux_amd64.bin

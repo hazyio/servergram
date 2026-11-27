@@ -1,0 +1,41 @@
+---
+title: "Logs and notifications"
+description: "Review server activity logs and unread notifications"
+---
+
+Servergram records activity on the server and exposes it in the web UI. Logs and notifications are separate features: logs are an audit trail of actions, and notifications are messages the server stores for your attention.
+
+## Activity logs
+
+Open **Logs** in the sidebar to see recent activity. Each row has:
+
+| Column | Description |
+| --- | --- |
+| **Action** | `create`, `add`, `update`, `delete`, or `read`. |
+| **Message** | What happened, including the affected server, file, key, or job. |
+| **Time** | When the action occurred, shown relative to now. |
+
+Use the search box to filter messages, and the sort menu to show one action type. The page loads 100 entries at a time. Use **Previous** and **Next** to move through the log.
+
+Logs are stored in the Servergram database. They are not the managed server's system logs, journal, or `syslog`. To inspect those, use SSH or your normal server monitoring tools.
+
+<Note>
+  Some read operations are logged as well, such as listing files or viewing a cron run log. The log is an activity trail, not a security audit with user attribution: Servergram has a single password and does not record which person performed an action.
+</Note>
+
+## Notifications
+
+The bell button in the sidebar opens the notification center. A dot on the bell means there are unread notifications.
+
+The notification center has two tabs:
+
+- **Unread** shows notifications you have not read.
+- **Read** shows notifications that are already marked as read.
+
+Each notification shows a title and message. Notifications can also carry a URL, which the API exposes for clients that want to link to a related page.
+
+The web UI currently displays notifications and their read state. The API also provides an endpoint to mark notifications as read, which integrations can use. See the [API reference](/reference/api#notifications).
+
+<Note>
+  Notifications appear when the server stores them. An empty notification center is normal if nothing has been recorded yet.
+</Note>

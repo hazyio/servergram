@@ -1,0 +1,54 @@
+---
+title: "Account and sessions"
+description: "Sign in, sign out, and manage active browser sessions"
+---
+
+Servergram uses a single password for the whole instance. There are no user accounts or roles. Anyone with the password can manage every server and key.
+
+<Warning>
+  If `PASSWORD` is not set, authentication is disabled. Anyone who can reach the server has full access. Set a password before exposing Servergram to a network.
+</Warning>
+
+## Sign in
+
+Open the server URL in a browser. If authentication is enabled, Servergram redirects you to the sign-in page.
+
+1. Enter the instance password.
+2. Select **Sign in**.
+
+On success, the server sets an `session_token` cookie. The cookie is `HttpOnly`, `Secure`, and `SameSite=Lax`, so it is sent automatically with API and WebSocket requests but is not readable by JavaScript.
+
+A wrong password returns `401 Unauthorized`. If the server has no password configured, sign-in returns an error and authentication is already disabled.
+
+## Sign out
+
+Use **Sign out** at the bottom of the sidebar. This deletes the current session on the server and returns you to the sign-in page.
+
+## Sessions
+
+Open **Sessions** in the sidebar to see browsers and devices with an active session. The current device is marked **This device** and sorted first.
+
+Each session shows:
+
+- The operating system detected from the user agent.
+- The full user agent string.
+- When the session was created.
+- When it expires.
+
+Use the search box to filter by operating system or user agent.
+
+### Remove a session
+
+Select **Remove** on another device's card to sign that device out immediately. Removing a session cannot be undone; the device must sign in again.
+
+Selecting **Sign out** on the current device's card has the same effect as the sidebar sign-out button.
+
+## Session lifetime
+
+Sessions expire after `SESSION_TTL` days. The default is `1` day, and the allowed range is `1` to `30`. Changing `SESSION_TTL` affects new sessions only; existing sessions keep the expiry they were created with.
+
+Expired sessions are rejected on the next request and are cleaned up when someone signs in.
+
+<Note>
+  Servergram does not lock out repeated failed sign-in attempts. Put the server behind a reverse proxy or network access control if it is reachable from untrusted networks.
+</Note>

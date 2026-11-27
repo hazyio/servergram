@@ -1,0 +1,1079 @@
+---
+title: "REST API"
+description: "Endpoints, authentication, streaming, and error handling for the Servergram API"
+---
+
+The Servergram server exposes a JSON API under `/api`. The web UI uses the same API, so anything the UI can do is available to scripts and integrations.
+
+The live specification is served by your instance:
+
+- `GET /openapi.json` returns the OpenAPI document.
+- `GET /docs` opens an interactive API reference.
+
+The server also writes `openapi.json` to the repository root at startup during development.
+
+## Base URL and TLS
+
+All requests use the server's HTTPS address and port:
+
+```text
+https://servergram.example.com:9788/api
+```
+
+The server only serves HTTPS. It does not listen for plain HTTP.
+
+## Authentication
+
+When `PASSWORD` is set, every API route except `POST /api/account/login` requires a valid session cookie:
+
+```http
+Cookie: session_token=<token>
+```
+
+Sign in to obtain the cookie:
+
+```bash
+curl -i -X POST https://localhost:9788/api/account/login \
+  -H "Content-Type: application/json" \
+  -d '{"password":"ChangeMe-Str0ng!2026"}'
+```
+
+A successful sign-in returns `201 Created` and a `Set-Cookie` header. The cookie is `HttpOnly`, `Secure`, and `SameSite=Lax`.
+
+If `PASSWORD` is empty, authentication is disabled and the API accepts requests without a cookie. The server logs a warning at startup in that case.
+
+### CORS
+
+Cross-origin browser requests are allowed only from origins listed in `ALLOWED_ORIGINS`. Allowed responses include `Access-Control-Allow-Origin` for the exact origin and `Access-Control-Allow-Credentials: true`. Preflight requests allow `GET`, `POST`, `PUT`, `DELETE`, and `OPTIONS`.
+
+## Errors
+
+Errors use `application/problem+json`:
+
+```json
+{
+  "title": "Conflict",
+  "status": 409,
+  "detail": "Server with this name already exists"
+}
+```
+
+Validation errors can also include an `errors` array with `location`, `message`, and `value` for each invalid field.
+
+Common status codes:
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid request body or query. |
+| `401` | Missing, invalid, or expired session. |
+| `403` | The agent denied the operation. |
+| `404` | The server, key, group, path, or job does not exist. |
+| `409` | A name or connection conflict, or a resource is still in use. |
+| `500` | Internal error. |
+| `502` | The managed server could not complete a file transfer. |
+
+Many routes require an active server connection. If the server is not connected, they return `404` with a message such as `Server is not connected`, or `500` with `Failed to get connected agent, it is probably not connected`.
+
+## Endpoint summary
+
+### Account
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/account/login` | Sign in and set the session cookie. |
+| `DELETE` | `/api/account/logout` | Delete the current session. |
+| `GET` | `/api/account/sessions/list` | List active sessions. |
+| `DELETE` | `/api/account/sessions/remove/{id}` | Remove a session by ID. |
+
+### SSH keys
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/ssh-key/add` | Add a private key. |
+| `GET` | `/api/ssh-key/list` | List keys with attached server counts. |
+| `GET` | `/api/ssh-key/view-key/{id}` | Return the decrypted private key. |
+| `DELETE` | `/api/ssh-key/delete/{id}` | Delete an unused key. |
+
+### Groups
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/group/create` | Create a group. |
+| `GET` | `/api/group/list` | List groups with server counts. |
+| `DELETE` | `/api/group/delete/{id}` | Delete an empty group. |
+
+### Search
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/search/ssh?query=` | Search SSH keys by name. |
+| `GET` | `/api/search/group?query=` | Search groups by name. |
+
+### Servers
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/server/add` | Add a server. |
+| `GET` | `/api/server/list` | List servers. |
+| `GET` | `/api/server/list/by-group/{group_id}` | List servers in a group. |
+| `DELETE` | `/api/server/delete/{id}` | Delete a disconnected server. |
+| `PUT` | `/api/server/update-finger-print/{id}` | Trust a host fingerprint. |
+| `GET` | `/api/server/info/{id}` | Get system information. |
+| `GET` | `/api/server/watch-resources/{id}` | Stream resource usage. |
+| `GET` | `/api/server/watch-processes/{id}` | Stream the process list. |
+| `GET` | `/api/server/watch-top-process/{id}` | Stream top processes. |
+| `POST` | `/api/server/{id}/stop-process/` | Send `SIGTERM`. |
+| `POST` | `/api/server/{id}/force-stop-process/` | Send `SIGKILL`. |
+| `POST` | `/api/server/{id}/signal-process/` | Send a specific signal. |
+
+### Files
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/files/list-in-server/{id}` | Stream a directory listing. |
+| `GET` | `/api/files/watch-dir-in-server/{id}` | Stream directory changes. |
+| `PUT` | `/api/files/create-dir-in-server/{id}` | Create a directory. |
+| `DELETE` | `/api/files/remove-dir-in-server/{id}` | Remove a directory. |
+| `PUT` | `/api/files/create-file-in-server/{id}` | Create an empty file. |
+| `DELETE` | `/api/files/remove-file-in-server/{id}` | Remove a file. |
+| `PATCH` | `/api/files/rename-path-in-server/{id}` | Rename a file or directory. |
+| `GET` | `/api/files/get-path-properties-in-server/{id}` | Get entry metadata. |
+| `GET` | `/api/files/read-file-in-server/{id}` | Stream a text file. |
+| `GET` | `/api/files/download-file-in-server/{id}` | Download a file. |
+| `POST` | `/api/files/upload-file-to-server/{id}` | Upload a file. |
+
+### Cron
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/cron/{id}/list` | Stream the crontab. |
+| `POST` | `/api/cron/{id}/create` | Create a job. |
+| `POST` | `/api/cron/{id}/remove-duplicates` | Remove duplicate lines. |
+| `POST` | `/api/cron/{id}/fix-unmanaged` | Wrap unmanaged jobs. |
+| `GET` | `/api/cron/{id}/run/{job_id}` | Run a job now. |
+| `GET` | `/api/cron/{id}/info/{job_id}` | Get job details. |
+| `POST` | `/api/cron/{id}/update/{job_id}` | Update a job. |
+| `DELETE` | `/api/cron/{id}/delete/{job_id}` | Delete a job. |
+| `GET` | `/api/cron/{id}/runs/{job_id}` | List runs. |
+| `GET` | `/api/cron/{id}/runs/{run_id}/stop` | Stop a run. |
+| `GET` | `/api/cron/{id}/runs/{run_id}/log` | Read a run log. |
+
+### Logs and notifications
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/logs/list` | List activity logs. |
+| `GET` | `/api/notification/available` | Check for unread notifications. |
+| `GET` | `/api/notification/list/unread` | List unread notifications. |
+| `GET` | `/api/notification/list/read` | List read notifications. |
+| `GET` | `/api/notification/list/all` | List all notifications. |
+| `PUT` | `/api/notification/mark-as-read` | Mark notifications as read. |
+
+## Account endpoints
+
+### Sign in
+
+```http
+POST /api/account/login
+Content-Type: application/json
+```
+
+```json
+{
+  "password": "ChangeMe-Str0ng!2026"
+}
+```
+
+Returns `201 Created` and sets `session_token`. Returns `401` for a wrong password. Returns `500` if the server has no password configured.
+
+### Sign out
+
+```http
+DELETE /api/account/logout
+```
+
+Deletes the session identified by the cookie. Returns `404` if the session no longer exists.
+
+### List sessions
+
+```http
+GET /api/account/sessions/list
+```
+
+```json
+{
+  "sessions": [
+    {
+      "id": 12,
+      "os": "Linux",
+      "user_agent": "Mozilla/5.0 ...",
+      "created_at": "2026-11-27T10:00:00Z",
+      "expires_at": "2026-11-28T10:00:00Z",
+      "this_device": true
+    }
+  ]
+}
+```
+
+### Remove a session
+
+```http
+DELETE /api/account/sessions/remove/{id}
+```
+
+Removes the session immediately. The device must sign in again.
+
+## SSH key endpoints
+
+### Add a key
+
+```http
+POST /api/ssh-key/add
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "production",
+  "key": "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----"
+}
+```
+
+`key` must be a private key in PEM or OpenSSH format. Public keys are rejected. Passphrase-protected keys are accepted; the key is stored encrypted and the passphrase is requested when connecting.
+
+Returns `201` on success and `409` if the name already exists.
+
+### List keys
+
+```http
+GET /api/ssh-key/list
+```
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "production",
+      "created_at": "2026-11-27T10:00:00Z",
+      "encrypted": true,
+      "resources_attached": 3
+    }
+  ]
+}
+```
+
+`encrypted` reports whether the private key itself has a passphrase, not whether Servergram encrypts it at rest.
+
+### View a key
+
+```http
+GET /api/ssh-key/view-key/{id}
+```
+
+```json
+{
+  "private": "-----BEGIN OPENSSH PRIVATE KEY-----\n..."
+}
+```
+
+This returns the decrypted private key. Treat the response as a secret.
+
+### Delete a key
+
+```http
+DELETE /api/ssh-key/delete/{id}
+```
+
+Returns `204` on success and `409` if any server still uses the key.
+
+## Group endpoints
+
+### Create a group
+
+```http
+POST /api/group/create
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "production"
+}
+```
+
+Returns `201` on success and `409` if the name already exists.
+
+### List groups
+
+```http
+GET /api/group/list
+```
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "production",
+      "created_at": "2026-11-27T10:00:00Z",
+      "resources_attached": 4
+    }
+  ]
+}
+```
+
+### Delete a group
+
+```http
+DELETE /api/group/delete/{id}
+```
+
+Returns `409` if the group still contains servers.
+
+## Search endpoints
+
+Both search endpoints accept `query` (up to 200 characters) and return at most 10 matches:
+
+```http
+GET /api/search/ssh?query=prod
+GET /api/search/group?query=prod
+```
+
+```json
+{
+  "items": [{ "id": 1, "name": "production", "encrypted": true }],
+  "total": 1
+}
+```
+
+Group search items contain only `id` and `name`.
+
+## Server endpoints
+
+### Add a server
+
+```http
+POST /api/server/add
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "web-1",
+  "host": "203.0.113.10",
+  "username": "deploy",
+  "port": 22,
+  "group_id": 1,
+  "ssh_key_id": 1
+}
+```
+
+| Field | Rules |
+| --- | --- |
+| `name` | 1 to 100 characters; letters, numbers, spaces, `. _ - @`. Must be unique. |
+| `host` | 1 to 100 characters. Hostname or IP address. |
+| `username` | 1 to 100 characters. |
+| `port` | 1 to 65535. |
+| `group_id` | An existing group. |
+| `ssh_key_id` | An existing SSH key. |
+
+Returns `201` with the new ID:
+
+```json
+{ "id": 7 }
+```
+
+Returns `404` if the group or key does not exist, and `409` if the name or target already exists.
+
+### List servers
+
+```http
+GET /api/server/list
+```
+
+```json
+{
+  "items": [
+    {
+      "id": 7,
+      "name": "web-1",
+      "host": "203.0.113.10",
+      "trusted": true,
+      "created_at": "2026-11-27T10:00:00Z"
+    }
+  ]
+}
+```
+
+Use `GET /api/server/list/by-group/{group_id}` to filter by group.
+
+### Delete a server
+
+```http
+DELETE /api/server/delete/{id}
+```
+
+Returns `409` if the server is currently connected. Disconnect it first.
+
+### Trust a host fingerprint
+
+```http
+PUT /api/server/update-finger-print/{id}
+Content-Type: application/json
+```
+
+```json
+{
+  "fingerprint": "SHA256:..."
+}
+```
+
+This stores the fingerprint and marks the server as trusted. It returns `204 No Content`.
+
+<Warning>
+  Only send a fingerprint you have verified out of band. Trusting an attacker's fingerprint defeats SSH host verification.
+</Warning>
+
+### Get server information
+
+```http
+GET /api/server/info/{id}
+```
+
+Requires an active connection.
+
+```json
+{
+  "os": "linux",
+  "architecture": "amd64",
+  "kernel_version": "6.8.0-45-generic",
+  "hostname": "web-1",
+  "uptime": 864000,
+  "platform": "Ubuntu 24.04",
+  "cpu_model": "AMD EPYC 7763",
+  "system_time": "2026-11-27T10:00:00Z"
+}
+```
+
+### Stream resource usage
+
+```http
+GET /api/server/watch-resources/{id}?interval=1000
+```
+
+`interval` is in milliseconds, defaults to `1000`, and must be between `1000` and `60000`.
+
+Each `data` event contains:
+
+```json
+{
+  "cpu": { "usage": 12.5, "cores": 4, "threads": 8 },
+  "memory": { "usage": 2147483648, "total": 8589934592, "available": 6442450944, "percent": 25 },
+  "disk": { "usage": 10737418240, "total": 53687091200, "available": 42949672960, "percent": 20 },
+  "swap": { "usage": 0, "total": 2147483648, "available": 2147483648, "percent": 0 }
+}
+```
+
+`usage`, `total`, and `available` are bytes. The stream runs until the client disconnects or the connection ends.
+
+### Stream processes
+
+```http
+GET /api/server/watch-processes/{id}?interval=1000&columns=1,2,3,4,5,6
+```
+
+`columns` is required and is a comma-separated list:
+
+| Value | Column |
+| --- | --- |
+| `1` | Memory |
+| `2` | Command |
+| `3` | User |
+| `4` | CPU |
+| `5` | State |
+| `6` | Uptime |
+
+Each `data` event contains an `items` array:
+
+```json
+{
+  "items": [
+    {
+      "pid": 1234,
+      "ppid": 1,
+      "name": "nginx",
+      "cpu_usage": 0.4,
+      "memory_usage": 18432000,
+      "command": "nginx: worker process",
+      "username": "www-data",
+      "status": 1,
+      "uptime": 3600
+    }
+  ]
+}
+```
+
+`status` is a number: `1` sleeping, `2` stopped, `3` zombie, `4` idle, `5` waiting, `6` running, `7` other.
+
+### Stream top processes
+
+```http
+GET /api/server/watch-top-process/{id}?sortBy=0&limit=5&interval=1000
+```
+
+| Parameter | Values |
+| --- | --- |
+| `sortBy` | `0` for CPU, `1` for memory. |
+| `limit` | Maximum number of processes, at least `1`. |
+| `interval` | `1000` to `60000` milliseconds. |
+
+Each `data` event contains:
+
+```json
+{
+  "items": [
+    { "pid": 1234, "name": "postgres", "cpu_usage": 8.2, "memory_usage": 268435456 }
+  ]
+}
+```
+
+### Stop a process
+
+```http
+POST /api/server/{id}/stop-process/
+Content-Type: application/json
+```
+
+```json
+{ "pid": 1234 }
+```
+
+Sends `SIGTERM`.
+
+### Force stop a process
+
+```http
+POST /api/server/{id}/force-stop-process/
+Content-Type: application/json
+```
+
+```json
+{ "pid": 1234 }
+```
+
+Sends `SIGKILL`.
+
+### Signal a process
+
+```http
+POST /api/server/{id}/signal-process/
+Content-Type: application/json
+```
+
+```json
+{ "pid": 1234, "sig_num": 4 }
+```
+
+`sig_num` uses the protobuf enum, **not** the Unix signal number:
+
+| `sig_num` | Signal |
+| --- | --- |
+| `1` | `SIGHUP` |
+| `2` | `SIGINT` |
+| `3` | `SIGKILL` |
+| `4` | `SIGTERM` |
+| `5` | `SIGQUIT` |
+| `6` | `SIGUSR1` |
+| `7` | `SIGUSR2` |
+| `8` | `SIGSTOP` |
+| `9` | `SIGCONT` |
+| `10` | `SIGTSTP` |
+| `11` | `SIGALRM` |
+| `12` | `SIGABRT` |
+
+For example, `SIGTERM` is `4` here and `15` on Linux.
+
+## File endpoints
+
+File endpoints require an active connection. Paths are resolved on the managed server as the SSH user.
+
+### File entry fields
+
+Most file responses use this shape:
+
+| Field | Description |
+| --- | --- |
+| `name` | Entry name. |
+| `kind` | `0` file, `1` directory, `2` symlink, `3` other. |
+| `size` | Size in bytes. |
+| `modified_unix_ns` | Modification time in Unix nanoseconds. |
+| `mode` | Unix mode bits. |
+| `uid`, `gid` | Owner and group IDs. |
+| `symlink_target` | Target for symlinks. |
+| `link_broken` | Whether a symlink target is missing. |
+| `is_hidden` | Whether the name starts with a dot. |
+
+### List a directory
+
+```http
+GET /api/files/list-in-server/{id}?dir=/home/deploy&include_hidden=false
+```
+
+`dir` defaults to the SSH user's home directory. `include_hidden` is required.
+
+The response is an SSE stream of chunks. Each `data` event contains:
+
+```json
+{
+  "entries": [
+    {
+      "name": "app",
+      "kind": 1,
+      "size": 4096,
+      "modified_unix_ns": 1764237600000000000,
+      "mode": 493,
+      "uid": 1000,
+      "gid": 1000,
+      "is_hidden": false
+    }
+  ],
+  "resolved_path": "/home/deploy",
+  "done": false
+}
+```
+
+`resolved_path` is sent in the first chunk. The stream ends with a chunk where `done` is `true`.
+
+### Watch a directory
+
+```http
+GET /api/files/watch-dir-in-server/{id}?dir=/home/deploy&include_hidden=false
+```
+
+Each `data` event describes one change:
+
+```json
+{
+  "kind": 0,
+  "path": "/home/deploy",
+  "entry": { "name": "app.log", "kind": 0, "size": 1200 }
+}
+```
+
+`kind` is `0` modified, `1` created, or `2` deleted. The stream runs until the client disconnects.
+
+### Create a directory
+
+```http
+PUT /api/files/create-dir-in-server/{id}
+Content-Type: application/json
+```
+
+```json
+{ "path": "/home/deploy", "name": "backups" }
+```
+
+### Remove a directory
+
+```http
+DELETE /api/files/remove-dir-in-server/{id}
+Content-Type: application/json
+```
+
+```json
+{ "path": "/home/deploy/backups" }
+```
+
+Removal is recursive.
+
+### Create a file
+
+```http
+PUT /api/files/create-file-in-server/{id}
+Content-Type: application/json
+```
+
+```json
+{ "path": "/home/deploy", "name": "notes.txt" }
+```
+
+### Remove a file
+
+```http
+DELETE /api/files/remove-file-in-server/{id}
+Content-Type: application/json
+```
+
+```json
+{ "path": "/home/deploy", "name": "notes.txt" }
+```
+
+### Rename a path
+
+```http
+PATCH /api/files/rename-path-in-server/{id}
+Content-Type: application/json
+```
+
+```json
+{
+  "path": "/home/deploy",
+  "old_name": "notes.txt",
+  "new_name": "notes-old.txt"
+}
+```
+
+### Get path properties
+
+```http
+GET /api/files/get-path-properties-in-server/{id}?path=/home/deploy&name=notes.txt
+```
+
+Returns the entry under the capitalized key `Enity`:
+
+```json
+{
+  "Enity": {
+    "name": "notes.txt",
+    "kind": 0,
+    "size": 1200,
+    "modified_unix_ns": 1764237600000000000,
+    "mode": 420,
+    "uid": 1000,
+    "gid": 1000,
+    "is_hidden": false
+  }
+}
+```
+
+### Read a text file
+
+```http
+GET /api/files/read-file-in-server/{id}?path=/home/deploy&name=notes.txt&max_bytes_size=5242880
+```
+
+`max_bytes_size` is required. The agent rejects files larger than this limit and rejects files that are not readable UTF-8 text.
+
+The response is an SSE stream. Each `data` event contains base64-encoded bytes:
+
+```json
+{
+  "data": "aGVsbG8gd29ybGQK",
+  "done": false
+}
+```
+
+The stream ends with `done: true`. The web UI uses a 5 MiB limit for previews.
+
+### Download a file
+
+```http
+GET /api/files/download-file-in-server/{id}?path=/home/deploy&name=backup.tar.gz
+```
+
+The response is `application/octet-stream` with `Content-Disposition: attachment`. There is no Servergram-side size limit. Returns `502` if the file metadata cannot be read.
+
+### Upload a file
+
+```http
+POST /api/files/upload-file-to-server/{id}?name=backup.tar.gz&dir=/home/deploy
+Content-Type: application/octet-stream
+```
+
+Send the raw file bytes as the request body. The maximum size is 10 GiB. `name` and `dir` are required query parameters. Uploading replaces an existing file with the same name.
+
+## Cron endpoints
+
+Cron endpoints require an active connection and operate on the SSH user's crontab.
+
+### List jobs
+
+```http
+GET /api/cron/{id}/list
+```
+
+The response is an SSE stream of batches. Each `data` event contains up to 50 jobs:
+
+```json
+{
+  "jobs": [
+    {
+      "hash": "…",
+      "name": "nightly backup",
+      "managed": true,
+      "status": "active",
+      "id": 3,
+      "last_run_at": "2026-11-27T02:00:00Z",
+      "next_run_at": "2026-11-28T02:00:00Z",
+      "schedule": "0 2 * * *",
+      "command": "/usr/local/bin/backup.sh"
+    }
+  ],
+  "done": false
+}
+```
+
+The final event has `done: true`.
+
+### Create a job
+
+```http
+POST /api/cron/{id}/create
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "nightly backup",
+  "schedule": "0 2 * * *",
+  "command": "/usr/local/bin/backup.sh",
+  "wrap": true,
+  "run_logs_keep_count": 20
+}
+```
+
+| Field | Rules |
+| --- | --- |
+| `schedule` | Five-field cron expression or a supported `@` alias. Required. |
+| `command` | Single line, no control characters. Required. |
+| `name` | Optional. Up to 100 characters in the web UI. |
+| `wrap` | If `true`, the agent manages the job and records runs. |
+| `run_logs_keep_count` | `0` to `960`. When `wrap` is `true`, use `5`, `10`, `20`, `40`, `80`, `160`, `240`, `480`, or `960`. |
+
+Returns `200` on success.
+
+### Remove duplicates
+
+```http
+POST /api/cron/{id}/remove-duplicates
+```
+
+```json
+{ "removed": 2 }
+```
+
+### Fix unmanaged jobs
+
+```http
+POST /api/cron/{id}/fix-unmanaged
+```
+
+```json
+{ "fixed": 3 }
+```
+
+This wraps unmanaged crontab lines with the agent prefix.
+
+### Run a job
+
+```http
+GET /api/cron/{id}/run/{job_id}
+```
+
+Starts the job immediately and records a manual run.
+
+### Get job information
+
+```http
+GET /api/cron/{id}/info/{job_id}
+```
+
+```json
+{
+  "name": "nightly backup",
+  "managed": true,
+  "id": 3,
+  "schedule": "0 2 * * *",
+  "command": "/usr/local/bin/backup.sh",
+  "run_logs_keep_count": 20,
+  "status": "active",
+  "last_run_at": "2026-11-27T02:00:00Z",
+  "next_run_at": "2026-11-28T02:00:00Z"
+}
+```
+
+### Update a job
+
+```http
+POST /api/cron/{id}/update/{job_id}
+Content-Type: application/json
+```
+
+The body uses the same fields as create.
+
+### Delete a job
+
+```http
+DELETE /api/cron/{id}/delete/{job_id}
+```
+
+Removes the crontab line and the job's stored run history.
+
+### List runs
+
+```http
+GET /api/cron/{id}/runs/{job_id}?limit=10&offset=0
+```
+
+`limit` defaults to `10` and must be at most `100`.
+
+```json
+{
+  "runs": [
+    {
+      "id": 41,
+      "status": "success",
+      "started_at": "2026-11-27T02:00:00Z",
+      "finished_at": "2026-11-27T02:01:12Z",
+      "exit_code": 0,
+      "trigger": "scheduled"
+    }
+  ],
+  "more": false
+}
+```
+
+`status` is `running`, `success`, `failed`, `cancelled`, or `timed_out`. `trigger` is `scheduled` or `manual`.
+
+### Stop a run
+
+```http
+GET /api/cron/{id}/runs/{run_id}/stop
+```
+
+Stops the run's process group and records it as cancelled.
+
+### Read a run log
+
+```http
+GET /api/cron/{id}/runs/{run_id}/log?limit=1000&offset=0
+```
+
+`limit` defaults to `1000` and must be at most `10000`.
+
+```json
+{
+  "log": "backup started\nbackup finished\n",
+  "download_path": "/home/deploy/.servergram/agent/logs/3/log-2026-11-27T02:00:00Z.log"
+}
+```
+
+`download_path` is the log file path on the managed server. It is not a Servergram download URL.
+
+## Logs and notifications
+
+### List activity logs
+
+```http
+GET /api/logs/list?start-index=0&limit=100
+```
+
+`limit` must be between `3` and `200`. `start-index` is `0` for the newest page.
+
+```json
+{
+  "items": [
+    {
+      "id": 120,
+      "action": "update",
+      "message": "Updated cron job 3 in server \"7\"",
+      "created_at": "2026-11-27T10:00:00Z"
+    }
+  ],
+  "next_index": 20,
+  "previous_index": 0
+}
+```
+
+`next_index` is the cursor for the next page. `previous_index` is `0` when there is no earlier page.
+
+### Check for unread notifications
+
+```http
+GET /api/notification/available
+```
+
+```json
+{ "value": true }
+```
+
+### List notifications
+
+```http
+GET /api/notification/list/unread
+GET /api/notification/list/read
+GET /api/notification/list/all
+```
+
+The response is a JSON array:
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Backup finished",
+    "message": "The nightly backup completed successfully.",
+    "url": "/servers/7/cron/3",
+    "created_at": "2026-11-27T02:01:12Z"
+  }
+]
+```
+
+### Mark notifications as read
+
+```http
+PUT /api/notification/mark-as-read
+Content-Type: application/json
+```
+
+```json
+{ "notification_ids": [1, 2, 3] }
+```
+
+Returns `{ "value": true }`.
+
+## Server-sent events
+
+Streaming endpoints use `text/event-stream`. Events are named `data` and `error`, so browser clients must subscribe explicitly:
+
+```js
+const source = new EventSource("/api/files/list-in-server/7?dir=/home&include_hidden=false", {
+  withCredentials: true,
+});
+
+source.addEventListener("data", (event) => {
+  const chunk = JSON.parse(event.data);
+  // ...
+});
+
+source.addEventListener("error", (event) => {
+  if (event instanceof MessageEvent) {
+    const problem = JSON.parse(event.data);
+    console.error(problem.status, problem.message);
+  }
+});
+```
+
+An error event carries:
+
+```json
+{ "status": 404, "message": "path \"/missing\" not found" }
+```
+
+Connection-level errors do not carry data. The browser reconnects `EventSource` automatically unless the stream ends normally or the client closes it.
+
+Some streams end with `done: true` (directory listings, file reads, cron listings). Resource and process streams run until the client disconnects.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Upload size | 10 GiB |
+| Text preview size | 5 MiB |
+| Resource/process interval | 1000 to 60000 ms |
+| Cron run list limit | 100 |
+| Cron log read limit | 10000 |
+| Activity log page size | 3 to 200 |
+| Search results | 10 |
+| WebSocket message size | 1 MiB |

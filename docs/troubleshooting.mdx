@@ -1,0 +1,131 @@
+---
+title: "Troubleshooting"
+description: "Common problems and how to resolve them"
+---
+
+This page covers problems you are likely to hit while running Servergram. Start with the server's log output: most startup and connection errors are written there with a specific message.
+
+## The server will not start
+
+The server validates its environment at startup and exits on the first problem.
+
+| Message or symptom | Fix |
+| --- | --- |
+| `environment validation failed` | Check `DATABASE_URL`, `SERVER_PORT`, `ALLOWED_ORIGINS`, `PASSWORD`, `SHH_MASTER_KEY`, `SESSION_TTL`, and the TLS paths. |
+| `PASSWORD and SHH_MASTER_KEY should not be the same` | Use two different values. |
+| `SSL_PUBLIC_KEY and SSL_PRIVATE_KEY must point to existing files` | Check the paths. Relative paths resolve from the directory you start the server in. |
+| `failed to load TLS key pair` | The files exist but are not a valid certificate and key pair. |
+| `ALLOWED_ORIGINS` error | When `SERVER_PORT` is set, provide at least one non-empty origin, including the scheme and port. |
+| `unsupported database scheme` | Use `sqlite`, `sqlite3`, `postgres`, `postgresql`, `mysql`, `sqlserver`, or `mssql`. |
+
+If `SERVER_PORT` is unset, the server uses `9788` and allows all origins. Set both `SERVER_PORT` and `ALLOWED_ORIGINS` explicitly for anything other than local testing.
+
+## I cannot sign in
+
+- Confirm `PASSWORD` is set on the server. If it is empty, authentication is disabled and the sign-in endpoint returns an error.
+- Check that the password meets the rules: 16 to 128 characters, upper and lower case, a number, a symbol, no spaces.
+- If the browser keeps returning to the sign-in page, check that cookies are enabled and that you are using the same scheme and host you configured in `ALLOWED_ORIGINS`.
+- Clear the `session_token` cookie and sign in again.
+- Check the server clock. Sessions have an expiry time, and a large clock skew can make them appear expired.
+
+## The server shows as disconnected
+
+Files, processes, and cron require an active connection. Select **Connect** on the home page and watch for an error.
+
+Common causes:
+
+- **Wrong host, port, username, or key.** Verify the values in the server record.
+- **SSH access is blocked.** Check firewalls and that the SSH daemon accepts public-key authentication for the user.
+- **The key is wrong.** The key must be the private key that matches an authorized key for the user.
+- **The server is unsupported.** Only Linux on `amd64` or `arm64` is supported.
+- **The home directory is not writable.** The agent is uploaded to `~/.servergram/agent`.
+- **The server is out of disk space.** The agent upload and its database need free space.
+
+The server log includes the SSH error and any agent startup output. Agent logs are forwarded to the server log.
+
+## The host fingerprint does not match
+
+Servergram pins the SSH host key. A mismatch means the key presented by the managed server differs from the stored fingerprint.
+
+1. Compare the old and new fingerprints in the dialog.
+2. Verify the new fingerprint on the managed server, for example with `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`.
+3. If the change is expected, trust the new fingerprint and reconnect.
+4. If it is not expected, stop and investigate before connecting.
+
+Do not trust a new fingerprint just to clear the error.
+
+## Servergram asks for a passphrase
+
+The SSH key is passphrase-protected. Enter the passphrase when prompted. Servergram uses it for the connection attempt and does not store it.
+
+If the passphrase is rejected, verify it with `ssh -i <key> <user>@<host>` outside Servergram.
+
+## The WebSocket will not connect
+
+The web UI uses a WebSocket for connection state. If it fails:
+
+- Add the exact UI origin to `ALLOWED_ORIGINS`, including scheme and port.
+- If you use a reverse proxy, enable WebSocket upgrades and pass the `Upgrade` and `Connection` headers.
+- Make sure the proxy does not strip cookies.
+- Check that HTTPS is terminated correctly. The client uses `wss://` when the page is served over HTTPS.
+
+## TLS certificate errors
+
+- The certificate must cover the hostname you use in the browser.
+- The server only serves HTTPS. Point the browser at `https://`, not `http://`.
+- For local development, create a trusted certificate with `mkcert` as shown in [Configuration](/config#ssl_public_key-and-ssl_private_key).
+- If you use a reverse proxy, terminate TLS there and forward to Servergram over HTTPS, or adjust your setup so the browser trusts the certificate it receives.
+
+## SSH keys stopped working after a configuration change
+
+Changing `SHH_MASTER_KEY` makes existing encrypted private keys unreadable. Restore the previous value. If you cannot, delete the affected keys and add them again.
+
+Back up `SHH_MASTER_KEY` separately from the database.
+
+## Cron jobs do not run
+
+- Confirm the job is in the SSH user's crontab. Open the server's **Cron** page and check that the job is listed.
+- Confirm the user's cron daemon is running on the managed server.
+- Check the schedule. Servergram accepts five-field expressions and `@` aliases, not six-field expressions with seconds.
+- Use absolute paths in commands. Cron runs with a minimal environment, so `PATH` may differ from an interactive shell.
+- Make sure the command is executable by the SSH user.
+- Check whether the job is **Unmanaged**. Unmanaged jobs run, but Servergram does not record their output.
+- If the same schedule and command appear twice, use **Fix now** on the duplicate notice.
+
+For wrapped jobs, open the job and inspect its run history and log. For unwrapped jobs, check the managed server's cron mail or system logs.
+
+## A cron run will not stop
+
+Servergram stops the run's process group. A process that detaches from the group or ignores termination can survive. Check the managed server and stop it manually if needed.
+
+## File preview fails
+
+The preview only supports UTF-8 text files up to 5 MiB. For larger or binary files, use **Download** instead. If a text file still fails, confirm the SSH user can read it.
+
+## File upload fails
+
+- The maximum upload size is 10 GiB.
+- The SSH user must be able to write to the target directory.
+- The managed server must have enough free space.
+- Very long or unusual file names can be rejected. Avoid `/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, and `..` in names.
+
+An interrupted upload can leave a partial file. Check the target directory and remove it if necessary.
+
+## A process action fails
+
+Signals are sent as the SSH user. You cannot signal processes owned by another user unless that user has permission. Confirm the PID is still running and that the SSH user owns it or has the required privilege.
+
+## Notifications are empty
+
+The notification center shows notifications stored by the server. An empty list is normal when nothing has been recorded. Activity logs are separate; open **Logs** to review actions.
+
+## Where to find logs
+
+- **Activity logs:** the **Logs** page in the web UI, stored in the Servergram database.
+- **Server logs:** the process output where you started the server binary.
+- **Agent logs:** forwarded to the server log with `source=agent-stderr`. Set `LOG_LEVEL=debug` in the SSH user's environment for verbose output.
+- **Cron run logs:** the job's run detail in the UI, or `~/.servergram/agent/logs/<job-id>/` on the managed server.
+
+## Still stuck
+
+The live API specification is available at `/openapi.json`, and an interactive reference is at `/docs`. The [development guide](/development) lists the repository layout if you need to inspect the source.

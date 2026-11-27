@@ -1,0 +1,73 @@
+---
+title: "Files"
+description: "Browse, view, upload, and manage files on a managed server"
+---
+
+The **Files** page is a file browser for the SSH user on a managed server. It opens in that user's home directory and can navigate anywhere the user has permission to read.
+
+<Note>
+  Files require an active server connection. If the page says the server is not connected, reconnect from the home page.
+</Note>
+
+## Browse files
+
+Use the path bar to jump to a directory, or select a folder in the table to open it. The back and forward buttons move through your navigation history. The search box filters the current directory by name.
+
+The settings menu controls the view:
+
+| Setting | Effect |
+| --- | --- |
+| **Show hidden files** | Includes entries whose names start with a dot. |
+| **Directories first** | Sorts folders before files. |
+| **Columns** | Shows or hides size, modified time, mode, and owner. |
+| **Ask before delete** | Shows a confirmation before deleting entries. |
+
+These preferences are stored in your browser, not on the server.
+
+## Create entries
+
+Use the **New** menu to create a file or directory in the current directory. Names cannot contain `/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, or `..`, and must be 255 bytes or shorter.
+
+## Rename, delete, and inspect
+
+Right-click an entry, or use its actions menu, to:
+
+- **Rename** the entry.
+- **Delete** a file or directory.
+- **View** a text file.
+- **Download** the file.
+- **Properties** to see its kind, size, permissions, owner, group, and modification time.
+
+Deleting a directory removes it recursively. The SSH user must have permission for the operation.
+
+## View a file
+
+Select a text file to open a read-only preview. The preview:
+
+- Streams the file from the managed server.
+- Accepts UTF-8 text only. Binary files are rejected.
+- Stops at 5 MiB. Larger files must be downloaded instead.
+- Applies syntax highlighting based on the file extension.
+
+The preview is read-only. To change a file, edit it on the server or upload a replacement.
+
+## Download a file
+
+Downloading streams the file directly from the managed server to your browser. There is no Servergram-side size limit. The browser receives the file as an attachment with its original name.
+
+## Upload a file
+
+1. Open the target directory.
+2. Select **Upload**.
+3. Choose a file and optionally change the name it is saved as.
+4. Start the upload.
+
+Uploads are streamed to the managed server. The maximum upload size is 10 GiB. Uploading replaces an existing file with the same name.
+
+<Warning>
+  Large uploads depend on free space and write permissions on the managed server. A failed upload can leave a partial file, so check the target directory after an interrupted transfer.
+</Warning>
+
+## Permissions
+
+The file browser does not elevate privileges. It can only read and write what the SSH user can access. A permission error means the SSH user cannot perform that operation on the path.

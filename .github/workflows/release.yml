@@ -23,7 +23,7 @@ jobs:
             agent/go.sum
             server/go.sum
 
-      # 1. Frontend
+      # 1. Frontend (outputs to ./server/dist)
       - name: Build client
         working-directory: ./client
         run: |
@@ -40,7 +40,7 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -o ../server/agents/agent_linux_amd64.bin .
           GOOS=linux GOARCH=arm64 go build -o ../server/agents/agent_linux_arm64.bin .
 
-      # 3. Server (agents are already in ./server/agents, so go:embed picks them up)
+      # 3. Server (dist and agents are already in ./server, so go:embed picks them up)
       - name: Build server
         working-directory: ./server
         env:
@@ -51,7 +51,7 @@ jobs:
 
       # Package the frontend as one archive
       - name: Package client
-        run: tar -czf client.tar.gz -C client dist
+        run: tar -czf client.tar.gz -C server dist
 
       # 4. Publish
       - name: Publish release

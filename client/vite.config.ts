@@ -3,6 +3,12 @@ import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import fs from "fs";
+const certPath = "../certs/localhost+2.pem";
+const keyPath = "../certs/localhost+2-key.pem";
+const https =
+  fs.existsSync(certPath) && fs.existsSync(keyPath)
+    ? { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }
+    : undefined; // CI has no certs, and the build doesn't need them
 
 export default defineConfig({
   server: {
@@ -19,10 +25,7 @@ export default defineConfig({
         ws: true, // proxy the Upgrade request
       },
     },
-    https: {
-      cert: fs.readFileSync("../certs/localhost+2.pem"),
-      key: fs.readFileSync("../certs/localhost+2-key.pem"),
-    },
+    https,
   },
   plugins: [
     tailwindcss(),

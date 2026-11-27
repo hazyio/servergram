@@ -9,10 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"slices"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/google/shlex"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -198,11 +198,17 @@ func handleRunCronJob(ctx context.Context, database *gorm.DB, req *proto.RunCron
 		return nil, status.Errorf(codes.NotFound, "cron job missing, in database but not in crontab: %v", err)
 	}
 	slog.Debug("running cron job", "job_id", job.ID, "command", jobCommand)
-	parts := strings.Fields(jobCommand) // handles repeated spaces, unlike Split
-	if len(parts) == 0 {
+	parts, err := shlex.Split(jobCommand) // respects quotes
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "bad command: %v", err)
+	}
+	if len(parts) < 2 {
 		return nil, status.Errorf(codes.Internal, "empty command")
 	}
-	cmd := exec.Command(parts[0], parts[1:]...)
+
+	// parts[0]=agent, parts[1]=run-job, then flags/args
+	args := append([]string{parts[1], "--manual"}, parts[2:]...)
+	cmd := exec.Command(parts[0], args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true} // new session, no controlling terminal
 
 	if err := cmd.Start(); err != nil {
@@ -430,7 +436,7 @@ func handleGetCronRunLogResponse(database *gorm.DB, req *proto.GetCronRunLogRequ
 	}
 
 	return &proto.GetCronRunLogResponse{
-		Log:         string(buf[:n]),
+		Log:          string(buf[:n]),
 		DownloadPath: *logPath,
 	}, nil
 }

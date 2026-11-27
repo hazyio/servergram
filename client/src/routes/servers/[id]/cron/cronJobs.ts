@@ -67,6 +67,7 @@ export type CronRun = {
 export type CronRunLog = {
   content: string;
   downloadPath: string;
+  more: boolean;
 };
 
 /**
@@ -483,11 +484,15 @@ export async function getCronRunLog(
   }
 
   const log = data as CronRunLogApi | undefined;
+  const content = log?.log ?? "";
 
   return {
     data: {
-      content: log?.log ?? "",
+      content,
       downloadPath: log?.download_path ?? log?.download_url ?? "",
+      // The response has no "more" flag, so a full byte chunk means there is
+      // likely more output to fetch. A shorter chunk is the end of the log.
+      more: new TextEncoder().encode(content).length >= limit,
     },
   };
 }

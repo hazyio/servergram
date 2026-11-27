@@ -84,14 +84,16 @@ func RunJob(ctx context.Context, database *gorm.DB, jobID uint64, command string
 	}
 	if newRun != nil {
 
-		if result.TimedOut {
-			newRun.Status = db.RunStatusTimedOut
-		} else if err != nil {
+		if err != nil {
 			newRun.Status = db.RunStatusFailed
 		} else if result.ExitCode == 0 {
 			newRun.Status = db.RunStatusSuccess
+		} else {
+			newRun.Status = db.RunStatusFailed
 		}
-
+		if result.TimedOut {
+			newRun.Status = db.RunStatusTimedOut
+		}
 		newRun.FinishedAt = time.Now()
 
 		newRun.ExitCode = result.ExitCode

@@ -72,9 +72,7 @@
 
     content = data.content;
     downloadPath = data.downloadPath;
-    // The log endpoint has no "more" flag. Keep the button available until a
-    // request comes back empty, which means the end of the log was reached.
-    hasMore = content.length > 0;
+    hasMore = data.more;
     offset = CRON_RUN_LOG_PAGE_SIZE;
   }
 
@@ -111,13 +109,8 @@
       downloadPath = data.downloadPath;
     }
 
-    if (!data.content) {
-      // Empty log means there is nothing left to load.
-      hasMore = false;
-      return;
-    }
-
     content += data.content;
+    hasMore = data.more;
     offset += limit;
   }
 

@@ -41,6 +41,9 @@ func addSSHKey(data internal.RouteData[models.AddSSHKeyRequest]) (*EmptyRR, erro
 		slog.Error("An error occurred while encrypting the SSH key", "error", encryptedSSHKeyErr)
 		return nil, internal.InternalServerError
 	}
+	if !input.Encrypted {
+		return nil, internal.NewHumaError(http.StatusBadRequest, "unencrypted keys are not supported")
+	}
 	newKey := db.SSHKey{
 		Name:      name,
 		Key:       encryptedSSHKey,

@@ -26,7 +26,7 @@ These preferences are stored in your browser, not on the server.
 
 ## Create entries
 
-Use the **New** menu to create a file or directory in the current directory. Names cannot contain `/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, or `..`, and must be 255 bytes or shorter.
+Use the **New** menu to create a file or directory in the current directory. Names must be absolute paths, cannot contain `/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, or `..`, and must be 255 bytes or shorter. The directory must exist.
 
 ## Rename, delete, and inspect
 
@@ -62,7 +62,7 @@ Downloading streams the file directly from the managed server to your browser. T
 3. Choose a file and optionally change the name it is saved as.
 4. Start the upload.
 
-Uploads are streamed to the managed server. The maximum upload size is 10 GiB. Uploading replaces an existing file with the same name.
+Uploads are streamed to the managed server. The maximum upload size is 10 GiB. Uploading replaces an existing file with the same name. The name must follow the same rules as other entries: no `/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`, or `..`, and 255 bytes or shorter.
 
 <Warning>
   Large uploads depend on free space and write permissions on the managed server. A failed upload can leave a partial file, so check the target directory after an interrupted transfer.

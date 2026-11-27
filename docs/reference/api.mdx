@@ -730,20 +730,20 @@ Content-Type: application/json
 GET /api/files/get-path-properties-in-server/{id}?path=/home/deploy&name=notes.txt
 ```
 
-Returns the entry under the capitalized key `Enity`:
+Returns the entry:
 
 ```json
 {
-  "Enity": {
-    "name": "notes.txt",
-    "kind": 0,
-    "size": 1200,
-    "modified_unix_ns": 1764237600000000000,
-    "mode": 420,
-    "uid": 1000,
-    "gid": 1000,
-    "is_hidden": false
-  }
+  "name": "notes.txt",
+  "kind": 0,
+  "size": 1200,
+  "modified_unix_ns": 1764237600000000000,
+  "mode": 420,
+  "uid": 1000,
+  "gid": 1000,
+  "is_hidden": false,
+  "link_broken": false,
+  "symlink_target": ""
 }
 ```
 
@@ -833,13 +833,15 @@ Content-Type: application/json
 }
 ```
 
+All fields are required in the API. The web UI makes `name` optional (it can be empty).
+
 | Field | Rules |
 | --- | --- |
 | `schedule` | Five-field cron expression or a supported `@` alias. Required. |
 | `command` | Single line, no control characters. Required. |
-| `name` | Optional. Up to 100 characters in the web UI. |
-| `wrap` | If `true`, the agent manages the job and records runs. |
-| `run_logs_keep_count` | `0` to `960`. When `wrap` is `true`, use `5`, `10`, `20`, `40`, `80`, `160`, `240`, `480`, or `960`. |
+| `name` | Optional in the web UI; required by the API. Up to 100 characters. |
+| `wrap` | If `true`, the agent manages the job and records runs. Required by the API. |
+| `run_logs_keep_count` | `0` to `960`. When `wrap` is `true`, use `5`, `10`, `20`, `40`, `80`, `160`, `240`, `480`, or `960`. Required by the API. |
 
 Returns `200` on success.
 

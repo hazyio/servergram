@@ -1,0 +1,97 @@
+---
+title: "Servers, SSH keys, and groups"
+description: "Add servers, manage SSH keys and groups, and open SSH connections"
+---
+
+Servergram stores the connection details for each managed server. Before you can add a server, create at least one group and one SSH key. Then connect to the server from the home page.
+
+## Before you begin
+
+You need:
+
+- A Linux server running on `amd64` or `arm64`.
+- An SSH user that can log in with a private key.
+- The private key in PEM or OpenSSH format. Public keys are rejected.
+- Network access from the Servergram server to the managed server's SSH port.
+
+The SSH user's permissions are the permissions the agent runs with. Use a dedicated user if you want to limit what Servergram can do.
+
+## Create a group
+
+Groups organize servers and appear on the home page and in the sidebar.
+
+1. Open **Groups** in the sidebar.
+2. Select **New group**.
+3. Enter a name and save.
+
+Group names must be 1 to 100 characters and can contain letters, numbers, spaces, and `. _ - @`.
+
+You cannot delete a group while it still has servers attached. Move or delete those servers first.
+
+## Add an SSH key
+
+1. Open **SSH Keys** in the sidebar.
+2. Select **Add SSH key**.
+3. Enter a name and paste the **private** key.
+4. Save the key.
+
+Key names must be unique and follow the same character rules as group names. Passphrase-protected keys are supported. Servergram detects the passphrase and asks for it the first time it connects to a server that uses the key.
+
+<Warning>
+  Paste the private key, not the public key. The private key is encrypted with `SHH_MASTER_KEY` before it is stored. Changing `SHH_MASTER_KEY` later makes saved keys unreadable.
+</Warning>
+
+You can view a saved private key from the key's actions menu. You cannot delete a key while servers still use it.
+
+## Add a server
+
+1. Select **Add server** on the home page or open `/servers/add`.
+2. Fill in the server details:
+
+| Field | Description |
+| --- | --- |
+| **Server name** | A display name. Must be unique. |
+| **Host** | A hostname, IPv4 address, or IPv6 address. |
+| **SSH username** | The user to log in as. |
+| **SSH port** | The SSH port. Defaults to `22`. |
+| **Group** | The group that owns the server. |
+| **SSH key** | The private key used to authenticate. |
+
+3. Select **Add server**.
+
+The name and the combination of name, host, port, and username must be unique. Adding a server does not connect to it yet.
+
+## Connect to a server
+
+On the home page, select **Connect** next to a server. The server status changes to **Connecting** while Servergram opens the SSH session and starts the agent.
+
+The first connection needs your trust decision:
+
+- **New host:** Servergram shows the host key fingerprint. Compare it with the fingerprint on the managed server, then trust it. The fingerprint is stored on the server record.
+- **Changed host key:** If the fingerprint no longer matches the stored value, Servergram asks you to compare the old and new fingerprints. Only accept the new fingerprint if you know why it changed, such as a server rebuild or key rotation.
+- **Passphrase-protected key:** Enter the key passphrase when prompted.
+
+After the connection succeeds, the server stays connected until you disconnect it, the SSH session ends, or the Servergram server restarts.
+
+<Warning>
+  A changed host key can indicate a man-in-the-middle attack. Verify the new fingerprint out of band before you trust it.
+</Warning>
+
+To close the connection, select **Disconnect** next to the server. You must disconnect a server before you can delete it.
+
+## Server pages
+
+Open a server from the home page to reach its pages:
+
+| Page | What it shows |
+| --- | --- |
+| **Overview** | System information, live resource usage, and top processes. |
+| **Files** | A file browser for the SSH user's home directory and the rest of the filesystem. |
+| **Processes** | A live process list with stop and signal actions. |
+| **Cron** | The user's crontab, including jobs created outside Servergram. |
+
+Files, processes, and cron require an active connection. If a page reports that the server is not connected, reconnect from the home page.
+
+## Delete a server
+
+Disconnect the server first, then use the delete action on the home page. Deleting a server removes its stored connection details. It does not change anything on the managed server.

@@ -1,0 +1,193 @@
+---
+title: "WebSocket protocol"
+description: "Connect and disconnect managed servers over the services WebSocket"
+---
+
+Servergram uses one WebSocket to manage SSH connections to servers. Live resource, process, file, and cron data uses [server-sent events](/reference/api#server-sent-events) instead.
+
+## Endpoint
+
+```text
+wss://servergram.example.com:9788/ws/
+```
+
+The bundled web client connects to `/ws/services`. The server matches any path under `/ws/` with the same handler, so both work.
+
+When `PASSWORD` is set, the WebSocket handshake must include the `session_token` cookie. The browser sends it automatically for same-origin connections. The `Origin` header must match an entry in `ALLOWED_ORIGINS`.
+
+## Message format
+
+Both directions use a JSON envelope:
+
+```json
+{
+  "action": "connect_server",
+  "data": { "id": 7, "name": "web-1" }
+}
+```
+
+`action` is a string. `data` is an object whose shape depends on the action.
+
+## Client actions
+
+### Connect a server
+
+```json
+{
+  "action": "connect_server",
+  "data": { "id": 7, "name": "web-1" }
+}
+```
+
+Queues a connection attempt. The server immediately broadcasts the updated service list with the server marked `connecting`, then opens SSH and starts the agent in the background.
+
+The server rejects the request with an `error` event if the server is already queued or already connected.
+
+### Disconnect a server
+
+```json
+{
+  "action": "disconnect_server",
+  "data": { "id": 7 }
+}
+```
+
+Closes the SSH session. The agent exits when the session closes.
+
+### Get connected services
+
+```json
+{
+  "action": "get_connected_services",
+  "data": {}
+}
+```
+
+Asks the server to send the current service list immediately.
+
+## Server events
+
+### Connected services
+
+Sent on connect, after every change, and every 30 seconds:
+
+```json
+{
+  "action": "connected_services",
+  "data": {
+    "items": [
+      {
+        "id": 7,
+        "name": "web-1",
+        "type": "server",
+        "status": "connected"
+      },
+      {
+        "id": 8,
+        "name": "db-1",
+        "type": "server",
+        "status": "connecting"
+      }
+    ]
+  }
+}
+```
+
+| Field | Values |
+| --- | --- |
+| `type` | `server` |
+| `status` | `connected` or `connecting` |
+
+Disconnected servers are not included in the list.
+
+### Trust host fingerprint
+
+Sent when the server has no trusted host key yet:
+
+```json
+{
+  "action": "trust_host_finger_print",
+  "data": {
+    "id": 7,
+    "name": "web-1",
+    "finger_print": "SHA256:..."
+  }
+}
+```
+
+To continue, verify the fingerprint and call:
+
+```http
+PUT /api/server/update-finger-print/7
+Content-Type: application/json
+
+{ "fingerprint": "SHA256:..." }
+```
+
+Then send `connect_server` again.
+
+### Host fingerprint mismatch
+
+Sent when the server's host key does not match the stored fingerprint:
+
+```json
+{
+  "action": "host_finger_print_mismatch",
+  "data": {
+    "id": 7,
+    "name": "web-1",
+    "old_finger_print": "SHA256:...",
+    "new_finger_print": "SHA256:..."
+  }
+}
+```
+
+Compare the fingerprints out of band. If the change is expected, trust the new fingerprint with the same `PUT` endpoint and reconnect. If it is not expected, stop and investigate.
+
+### Passphrase required
+
+Sent when the SSH key is passphrase-protected:
+
+```json
+{
+  "action": "pass_phrase_required",
+  "data": {
+    "id": 7,
+    "name": "web-1"
+  }
+}
+```
+
+The web UI prompts for the passphrase. The passphrase is used for that connection attempt; it is not stored.
+
+### Error
+
+```json
+{
+  "action": "error",
+  "data": {
+    "message": "failed to connect to server, config might be wrong. check server configuration"
+  }
+}
+```
+
+Errors are informational. The service list is sent again after a failed connection attempt, so the UI can clear the connecting state.
+
+## Connection lifecycle
+
+A typical first connection looks like this:
+
+```text
+client → connect_server {id: 7}
+server → connected_services [{id: 7, status: "connecting"}]
+server → trust_host_finger_print {id: 7, fingerprint: "SHA256:..."}
+client → PUT /api/server/update-finger-print/7
+client → connect_server {id: 7}
+server → connected_services [{id: 7, status: "connected"}]
+```
+
+A connection with a passphrase-protected key includes `pass_phrase_required` before the final connected state. A changed host key includes `host_finger_print_mismatch` instead of `trust_host_finger_print`.
+
+<Note>
+  The server keeps the connection state in memory. Restarting the Servergram server drops all SSH sessions, and clients must connect again.
+</Note>

@@ -1,0 +1,86 @@
+---
+title: "Monitoring and processes"
+description: "View server information, live resource usage, and running processes"
+---
+
+Each connected server has an **Overview** page and a **Processes** page. Both read live data from the agent over the existing SSH session.
+
+## Overview
+
+The overview page shows system information, resource usage, and the busiest processes.
+
+### System information
+
+The information card reports:
+
+| Field | Description |
+| --- | --- |
+| **OS** | The operating system reported by the managed server. |
+| **Architecture** | `amd64` or `arm64`. |
+| **Kernel version** | The running kernel. |
+| **Hostname** | The managed server's hostname. |
+| **Uptime** | How long the server has been running. |
+| **Platform** | The distribution or platform name. |
+| **CPU model** | The processor model. |
+| **System time** | The managed server's current time. |
+
+### Resource usage
+
+The resources card streams CPU, memory, disk, and swap usage. CPU shows total usage plus core and thread counts. Memory, disk, and swap show used, total, and available bytes with a percentage.
+
+Use the chart button to switch between a chart and usage bars. The page keeps up to 900 recent samples in the browser, so a long-open tab shows a rolling history rather than unbounded data.
+
+### Top processes
+
+The top processes card shows the five busiest processes. You can:
+
+- Sort by **CPU** or **Memory**.
+- Set the refresh interval to 1, 5, 10, 15, or 30 seconds.
+
+Select a process to open the full **Processes** page.
+
+## Processes
+
+The **Processes** page streams the full process list. Each row includes the PID, parent PID, name, CPU usage, memory usage, command, user, state, and uptime.
+
+### Columns and grouping
+
+Use the settings menu to show or hide the command, user, CPU, memory, state, and uptime columns. You can group processes by:
+
+- **Parent id** to build a process tree.
+- **Name** to group processes with the same executable name.
+- **Command** to group processes with the same command line.
+- **None** for a flat list.
+
+Column and grouping choices are saved in your browser. Grouping by command requires the command column.
+
+### Refresh interval
+
+Use the interval menu to refresh every 1, 3, 5, 10, 20, 30, 40, or 50 seconds. The page also has a manual refresh button and a search box that filters the current rows by name or command.
+
+## Process actions
+
+Open a process's actions menu to send a signal:
+
+| Action | Signal | Behavior |
+| --- | --- | --- |
+| **Stop** | `SIGTERM` | Asks the process to shut down gracefully. |
+| **Force stop** | `SIGKILL` | Stops the process immediately. It cannot be caught. |
+| **Terminate** | `SIGTERM` | Same signal as **Stop**. |
+| **Kill** | `SIGKILL` | Same signal as **Force stop**. |
+| **Interrupt** | `SIGINT` | Equivalent to `Ctrl+C`. |
+| **Hang up** | `SIGHUP` | Often reloads configuration. |
+| **Quit** | `SIGQUIT` | Quits and may produce a core dump. |
+| **Pause** | `SIGSTOP` | Suspends the process. It cannot be caught. |
+| **Continue** | `SIGCONT` | Resumes a suspended process. |
+| **User 1** | `SIGUSR1` | Application-defined. |
+| **User 2** | `SIGUSR2` | Application-defined. |
+| **Abort** | `SIGABRT` | Aborts the process and may produce a core dump. |
+
+<Warning>
+  Signals are sent as the SSH user. You cannot signal processes owned by other users unless that user has permission. Stopping the wrong process can take down a service.
+</Warning>
+
+<Note>
+  The API uses the protobuf signal enum, not Unix signal numbers. For example, `SIGTERM` is `4` in the API and `15` on Linux. The web UI handles this mapping for you. See the [API reference](/reference/api#signal-a-process) if you call the API directly.
+</Note>

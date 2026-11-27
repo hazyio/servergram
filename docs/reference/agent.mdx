@@ -1,0 +1,128 @@
+---
+title: "Agent"
+description: "How the Servergram agent runs on managed servers"
+---
+
+The agent is a small Go service that runs on each managed Linux server. It performs file operations, process control, resource sampling, and cron management on behalf of the Servergram server.
+
+You normally do not install or run the agent by hand. The server uploads it over SSH and starts it when you connect.
+
+## Commands
+
+```bash
+agent serve
+agent run-job -id=<id> [-manual] "command"
+```
+
+### `serve`
+
+Starts the gRPC server over standard input and output. The Servergram server starts this command inside an SSH session:
+
+```bash
+~/.servergram/agent serve
+```
+
+The agent serves three gRPC services:
+
+- Files: list, read, write, create, remove, rename, watch, properties.
+- Resources: information, resource usage, process list, top processes, stop, force stop, signal.
+- Cron: list, create, update, delete, run, stop, run history, logs, duplicate repair.
+
+### `run-job`
+
+Executes a cron job command and records the run in the agent's database:
+
+```bash
+agent run-job -id=3 "command"
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `-id` | The cron job ID. Required. |
+| `-manual` | Marks the run as manually triggered. Omit for scheduled runs. |
+
+Managed crontab entries call this command. The command is passed as the remaining arguments and runs through `/bin/sh -c`.
+
+The wrapper:
+
+- Creates a run record when retention is enabled.
+- Captures combined standard output and standard error.
+- Writes a log file under `~/.servergram/agent/logs/<job-id>/`.
+- Records the exit code and finish time.
+- Stops the whole process group when the run is canceled.
+
+## Runtime
+
+- The agent listens only on the SSH session's standard input and output. It does not open a TCP port.
+- It runs as the SSH user, with that user's permissions.
+- It stores its own SQLite database at `~/.servergram/servergram.db` and migrates it at startup.
+- It reads and writes the user's crontab with the `crontab` command.
+- It samples system resources with `gopsutil`.
+- It writes JSON logs to standard error. The server forwards them to its own log output.
+
+### Paths on the managed server
+
+| Path | Purpose |
+| --- | --- |
+| `~/.servergram/agent` | Agent binary. |
+| `~/.servergram/servergram.db` | Agent SQLite database. |
+| `~/.servergram/agent/logs/<job-id>/` | Cron run log files. |
+
+The server uploads the agent when the remote SHA-256 checksum differs from the embedded binary. The upload writes to `agent.new`, sets mode `700`, and renames it to `agent`.
+
+## Cron management
+
+The agent owns the managed part of the user's crontab:
+
+- Jobs created with **Wrap with agent** get a prefix that identifies them as managed.
+- The agent recognizes managed lines by that prefix.
+- Lines without the prefix are unmanaged. They still run, but the agent does not record their runs.
+- Duplicate lines with the same schedule and command can be removed from the Cron page.
+- Unmanaged lines can be wrapped from the Cron page, which adds the prefix without changing the schedule or command.
+
+The agent calculates the next run time from the schedule and stores it with the job. Run history is pruned to the job's retention count.
+
+<Warning>
+  Editing the crontab by hand can break the link between a managed line and its run history. If you remove the agent prefix, the job becomes unmanaged. If you change the schedule or command, Servergram may treat it as a new job.
+</Warning>
+
+## Environment
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `LOG_LEVEL` | `info` | Set to `debug` for verbose logs. |
+
+The agent does not read the server's `.env` file. It inherits the environment of the SSH session.
+
+## Platform support
+
+The runtime targets Linux on `amd64` and `arm64`. The agent uses Linux-specific features, including `crontab` and `/proc`-based process data. Other operating systems and architectures are rejected when the server selects the agent binary.
+
+## Build
+
+From the repository root:
+
+```bash
+cd agent
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../server/agents/agent_linux_amd64.bin .
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ../server/agents/agent_linux_arm64.bin .
+```
+
+The server embeds these two files at compile time. To build only the current machine's architecture, run `scripts/build-agent-to-server.sh`.
+
+## Debugging
+
+Build a local binary:
+
+```bash
+cd agent
+go build -o /tmp/servergram-agent .
+```
+
+`scripts/run-agent.sh` exposes the agent on `127.0.0.1:9000` through `socat` for transport debugging. It requires `socat` and does not replace a real SSH session.
+
+Set `LOG_LEVEL=debug` to see detailed agent logs. The server prefixes forwarded agent logs with `source=agent-stderr`.
+
+The agent shares protobuf definitions with the server through the `shared` module. From the `scripts/` directory, run `./generate-protobuf.sh` to regenerate them.
+
+See the [development guide](/development) for the full build and code-generation workflow.

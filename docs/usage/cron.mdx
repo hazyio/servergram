@@ -1,0 +1,110 @@
+---
+title: "Cron jobs"
+description: "Create, run, and monitor cron jobs on a managed server"
+---
+
+The **Cron** page reads the SSH user's crontab and lets you create and manage jobs. Jobs created outside Servergram also appear here.
+
+<Note>
+  Cron requires an active server connection. Jobs run with the SSH user's crontab and permissions.
+</Note>
+
+## Job statuses
+
+| Status | Meaning |
+| --- | --- |
+| **Active** | The job is in the crontab and scheduled to run. |
+| **Inactive** | The job is stored but skipped by the agent. |
+| **Unmanaged** | The crontab line was not created by Servergram, so there is no run history or status tracking. |
+
+Unmanaged jobs are still normal cron jobs. Servergram shows them so you can see the whole crontab and optionally wrap them with the agent.
+
+## Create a job
+
+1. Open the server's **Cron** page and select **Add job**.
+2. Enter the command to run.
+3. Choose a schedule.
+4. Optionally enter a name (the web UI does not require it, but the API does).
+5. Optionally enable **Wrap with agent** and set how many runs to keep.
+6. Select **Add job**.
+
+### Schedule format
+
+Servergram accepts standard five-field cron expressions:
+
+```text
+minute hour day-of-month month day-of-week
+```
+
+Examples:
+
+| Expression | Runs |
+| --- | --- |
+| `*/5 * * * *` | Every five minutes. |
+| `0 * * * *` | Every hour on the hour. |
+| `0 2 * * *` | Every day at 02:00. |
+| `30 3 * * 1` | Every Monday at 03:30. |
+| `0 0 1 * *` | The first day of every month at midnight. |
+
+You can also use these aliases: `@reboot`, `@yearly`, `@annually`, `@monthly`, `@weekly`, `@daily`, `@midnight`, and `@hourly`.
+
+<Warning>
+  A six-field expression with a seconds field is not supported. Use five fields or an `@` alias.
+</Warning>
+
+### Command rules
+
+The command must be a single line. It cannot contain newlines, tabs used as separators, or other control characters. The full crontab line must stay under 1000 characters. The command runs through `/bin/sh -c`, so shell syntax such as pipes, redirects, and `&&` works.
+
+### Wrap with agent
+
+Wrapping a job makes Servergram manage its execution. The agent records each run, its status, exit code, trigger, and output. The job's crontab line is prefixed so the agent can recognize it.
+
+When you wrap a job, choose how many runs to keep. Retention is stored per job and controls how many run records and log files are kept. The default is 20 runs, and the available values range from 5 to 960.
+
+<Note>
+  Wrapped jobs need the agent to be present on the managed server. Servergram uploads it automatically when you connect.
+</Note>
+
+## Run a job
+
+Open a job to see its details and run history. Select **Run** to start it immediately. Manual runs are recorded with the `manual` trigger. Scheduled runs use the `scheduled` trigger.
+
+The job detail page shows:
+
+- The schedule and command.
+- The current status.
+- The last and next run times.
+- Recent runs with status, trigger, start and finish times, and exit code.
+
+Run statuses in the web UI are **Running**, **Succeeded**, **Failed**, **Canceled**, and **Timed out**. The API uses `running`, `success`, `failed`, `cancelled`, and `timed_out`.
+
+### View a run log
+
+Select a run to open its log. Logs contain combined standard output and standard error. You can page through large logs. Logs are stored on the managed server under:
+
+```text
+~/.servergram/agent/logs/<job-id>/
+```
+
+Retention prunes older run records and their log files. Jobs without agent wrapping do not keep run history.
+
+### Stop a run
+
+While a run is in progress, select **Stop** to cancel it. The agent stops the job's process group and records the run as canceled. A process that ignores the stop can keep running, so verify the result on the server if the job is critical.
+
+## Edit and delete jobs
+
+Use the job's actions to edit its name, schedule, command, or retention, or to delete it. Editing a job updates its crontab line. Deleting a job removes its crontab line and its stored run history.
+
+<Warning>
+  Editing the crontab outside Servergram can make a managed job unmanaged or create duplicates. Use the Cron page when possible.
+</Warning>
+
+## Fix unmanaged jobs
+
+If the crontab contains jobs that Servergram did not create, the Cron page shows an **Unmanaged cron jobs** notice. Select **Fix now** to wrap those jobs with the agent. Servergram keeps their schedule and command, adds the agent prefix, and starts tracking runs.
+
+## Remove duplicates
+
+If the same schedule and command appear more than once, the Cron page shows a **Duplicate cron jobs** notice. Select **Fix now** to keep one entry and remove the extra lines. Duplicate lines can appear after manual crontab edits or after copying a job.

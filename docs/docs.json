@@ -27,6 +27,32 @@
         ]
       },
       {
+        "group": "Using Servergram",
+        "pages": [
+          "usage/servers",
+          "usage/files",
+          "usage/monitoring",
+          "usage/cron",
+          "usage/logs-and-notifications",
+          "usage/account"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/architecture",
+          "reference/api",
+          "reference/websocket",
+          "reference/agent"
+        ]
+      },
+      {
+        "group": "Help",
+        "pages": [
+          "troubleshooting"
+        ]
+      },
+      {
         "group": "Development",
         "pages": [
           "development"
